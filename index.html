@@ -322,6 +322,79 @@ html.pwa .wrap{min-height:calc(var(--scrH) + 1px)}
     inset 2.5px 0 3px -1.5px rgba(255,70,170,.45),inset -2.5px 0 3px -1.5px rgba(70,170,255,.45),0 0 0 .5px rgba(0,0,0,.08),0 8px 20px rgba(30,50,90,.18)}}
 .seg>.thumb.sw~button.on,.tabbar>.thumb.sw~button.on{color:var(--ink)}
 @media (prefers-reduced-motion:reduce){.seg>.thumb.sw,.tabbar>.thumb.sw{scale:none}}
+
+/* ================= v1.8 — iOS 27 görünümü =================
+   Sistem renkleri (gruplu arka plan + ikincil hücre), düz hücre kartları, iOS segment kontrolü,
+   Liquid Glass sekme çubuğu ve dairesel cam butonlar. Sekme değişimi yerinde (kayma yok). */
+:root{--sbg:#fff;--sbg3:#f2f2f7;--fill:rgba(120,120,128,.12);--fill2:rgba(120,120,128,.16);--sep:rgba(60,60,67,.18);--segth:#fff;--segsh:0 3px 8px rgba(0,0,0,.12),0 3px 1px rgba(0,0,0,.04);
+  --tb-fill:rgba(255,255,255,.62);--tb-rim:rgba(0,0,0,.06);--tb-ink:#000;--tb-thumb:rgba(120,120,128,.16);--tb-thumbrim:transparent;
+  --gb:rgba(255,255,255,.72);--gbr:rgba(0,0,0,.05);--gsh2:0 6px 18px rgba(0,0,0,.08)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--sbg:#1c1c1e;--sbg3:#2c2c2e;--fill:rgba(118,118,128,.24);--fill2:rgba(118,118,128,.32);--sep:rgba(84,84,88,.6);--segth:#636366;--segsh:0 3px 8px rgba(0,0,0,.3);
+  --tb-fill:rgba(30,30,32,.6);--tb-rim:rgba(255,255,255,.10);--tb-ink:#fff;--tb-thumb:rgba(255,255,255,.13);--tb-thumbrim:transparent;
+  --gb:rgba(44,44,46,.66);--gbr:rgba(255,255,255,.09);--gsh2:0 6px 18px rgba(0,0,0,.4)}}
+:root[data-theme="dark"]{--sbg:#1c1c1e;--sbg3:#2c2c2e;--fill:rgba(118,118,128,.24);--fill2:rgba(118,118,128,.32);--sep:rgba(84,84,88,.6);--segth:#636366;--segsh:0 3px 8px rgba(0,0,0,.3);
+  --tb-fill:rgba(30,30,32,.6);--tb-rim:rgba(255,255,255,.10);--tb-ink:#fff;--tb-thumb:rgba(255,255,255,.13);--tb-thumbrim:transparent;
+  --gb:rgba(44,44,46,.66);--gbr:rgba(255,255,255,.09);--gsh2:0 6px 18px rgba(0,0,0,.4)}
+.amb{display:none}
+/* Hücre kartları: düz, köşeli değil 26pt yuvarlak, kenarlıksız (iOS gruplu liste) */
+#app .glass:not(.ib):not(.cap){background:var(--sbg);-webkit-backdrop-filter:none;backdrop-filter:none;border:0;box-shadow:none}
+#app .glass::before{display:none}
+.card,.list,.stats,.alloc{border-radius:26px}.hero{border-radius:26px;padding:18px 18px 16px}
+.row{padding:12px 16px;min-height:60px}
+.row+.row::after{left:70px;right:0;height:.5px;background:var(--sep)}
+.list .row:not(:has(.av))+.row::after,.list .row+.row:not(:has(.av))::after{left:16px}
+.stats>div+div{border-left:.5px solid var(--sep)}
+.av{box-shadow:none;border-radius:12px;background:var(--c)}
+/* Başlık ve bölüm başlıkları */
+.hdr{padding:6px 4px 2px}
+.hdr h1{font:700 34px/1.1 var(--disp);letter-spacing:.01em}
+.eyebrow{font-size:13px}
+.grp{gap:7px}.grp>.gl{font-size:13px;font-weight:400;letter-spacing:0;padding:0 16px}
+.sech{padding:10px 4px 0}.sech h2{font:700 22px var(--disp);letter-spacing:.005em}
+/* Dairesel cam butonlar (iOS 27 gezinme çubuğu butonları) */
+#app .ib.glass,#app .cap.glass{background:var(--gb);border:.5px solid var(--gbr);box-shadow:var(--gsh2);-webkit-backdrop-filter:blur(14px) saturate(180%);backdrop-filter:blur(14px) saturate(180%)}
+.ib{width:44px;height:44px}.ib svg{width:19px;height:19px}
+/* iOS segment kontrolü */
+.seg{padding:2px;background:var(--fill);margin-top:12px}
+.seg button{padding:7px 10px;font-size:13px;font-weight:500;color:var(--ink)}
+.seg button.on{font-weight:600}
+.seg>.thumb{top:2px;bottom:2px;background:var(--segth);box-shadow:var(--segsh)}
+/* Düğmeler: kapsül */
+.btn{border:0;border-radius:99px;min-height:50px;font-size:17px;font-weight:600}
+.btn.pri{box-shadow:none}
+.btn.plain{background:var(--fill)}
+.btn.sm{min-height:34px;font-size:15px}
+.fbtns{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.fbtns .btn,.acts .btn{font-size:16px;white-space:nowrap;padding:12px 10px}
+.rowbtn{background:var(--fill)}
+/* Alanlar ve alt paneller */
+.f input,.f textarea,.inp{border:0;background:var(--fill);border-radius:12px;padding:12px 14px;font-size:17px}
+.pv{background:var(--fill);border-radius:14px}
+.sheet{border-radius:38px 38px 0 0}
+#m>.sheet{background:var(--sbg3);-webkit-backdrop-filter:none;backdrop-filter:none;border:0}
+:root[data-theme="light"] #m>.sheet{background:#f2f2f7}
+.tag{background:var(--fill)}
+.chip{padding:3px 9px}
+/* Sekme çubuğu: iOS 27 Liquid Glass */
+.tabbar{background:var(--tb-fill);-webkit-backdrop-filter:blur(16px) saturate(190%);backdrop-filter:blur(16px) saturate(190%);border:.5px solid var(--tb-rim);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 8px 28px rgba(0,0,0,.18)}
+.tabbar button{color:var(--tb-ink);font-size:10px;font-weight:600;text-shadow:none;transition:color .35s ease}
+.tabbar button.on{color:var(--ac)}
+.tabbar>.thumb{background:var(--tb-thumb);box-shadow:none}
+.tabbar button.on svg{transform:none}
+/* Seçilen sekmenin simgesi: zıplama + renk geçişi (SF Symbols bounce gibi) */
+.tabbar button.pop svg{animation:icoPop .55s var(--spring)}
+@keyframes icoPop{0%{transform:scale(1)}30%{transform:scale(.78)}65%{transform:scale(1.16)}100%{transform:scale(1)}}
+/* Mercek altından geçen simge/yazı büyür ve kenarlarında renk kırılması olur */
+.tabbar button svg,.tabbar button span,.seg button{transition:transform .22s var(--spring),filter .22s,color .35s ease}
+.tabbar button.under svg{transform:scale(1.22);filter:drop-shadow(-1.2px 0 0 rgba(255,60,170,.75)) drop-shadow(1.2px 0 0 rgba(60,200,255,.75))}
+.tabbar button.under span{transform:scale(1.1)}
+.seg button.under{transform:scale(1.08);filter:drop-shadow(-1px 0 0 rgba(255,60,170,.6)) drop-shadow(1px 0 0 rgba(60,200,255,.6))}
+/* Sekme çubuğu merceği çubuğun dışına belirgin taşar */
+.tabbar>.thumb.sw{scale:1.2 1.5}
+@media (prefers-reduced-motion:reduce){.tabbar button.pop svg{animation:none}.tabbar>.thumb.sw{scale:none}}
+/* Sekme ve segment geçişi: kayma yok, yerinde yumuşak geçiş */
+#app.en-tab-fwd,#app.en-tab-bwd{animation:fadeIn .22s ease-out;--ex:0px}
+.tb-fwd>*,.tb-bwd>*{animation:fadeIn .2s ease-out both;--ex:0px}
 </style>
 </head>
 <body>
@@ -330,7 +403,7 @@ html.pwa .wrap{min-height:calc(var(--scrH) + 1px)}
 <nav class="tabbar glass" id="nav" aria-label="Sekmeler"></nav>
 <div id="m"></div><div id="t" class="glass" role="status" aria-live="polite"></div>
 <script>
-const APPV='1.7.0',KEY='fon-portfoyum-v2',TK='fon-tema',$=s=>document.querySelector(s);
+const APPV='1.8.0',KEY='fon-portfoyum-v2',TK='fon-tema',$=s=>document.querySelector(s);
 const NF=new Intl.NumberFormat('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2});
 const money=v=>NF.format(+v||0)+' ₺',num=(v,d=3)=>new Intl.NumberFormat('tr-TR',{maximumFractionDigits:d}).format(+v||0);
 const sgn=v=>(v>=0?'+':'−')+money(Math.abs(v)),pc=v=>(v>=0?'+':'−')+'%'+Math.abs(isFinite(v)?v:0).toFixed(2).replace('.',',');
@@ -501,7 +574,7 @@ function go(page,patch={}){
   const apply=()=>{navTo=null;app.classList.remove('leaving');Object.assign(view,{page},patch);enterMode=true;pageAnim='en-'+kind;
     render();scrollTo(0,kind==='pop'?(scrollMem[page]||0):0);if(fromRect)flyAvatar(code,fromRect)};
   if(RM()){apply();return}
-  app.style.setProperty('--exd',(kind==='push'||kind==='tab-fwd')?'-18px':'18px');app.classList.add('leaving','moving');
+  app.style.setProperty('--exd',kind.startsWith('tab')?'0px':kind==='push'?'-18px':'18px');app.classList.add('leaving','moving');
   navTimer=setTimeout(apply,140)}
 function themeSwitch(t){
   const willDark=t==='dark'||(t==='system'&&mq.matches);
@@ -535,7 +608,7 @@ function render(){
   const tab=pg==='detail'?'home':pg;
   const nav=$('#nav');
   if(!nav.querySelector('button'))nav.innerHTML='<i class="thumb" aria-hidden="true"></i>'+[['home','Portföy',I.home],['overview','Özet',I.pie],['settings','Ayarlar',I.gear]].map(([k,n,ic])=>`<button data-act="nav" data-id="${k}" aria-label="${n}">${ic}<span>${n}</span></button>`).join('');
-  nav.querySelectorAll('button').forEach(b=>{const on=b.dataset.id===tab;b.classList.toggle('on',on);if(on)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});
+  nav.querySelectorAll('button').forEach(b=>{const on=b.dataset.id===tab;if(on&&!b.classList.contains('on')&&nav.dataset.ready&&!RM()){b.classList.remove('pop');void b.offsetWidth;b.classList.add('pop');clearTimeout(b._p);b._p=setTimeout(()=>b.classList.remove('pop'),600)}b.classList.toggle('on',on);if(on)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});nav.dataset.ready=1;
   afterRender()}
 
 function openTx(kind,pre){
@@ -650,24 +723,39 @@ fixGap();render();
 if('serviceWorker' in navigator&&location.protocol!=='file:')addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 
 /* Sekme çubuğu: parmakla sürükleyerek seçim (bırakınca en yakın sekmeye geçer); dokunma da çalışır */
+/* iPhone'da dokunma olayları (touch) kullanılır: iOS'ta en güvenilir yol budur; fare için pointer olayları */
 (()=>{const nav=document.getElementById('nav');let d=null,blockClick=false;
   const parts=()=>{const th=nav.querySelector('.thumb'),b=[...nav.querySelectorAll('button')];return{th,b}};
   const place=(th,x,w)=>{th.style.width=w+'px';th.style.transform=`translateX(${x}px)`};
-  nav.addEventListener('pointerdown',e=>{if(e.button>0)return;d={x0:e.clientX,id:e.pointerId,moved:false,x:0,w:0}});
-  nav.addEventListener('pointermove',e=>{if(!d||e.pointerId!==d.id)return;const{th,b}=parts();if(!th||!b.length)return;
-    if(!d.moved){if(Math.abs(e.clientX-d.x0)<8)return;d.moved=true;try{nav.setPointerCapture(e.pointerId)}catch(_){}nav.classList.add('drag');th.classList.add('sw')}
+  const start=(cx,cy)=>{d={x0:cx,y0:cy,moved:false,x:0,w:0,t:null}};
+  const move=cx=>{if(!d)return false;const{th,b}=parts();if(!th||!b.length)return false;
+    if(!d.moved){if(Math.abs(cx-d.x0)<6)return false;d.moved=true;nav.classList.add('drag');th._hold=true;th.classList.add('sw');clearTimeout(th._t)}
     const r=nav.getBoundingClientRect(),w=b[0].offsetWidth,lo=b[0].offsetLeft,hi=b[b.length-1].offsetLeft;
-    const x=Math.max(lo,Math.min(hi,e.clientX-r.left-w/2));d.x=x;d.w=w;place(th,x,w);
+    const x=Math.max(lo-10,Math.min(hi+10,cx-r.left-w/2));d.x=Math.max(lo,Math.min(hi,x));d.w=w;place(th,x,w);
     let best=b[0],bd=1e9;b.forEach(k=>{const dd=Math.abs(k.offsetLeft+k.offsetWidth/2-(x+w/2));if(dd<bd){bd=dd;best=k}});
-    d.t=best.dataset.id;b.forEach(k=>k.classList.toggle('pre',k===best))});
-  const end=(e,cancel)=>{if(!d||e.pointerId!==d.id)return;const m=d.moved,t=d.t,x=d.x,w=d.w;d=null;if(!m)return;
-    blockClick=true;setTimeout(()=>blockClick=false,350);nav.classList.remove('drag');
-    const{th,b}=parts();b.forEach(k=>k.classList.remove('pre'));setTimeout(()=>th.classList.remove('sw'),300);
+    if(d.t!==best.dataset.id&&navigator.vibrate)try{navigator.vibrate(4)}catch(_){}
+    d.t=best.dataset.id;b.forEach(k=>k.classList.toggle('pre',k===best));return true};
+  const end=cancel=>{if(!d)return;const m=d.moved,t=d.t,x=d.x,w=d.w;d=null;if(!m)return;
+    blockClick=true;setTimeout(()=>blockClick=false,400);nav.classList.remove('drag');
+    const{th,b}=parts();b.forEach(k=>k.classList.remove('pre'));th._hold=false;lens(th,360);
     const cur=nav.querySelector('button.on');
     if(!cancel&&t&&cur&&t!==cur.dataset.id){SEGX.nav={x,w};go(t)}
     else if(cur)place(th,cur.offsetLeft,cur.offsetWidth)};
-  nav.addEventListener('pointerup',e=>end(e,false));nav.addEventListener('pointercancel',e=>end(e,true));
+  nav.addEventListener('touchstart',e=>{if(e.touches.length!==1){d=null;return}const t=e.touches[0];start(t.clientX,t.clientY)},{passive:true});
+  nav.addEventListener('touchmove',e=>{if(!d)return;const t=e.touches[0];if(move(t.clientX)&&e.cancelable)e.preventDefault()},{passive:false});
+  nav.addEventListener('touchend',()=>end(false),{passive:true});
+  nav.addEventListener('touchcancel',()=>end(true),{passive:true});
+  nav.addEventListener('pointerdown',e=>{if(e.pointerType==='touch'||e.button>0)return;start(e.clientX,e.clientY)});
+  addEventListener('pointermove',e=>{if(e.pointerType==='touch')return;move(e.clientX)});
+  addEventListener('pointerup',e=>{if(e.pointerType==='touch')return;end(false)});
   nav.addEventListener('click',e=>{if(blockClick){e.stopPropagation();e.preventDefault()}},true);
+})();
+/* Mercek hareket ederken altından geçen simge/yazı büyür ve renk kırılması alır */
+(()=>{let raf=0;const tick=()=>{raf=0;let any=false;
+  document.querySelectorAll('.seg>.thumb,.tabbar>.thumb').forEach(th=>{const on=th.classList.contains('sw');const r=th.getBoundingClientRect();
+    th.parentElement.querySelectorAll(':scope>button').forEach(b=>{let u=false;if(on){const q=b.getBoundingClientRect(),c=q.left+q.width/2;u=c>r.left+6&&c<r.right-6}b.classList.toggle('under',u)});if(on)any=true});
+  if(any)raf=requestAnimationFrame(tick)};
+  new MutationObserver(()=>{if(!raf)raf=requestAnimationFrame(tick)}).observe(document.body,{subtree:true,attributes:true,attributeFilter:['class','style']});
 })();
 /* Gösterge cam mercek modu: ms>0 → o süre sonra koyu kapsüle döner; ms=0 → parmak kalkana kadar */
 function lens(th,ms){if(!th||RM())return;th.classList.add('sw');clearTimeout(th._t);th._hold=!ms;if(ms)th._t=setTimeout(()=>{if(!th._hold)th.classList.remove('sw')},ms)}
