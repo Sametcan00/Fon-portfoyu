@@ -292,6 +292,15 @@ input[type=date]::-webkit-date-and-time-value{text-align:left;margin:0}
 :root[data-theme="dark"]{--lg-fill2:rgba(44,44,48,.62);--lg-rim:rgba(255,255,255,.12)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--lg-fill2:rgba(44,44,48,.62);--lg-rim:rgba(255,255,255,.12)}}
 .wrap{padding-bottom:calc(120px + var(--sab))}
+/* v1.6 — çubuk eski (kompakt) boyutuna döndü; seçili kapsül aynı öğe olarak sekmeler arasında kayar; parmakla sürüklenebilir */
+.tabbar{left:0;right:0;margin:0 auto;width:max-content;max-width:calc(100% - 24px);padding:5px;gap:2px;touch-action:none;user-select:none;-webkit-user-select:none}
+.tabbar button{flex:none;min-width:76px;padding:7px 18px;gap:2px}
+.tabbar button span{position:static;width:auto;height:auto;overflow:visible;clip-path:none}
+.tabbar svg{width:22px;height:22px}
+.tabbar>.thumb{top:5px;bottom:5px}
+.tabbar button.pre{color:var(--ac)}
+.tabbar.drag>.thumb{transition:width .2s var(--spring),scale .35s var(--spring)}
+.wrap{padding-bottom:calc(104px + var(--sab))}
 </style>
 </head>
 <body>
@@ -300,7 +309,7 @@ input[type=date]::-webkit-date-and-time-value{text-align:left;margin:0}
 <nav class="tabbar glass" id="nav" aria-label="Sekmeler"></nav>
 <div id="m"></div><div id="t" class="glass" role="status" aria-live="polite"></div>
 <script>
-const APPV='1.5.0',KEY='fon-portfoyum-v2',TK='fon-tema',$=s=>document.querySelector(s);
+const APPV='1.6.0',KEY='fon-portfoyum-v2',TK='fon-tema',$=s=>document.querySelector(s);
 const NF=new Intl.NumberFormat('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2});
 const money=v=>NF.format(+v||0)+' ₺',num=(v,d=3)=>new Intl.NumberFormat('tr-TR',{maximumFractionDigits:d}).format(+v||0);
 const sgn=v=>(v>=0?'+':'−')+money(Math.abs(v)),pc=v=>(v>=0?'+':'−')+'%'+Math.abs(isFinite(v)?v:0).toFixed(2).replace('.',',');
@@ -503,7 +512,9 @@ function render(){
   if(prevK)app.querySelectorAll('[data-k]').forEach(e=>{if(!prevK.has(e.dataset.k))e.classList.add('row-new')});
   [...app.children].forEach((c,i)=>c.style.setProperty('--i',i));app.querySelectorAll('.list').forEach(l=>[...l.children].forEach((r,i)=>r.style.setProperty('--i',i)));
   const tab=pg==='detail'?'home':pg;
-  $('#nav').innerHTML='<i class="thumb" aria-hidden="true"></i>'+[['home','Portföy',I.home],['overview','Özet',I.pie],['settings','Ayarlar',I.gear]].map(([k,n,ic])=>`<button data-act="nav" data-id="${k}" aria-label="${n}" class="${tab===k?'on':''}" ${tab===k?'aria-current="page"':''}>${ic}<span>${n}</span></button>`).join('');
+  const nav=$('#nav');
+  if(!nav.querySelector('button'))nav.innerHTML='<i class="thumb" aria-hidden="true"></i>'+[['home','Portföy',I.home],['overview','Özet',I.pie],['settings','Ayarlar',I.gear]].map(([k,n,ic])=>`<button data-act="nav" data-id="${k}" aria-label="${n}">${ic}<span>${n}</span></button>`).join('');
+  nav.querySelectorAll('button').forEach(b=>{const on=b.dataset.id===tab;b.classList.toggle('on',on);if(on)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});
   afterRender()}
 
 function openTx(kind,pre){
@@ -616,6 +627,27 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 fixGap();render();
 // Çevrimdışı çalışma: uygulama dosyaları cihazda saklanır
 if('serviceWorker' in navigator&&location.protocol!=='file:')addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+
+/* Sekme çubuğu: parmakla sürükleyerek seçim (bırakınca en yakın sekmeye geçer); dokunma da çalışır */
+(()=>{const nav=document.getElementById('nav');let d=null,blockClick=false;
+  const parts=()=>{const th=nav.querySelector('.thumb'),b=[...nav.querySelectorAll('button')];return{th,b}};
+  const place=(th,x,w)=>{th.style.width=w+'px';th.style.transform=`translateX(${x}px)`};
+  nav.addEventListener('pointerdown',e=>{if(e.button>0)return;d={x0:e.clientX,id:e.pointerId,moved:false,x:0,w:0}});
+  nav.addEventListener('pointermove',e=>{if(!d||e.pointerId!==d.id)return;const{th,b}=parts();if(!th||!b.length)return;
+    if(!d.moved){if(Math.abs(e.clientX-d.x0)<8)return;d.moved=true;try{nav.setPointerCapture(e.pointerId)}catch(_){}nav.classList.add('drag');th.classList.add('sw')}
+    const r=nav.getBoundingClientRect(),w=b[0].offsetWidth,lo=b[0].offsetLeft,hi=b[b.length-1].offsetLeft;
+    const x=Math.max(lo,Math.min(hi,e.clientX-r.left-w/2));d.x=x;d.w=w;place(th,x,w);
+    let best=b[0],bd=1e9;b.forEach(k=>{const dd=Math.abs(k.offsetLeft+k.offsetWidth/2-(x+w/2));if(dd<bd){bd=dd;best=k}});
+    d.t=best.dataset.id;b.forEach(k=>k.classList.toggle('pre',k===best))});
+  const end=(e,cancel)=>{if(!d||e.pointerId!==d.id)return;const m=d.moved,t=d.t,x=d.x,w=d.w;d=null;if(!m)return;
+    blockClick=true;setTimeout(()=>blockClick=false,350);nav.classList.remove('drag');
+    const{th,b}=parts();b.forEach(k=>k.classList.remove('pre'));setTimeout(()=>th.classList.remove('sw'),300);
+    const cur=nav.querySelector('button.on');
+    if(!cancel&&t&&cur&&t!==cur.dataset.id){SEGX.nav={x,w};go(t)}
+    else if(cur)place(th,cur.offsetLeft,cur.offsetWidth)};
+  nav.addEventListener('pointerup',e=>end(e,false));nav.addEventListener('pointercancel',e=>end(e,true));
+  nav.addEventListener('click',e=>{if(blockClick){e.stopPropagation();e.preventDefault()}},true);
+})();
 </script>
 </body>
 </html>
