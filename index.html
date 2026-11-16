@@ -1,0 +1,544 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Fon Portföyüm</title>
+<meta name="description" content="Kişisel fon portföyü takibi: FIFO satış, stopaj, günlük ve haftalık getiri.">
+<!-- iOS ana ekran uygulaması -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Portföy">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="format-detection" content="telephone=no">
+<meta name="theme-color" id="tc" content="#e8edf5">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+<style>
+/* Düzen: tek sütunlu iOS uygulaması; renkli ışık lekeleri üzerinde buzlu cam yüzeyler, altta yüzen cam sekme çubuğu */
+:root{
+  --bg:#e8edf5;--ink:#0d1726;--mut:#5b6678;--line:rgba(13,23,38,.08);--field:rgba(110,124,150,.12);
+  --ac:#2563eb;--acInk:#fff;--up:#08875a;--dn:#d33a3a;--upBg:rgba(8,135,90,.12);--dnBg:rgba(211,58,58,.12);
+  --glass:rgba(255,255,255,.5);--glass2:rgba(255,255,255,.78);--gbrd:rgba(255,255,255,.72);--ghi:rgba(255,255,255,.95);
+  --gsh:0 12px 32px rgba(28,48,92,.10),0 1px 2px rgba(28,48,92,.06);--spec:rgba(255,255,255,.55);
+  --b1:#9cc0ff;--b2:#86e6d2;--b3:#ffcfae;--scrim:rgba(10,18,32,.28);
+  --f1:#3b82f6;--f2:#10b981;--f3:#f59e0b;--f4:#ec4899;--f5:#8b5cf6;--f6:#06b6d4;
+  --font:-apple-system,BlinkMacSystemFont,'SF Pro Text','Inter',system-ui,'Segoe UI',sans-serif;
+  --disp:-apple-system,BlinkMacSystemFont,'SF Pro Display','Inter',system-ui,'Segoe UI',sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#060a13;--ink:#eef2f8;--mut:#8e99ab;--line:rgba(255,255,255,.08);--field:rgba(255,255,255,.07);
+  --ac:#5b8cff;--acInk:#fff;--up:#34d399;--dn:#ff6b6b;--upBg:rgba(52,211,153,.14);--dnBg:rgba(255,107,107,.14);
+  --glass:rgba(30,36,52,.46);--glass2:rgba(44,50,68,.8);--gbrd:rgba(255,255,255,.10);--ghi:rgba(255,255,255,.16);
+  --gsh:0 12px 32px rgba(0,0,0,.45),0 1px 2px rgba(0,0,0,.3);--spec:rgba(255,255,255,.10);
+  --b1:#1c3a8f;--b2:#0b5c53;--b3:#46276b;--scrim:rgba(0,0,0,.55);color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#060a13;--ink:#eef2f8;--mut:#8e99ab;--line:rgba(255,255,255,.08);--field:rgba(255,255,255,.07);
+  --ac:#5b8cff;--acInk:#fff;--up:#34d399;--dn:#ff6b6b;--upBg:rgba(52,211,153,.14);--dnBg:rgba(255,107,107,.14);
+  --glass:rgba(30,36,52,.46);--glass2:rgba(44,50,68,.8);--gbrd:rgba(255,255,255,.10);--ghi:rgba(255,255,255,.16);
+  --gsh:0 12px 32px rgba(0,0,0,.45),0 1px 2px rgba(0,0,0,.3);--spec:rgba(255,255,255,.10);
+  --b1:#1c3a8f;--b2:#0b5c53;--b3:#46276b;--scrim:rgba(0,0,0,.55);color-scheme:dark}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{background:var(--bg);-webkit-text-size-adjust:100%;text-size-adjust:100%}
+html,body{min-height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.4 var(--font);font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;touch-action:manipulation;overscroll-behavior-y:none}
+button,input,textarea{font:inherit;color:inherit}button{cursor:pointer;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+button:active{transform:scale(.97);transition:transform .08s}
+[hidden]{display:none!important}
+/* Sayfa geçişi: ileri sağdan, geri soldan kayar */
+.pg-fwd{animation:pgf .32s cubic-bezier(.2,.9,.3,1)}.pg-back{animation:pgb .32s cubic-bezier(.2,.9,.3,1)}.pg-fade{animation:pgx .22s ease-out}
+@keyframes pgf{from{transform:translateX(28px);opacity:0}}@keyframes pgb{from{transform:translateX(-28px);opacity:0}}@keyframes pgx{from{opacity:0}}
+@media (prefers-reduced-motion:reduce){.pg-fwd,.pg-back,.pg-fade{animation:none}}
+:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+/* Ambiyans: cam yüzeylerin arkasında kırılan renkli ışık */
+.amb{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.amb i{position:absolute;border-radius:50%;filter:blur(60px);opacity:.85;animation:drift 26s ease-in-out infinite alternate}
+.amb i:nth-child(1){width:70vmax;height:70vmax;left:-30vmax;top:-30vmax;background:var(--b1)}
+.amb i:nth-child(2){width:55vmax;height:55vmax;right:-25vmax;top:10vh;background:var(--b2);animation-duration:32s}
+.amb i:nth-child(3){width:50vmax;height:50vmax;left:10vw;bottom:-30vmax;background:var(--b3);animation-duration:38s}
+@keyframes drift{to{transform:translate(4vmax,3vmax) scale(1.08)}}
+@media (prefers-reduced-motion:reduce){.amb i{animation:none}*{transition:none!important}}
+.wrap{position:relative;z-index:1;max-width:560px;margin:0 auto;padding-top:calc(10px + env(safe-area-inset-top,0px));padding-bottom:calc(110px + env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:14px}
+/* Cam yüzey */
+.glass{position:relative;background:var(--glass);-webkit-backdrop-filter:blur(26px) saturate(180%);backdrop-filter:blur(26px) saturate(180%);border:1px solid var(--gbrd);box-shadow:inset 0 1px 0 var(--ghi),var(--gsh)}
+.glass::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(140deg,var(--spec),transparent 38%)}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){.glass{background:var(--glass2)}}
+.card{border-radius:24px}
+/* Başlık */
+.hdr{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;padding:6px 2px 0}
+.hdr h1{font:700 34px/1.05 var(--disp);letter-spacing:-.025em;margin:2px 0 0}
+.eyebrow{font-size:12px;color:var(--mut);display:flex;align-items:center;gap:6px}
+.dot{width:7px;height:7px;border-radius:50%;background:#e0a21b}.dot.on{background:var(--up)}
+.hbtns{display:flex;gap:8px}
+.ib{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;padding:0;color:var(--ink)}
+.ib svg{width:20px;height:20px;position:relative}
+/* Ana kart */
+.hero{border-radius:28px;padding:20px 20px 16px;display:flex;flex-direction:column;gap:6px}
+.lbl{font-size:13px;color:var(--mut)}
+.big{font:700 42px/1.05 var(--disp);letter-spacing:-.03em;position:relative}
+.big .cur{font-size:.55em;font-weight:600;margin-right:4px;color:var(--mut)}.big .dec{font-size:.55em;font-weight:600;color:var(--mut)}
+.big.md{font-size:34px}
+.chg{display:flex;align-items:center;flex-wrap:wrap;gap:8px;font-weight:600;position:relative}
+.chip{display:inline-flex;align-items:center;gap:3px;padding:3px 9px;border-radius:99px;font-size:13px;font-weight:600}
+.chip.up{background:var(--upBg);color:var(--up)}.chip.dn{background:var(--dnBg);color:var(--dn)}
+.chg .per{color:var(--mut);font-weight:500;font-size:13px}
+.ref{font-size:12px;color:var(--mut);position:relative}
+.up{color:var(--up)}.dn{color:var(--dn)}
+.seg{display:flex;padding:3px;border-radius:99px;background:var(--field);position:relative;margin-top:10px}
+.seg button{flex:1;border:0;background:none;color:var(--mut);padding:8px 10px;border-radius:99px;font-size:13px;font-weight:600;transition:background .25s,color .25s}
+.seg button.on{background:var(--glass2);color:var(--ink);box-shadow:inset 0 1px 0 var(--ghi),0 2px 8px rgba(0,0,0,.08)}
+/* Dağılım */
+.alloc{border-radius:22px;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.abar{display:flex;height:10px;border-radius:99px;overflow:hidden;gap:2px;position:relative}
+.abar i{display:block;height:100%;background:var(--c)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--mut);position:relative}
+.legend span{display:inline-flex;align-items:center;gap:6px}.legend span::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--c)}
+.sech{display:flex;justify-content:space-between;align-items:baseline;padding:6px 4px 0}
+.sech h2{font:700 20px var(--disp);letter-spacing:-.01em;margin:0}.sech span{font-size:13px;color:var(--mut)}
+/* Liste */
+.list{border-radius:22px;overflow:hidden}
+.row{position:relative;display:flex;align-items:center;gap:12px;padding:13px 16px;border:0;background:none;width:100%;text-align:left;color:inherit}
+.row+.row::after{content:"";position:absolute;top:0;left:16px;right:16px;height:1px;background:var(--line)}
+button.row:active{background:var(--field)}
+.row .l{flex:1;min-width:0}.r{text-align:right;flex-shrink:0}
+.row b{font-weight:600}
+.sub{color:var(--mut);font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.d{font-size:13px;font-weight:500}
+.av{width:42px;height:42px;border-radius:14px;flex-shrink:0;display:grid;place-items:center;font:700 12px var(--disp);letter-spacing:.02em;color:#fff;background:linear-gradient(145deg,color-mix(in srgb,var(--c) 75%,#fff),var(--c));box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 4px 12px color-mix(in srgb,var(--c) 35%,transparent)}
+.av.lg{width:56px;height:56px;border-radius:18px;font-size:15px}
+.empty{padding:28px 16px;text-align:center;color:var(--mut);font-size:14px;position:relative}
+.tag{font-size:11px;font-weight:600;padding:2px 8px;border-radius:99px;background:var(--field);color:var(--mut)}
+/* Detay */
+.dnav{display:flex;justify-content:space-between;padding-top:4px}
+.cap{border-radius:99px;padding:9px 15px;font-size:14px;font-weight:600;border:1px solid var(--gbrd);color:var(--ink);display:inline-flex;align-items:center;gap:4px}
+.cap svg{width:16px;height:16px;position:relative}
+.cap span{position:relative}
+.dhead{display:flex;flex-direction:column;gap:4px;padding:4px 4px 0}
+.dhead h2{font:700 22px/1.2 var(--disp);letter-spacing:-.015em;margin:6px 0 2px;text-wrap:balance}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);border-radius:22px;overflow:hidden}
+.stats>div{padding:14px;min-width:0;position:relative}.stats>div+div{border-left:1px solid var(--line)}
+.stats b{display:block;font-size:15px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px}
+.acts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn{border:1px solid var(--gbrd);border-radius:16px;padding:12px 16px;min-height:48px;font-weight:600;font-size:15px;color:var(--ink)}
+.btn span{position:relative}
+.btn.pri{background:var(--ac);border-color:transparent;color:var(--acInk);box-shadow:0 8px 20px color-mix(in srgb,var(--ac) 35%,transparent),inset 0 1px 0 rgba(255,255,255,.3)}
+.btn.red{background:var(--dn);border-color:transparent;color:#fff}
+.btn.plain{background:var(--field);border-color:transparent}
+.btn.sm{min-height:34px;padding:6px 12px;font-size:13px;border-radius:99px}
+.rowbtn{border:0;background:var(--field);border-radius:99px;padding:7px 13px;font-size:13px;font-weight:600;color:var(--ac)}
+.rowbtn.del{color:var(--dn)}
+/* Ayarlar / özet */
+.grp{display:flex;flex-direction:column;gap:6px}
+.grp>.gl{font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--mut);padding:0 6px}
+.pad{padding:16px;position:relative;display:flex;flex-direction:column;gap:10px}
+.pbar{height:6px;border-radius:9px;background:var(--field);overflow:hidden}.pbar i{display:block;height:100%;background:var(--c)}
+/* Sekme çubuğu */
+.tabbar{position:fixed;z-index:15;left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom,0px));display:flex;gap:2px;padding:5px;border-radius:99px;background:var(--glass2)}
+.tabbar button{position:relative;border:0;background:none;border-radius:99px;padding:7px 18px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;font-weight:600;color:var(--mut);min-width:76px;transition:background .25s,color .25s}
+.tabbar svg{width:22px;height:22px}
+.tabbar button.on{color:var(--ac);background:var(--field)}
+/* Sayfa (bottom sheet) */
+#m{position:fixed;inset:0;background:var(--scrim);display:none;align-items:flex-end;justify-content:center;z-index:20;-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}#m.open{display:flex}
+.sheet{width:100%;max-width:520px;border-radius:30px 30px 0 0;padding:10px 18px calc(22px + env(safe-area-inset-bottom,0px));padding-left:max(18px,env(safe-area-inset-left,0px));padding-right:max(18px,env(safe-area-inset-right,0px));max-height:90vh;overflow:auto;background:var(--glass2);animation:up .28s cubic-bezier(.2,.9,.3,1)}
+.sheet>*{position:relative}
+@keyframes up{from{transform:translateY(40px);opacity:.4}}
+@media(min-width:600px){#m{align-items:center}.sheet{border-radius:30px}}
+.grab{width:38px;height:5px;border-radius:9px;background:var(--line);margin:0 auto 14px;filter:contrast(3)}
+.sheet h3{margin:0 0 14px;font:700 19px var(--disp);letter-spacing:-.01em}
+.sheet p{margin:0 0 10px}
+.f{margin-bottom:12px}.f .lh{font-size:13px;color:var(--mut);margin-bottom:5px;display:flex;justify-content:space-between}
+.f input,.f textarea,.inp{width:100%;border:1px solid var(--line);background:var(--field);border-radius:14px;padding:11px 13px;font-size:16px}
+.f input[readonly]{opacity:.6}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}.two>*{min-width:0}
+.hint{font-size:12px;color:var(--mut);margin:-4px 0 12px}
+.lnk{border:0;background:none;color:var(--ac);font-size:13px;font-weight:600;padding:0}
+.btns{display:flex;gap:10px;margin-top:14px}.btns .btn{flex:1}
+.pv{background:var(--field);border-radius:16px;padding:12px 14px;font-size:14px;margin-top:4px}
+.pv div{display:flex;justify-content:space-between;padding:3px 0}.pv .tot{border-top:1px solid var(--line);margin-top:6px;padding-top:8px;font-weight:700}
+.err{color:var(--dn);font-size:13px;min-height:18px;margin:8px 0 0}
+#t{position:fixed;left:50%;top:calc(14px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:30;padding:10px 18px;border-radius:99px;font-size:13px;font-weight:600;max-width:90vw;background:var(--glass2)}
+.warn{border-radius:18px;padding:12px 14px;display:flex;gap:10px;align-items:center;font-size:13px}.warn>*{position:relative}.warn .l{flex:1}
+.fbtns{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.hidefile{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+/* ===== Hareket sistemi: iOS yay eğrisi, sayfa/sekme geçişleri, paneller, sayılar ===== */
+:root{--spring:cubic-bezier(.32,.72,0,1)}
+button{transition:transform .35s var(--spring),background-color .2s,color .2s}
+button:active{transform:scale(.96);transition:transform .08s}
+button.row:active{transform:scale(.985)}
+#app{view-transition-name:page}.tabbar{view-transition-name:tabbar}.amb{view-transition-name:amb}
+html.vt-theme #app,html.vt-theme .tabbar,html.vt-theme .amb{view-transition-name:none}
+::view-transition-group(*){animation-duration:.46s;animation-timing-function:var(--spring)}
+::view-transition-old(amb){display:none}::view-transition-new(amb){animation:none}
+::view-transition-old(tabbar){display:none}::view-transition-new(tabbar){animation:none}
+::view-transition-old(page),::view-transition-new(page){mix-blend-mode:normal}
+html[data-vt=push]::view-transition-old(page){animation:.28s cubic-bezier(.4,0,1,1) both vt-push-out}
+html[data-vt=push]::view-transition-new(page){animation:.5s var(--spring) both vt-push-in}
+html[data-vt=pop]::view-transition-old(page){animation:.28s cubic-bezier(.4,0,1,1) both vt-pop-out}
+html[data-vt=pop]::view-transition-new(page){animation:.5s var(--spring) both vt-pop-in}
+html[data-vt=tab-fwd]::view-transition-old(page){animation:.22s ease-in both vt-out-l}
+html[data-vt=tab-fwd]::view-transition-new(page){animation:.42s var(--spring) .05s both vt-in-r}
+html[data-vt=tab-bwd]::view-transition-old(page){animation:.22s ease-in both vt-out-r}
+html[data-vt=tab-bwd]::view-transition-new(page){animation:.42s var(--spring) .05s both vt-in-l}
+@keyframes vt-push-in{from{transform:translateX(38%);opacity:0}}
+@keyframes vt-push-out{to{transform:translateX(-22%);opacity:0}}
+@keyframes vt-pop-in{from{transform:translateX(-22%);opacity:0}}
+@keyframes vt-pop-out{to{transform:translateX(38%);opacity:0}}
+@keyframes vt-out-l{to{opacity:0;transform:translateX(-16px) scale(.985)}}
+@keyframes vt-out-r{to{opacity:0;transform:translateX(16px) scale(.985)}}
+@keyframes vt-in-r{from{opacity:0;transform:translateX(22px) scale(.985)}}
+@keyframes vt-in-l{from{opacity:0;transform:translateX(-22px) scale(.985)}}
+html.vt-theme::view-transition-old(root){animation:none}
+html.vt-theme::view-transition-new(root){animation:.62s cubic-bezier(.4,0,.2,1) both vt-reveal;mix-blend-mode:normal}
+@keyframes vt-reveal{from{clip-path:circle(0 at var(--vx,50%) var(--vy,50%))}to{clip-path:circle(150vmax at var(--vx,50%) var(--vy,50%))}}
+/* Kayan seçim vurgusu (segment ve alt menü) */
+.seg>.thumb,.tabbar>.thumb{position:absolute;left:0;top:3px;bottom:3px;width:0;border-radius:99px;pointer-events:none;background:var(--glass2);box-shadow:inset 0 1px 0 var(--ghi),0 2px 10px rgba(0,0,0,.10);transition:transform .45s var(--spring),width .45s var(--spring)}
+.tabbar>.thumb{top:5px;bottom:5px;background:var(--field);box-shadow:none}
+.seg button,.tabbar button{position:relative;z-index:1}
+.seg button.on{background:none;box-shadow:none}.tabbar button.on{background:none}
+.tabbar button svg{transition:transform .45s var(--spring)}.tabbar button.on svg{transform:translateY(-1px) scale(1.08)}
+/* Alt paneller: yaylı açılış, kapanış, aşağı çekerek kapatma */
+#m.open{animation:fadeIn .25s ease-out}
+#m.closing,#m.fading{animation:fadeOut .28s ease-in forwards}
+.sheet{animation:sheetUp .5s var(--spring);overscroll-behavior:contain}
+#m.closing .sheet{animation:sheetDown .28s cubic-bezier(.4,0,1,1) forwards}
+.sheet.noanim{animation:none}.sheet.swap>*{animation:fadeIn .22s ease-out}
+.sheet.drag{animation:none;transition:none}.sheet.snap{animation:none;transition:transform .36s var(--spring)}
+@keyframes sheetUp{from{transform:translateY(100%)}}@keyframes sheetDown{to{transform:translateY(105%)}}
+@keyframes fadeIn{from{opacity:0}}@keyframes fadeOut{to{opacity:0}}
+@media(min-width:600px){.sheet{animation:sheetPop .4s var(--spring)}#m.closing .sheet{animation:sheetFade .22s ease-in forwards}}
+@keyframes sheetPop{from{transform:scale(.94);opacity:0}}@keyframes sheetFade{to{transform:scale(.96);opacity:0}}
+/* Bildirim */
+#t{opacity:0;transform:translate(-50%,-16px) scale(.95);pointer-events:none;transition:opacity .25s ease,transform .5s var(--spring)}
+#t.show{opacity:1;transform:translate(-50%,0) scale(1)}
+/* Sayfaya giriş: bölümler ve satırlar sırayla belirir */
+.enter>*{animation:riseIn .52s var(--spring) both;animation-delay:calc(min(var(--i,0),8) * 38ms)}
+.enter .list>.row{animation:riseIn .52s var(--spring) both;animation-delay:calc(min(var(--i,0),10) * 30ms + 110ms)}
+@keyframes riseIn{from{opacity:0;transform:translateY(12px)}}
+.row-new{animation:rowNew .6s var(--spring) both}
+@keyframes rowNew{from{opacity:0;transform:scale(.95)}}
+.tb-fwd{animation:vt-in-r .42s var(--spring) both}.tb-bwd{animation:vt-in-l .42s var(--spring) both}
+.abar i,.pbar i{transition:width .8s var(--spring)}
+.chip{transition:background-color .3s,color .3s}
+.glass,.btn,.cap,.ib{transition:background-color .35s,border-color .35s,box-shadow .35s,transform .35s var(--spring)}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}::view-transition-group(*),::view-transition-old(*),::view-transition-new(*){animation:none!important}}
+</style>
+</head>
+<body>
+<div class="amb" aria-hidden="true"><i></i><i></i><i></i></div>
+<div class="wrap" id="app"></div>
+<nav class="tabbar glass" id="nav" aria-label="Sekmeler"></nav>
+<div id="m"></div><div id="t" class="glass" role="status" aria-live="polite"></div>
+<script>
+const APPV='1.1.0',KEY='fon-portfoyum-v2',TK='fon-tema',$=s=>document.querySelector(s);
+const NF=new Intl.NumberFormat('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2});
+const money=v=>NF.format(+v||0)+' ₺',num=(v,d=3)=>new Intl.NumberFormat('tr-TR',{maximumFractionDigits:d}).format(+v||0);
+const sgn=v=>(v>=0?'+':'−')+money(Math.abs(v)),pc=v=>(v>=0?'+':'−')+'%'+Math.abs(isFinite(v)?v:0).toFixed(2).replace('.',',');
+const rateTxt=r=>'%'+num(r*100,2);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const today=(d=0)=>new Date(Date.now()-d*864e5-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10);
+const dTR=i=>String(i).split('-').reverse().join('.');
+function pn(v){const s=String(v??'').trim();if(!s)return NaN;if(s.includes('.')&&s.includes(','))return s.lastIndexOf(',')>s.lastIndexOf('.')?parseFloat(s.replace(/\./g,'').replace(',','.')):parseFloat(s.replace(/,/g,''));return parseFloat(s.replace(',','.'))}
+// Varsayılan stopaj tüm fonlarda %17,5; fon bazında elle değiştirilebilir
+const defTax=()=>.175;
+const mk=(code,name,type,price,tax)=>({code,name,type,price,tax:tax??defTax(type),lots:[],hist:[],log:[{d:today(),p:price}]});
+const isDate=s=>/^\d{4}-\d{2}-\d{2}$/.test(s);
+// Yüklenen her veriyi (yerel, bulut, yedek) aynı şemaya getirir; bozuk kayıt uygulamayı kilitlemez
+function norm(o){
+  if(!o||!Array.isArray(o.funds))return null;let k=0;const nid=()=>Date.now()+(k++);
+  const lots=a=>(Array.isArray(a)?a:[]).filter(l=>l&&+l.qty>0).map(l=>({id:l.id??nid(),date:isDate(l.date)?l.date:today(),qty:+l.qty,cost:+l.cost||0}));
+  const funds=o.funds.filter(f=>f&&f.code).map(f=>{const price=+f.price>0?+f.price:0;return{
+    code:String(f.code).toUpperCase(),name:String(f.name||f.code),type:String(f.type||'Yatırım Fonu'),price,
+    tax:typeof f.tax==='number'&&f.tax>=0&&f.tax<1&&(f.tax>0||f.taxSet)?f.tax:defTax(f.type),taxSet:!!f.taxSet,lots:lots(f.lots),
+    hist:(Array.isArray(f.hist)?f.hist:[]).filter(Boolean).map(h=>({id:h.id??nid(),type:h.type||'',date:isDate(h.date)?h.date:today(),detail:String(h.detail||''),amount:+h.amount||0,gain:+h.gain||0,prev:Array.isArray(h.prev)?lots(h.prev):null,undone:!!h.undone})),
+    log:sortLog((Array.isArray(f.log)?f.log:[]).filter(e=>e&&isDate(e.d)&&+e.p>0).map(e=>({d:e.d,p:+e.p})))}});
+  // Güncel fiyat her zaman fiyat geçmişinin son kaydıdır
+  funds.forEach(f=>{const L=f.log,last=L[L.length-1];if(f.price&&(!last||Math.abs(last.p-f.price)>1e-12))f.log=sortLog([...L.filter(e=>e.d!==today()),{d:today(),p:f.price}])});
+  return{funds,updatedAt:+o.updatedAt||0}}
+const addD=(d,n)=>new Date(Date.parse(d+'T00:00:00Z')+n*864e5).toISOString().slice(0,10);
+// Fiyat geçmişi: tarihe göre sıralı, her güne tek kayıt, bir önceki kayıtla aynı olan fiyat (hafta sonu/tatil tekrarı) atılır
+function sortLog(a){const m=new Map();a.forEach(e=>m.set(e.d,e.p));const s=[...m].sort((x,y)=>x[0]<y[0]?-1:x[0]>y[0]?1:0).map(([d,p])=>({d,p}));const o=[];for(const e of s)if(!o.length||Math.abs(o[o.length-1].p-e.p)>1e-12)o.push(e);return o.slice(-400)}
+// Dönem başı referans fiyatı: günlük = bir önceki fiyat günü; haftalık = son fiyat tarihinden 7 gün önceki (veya öncesindeki) son fiyat
+function refOf(f,per){const L=f.log;if(!L.length)return null;const last=L[L.length-1];
+  if(per==='daily')return L.length>1?{d:L[L.length-2].d,p:L[L.length-2].p,to:last.d}:{d:null,p:0,to:last.d};
+  const cut=addD(last.d,-7);let r=null;for(const e of L)if(e.d<=cut)r=e;const partial=!r;if(!r&&L.length>1)r=L[0];
+  return r?{d:r.d,p:r.p,to:last.d,partial}:{d:null,p:0,to:last.d,partial}}
+let S={funds:[mk('DCB','Deniz Portföy Para Piyasası Fonu','Para Piyasası',1.774494)],updatedAt:0},view={page:'home',code:null,tab:'lots',period:'total'},pend=null,lastPage=null;
+try{const o=norm(JSON.parse(localStorage.getItem(KEY)||'null'));if(o)S=o}catch(e){}
+const Q=f=>f.lots.reduce((a,l)=>a+l.qty,0),C=f=>f.lots.reduce((a,l)=>a+l.qty*l.cost,0),V=f=>Q(f)*f.price,A=f=>Q(f)?C(f)/Q(f):0;
+const R=f=>f.hist.reduce((a,h)=>a+(h.type==='sell'&&!h.undone?h.gain:0),0);
+const sorted=f=>[...f.lots].sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:(+a.id||0)-(+b.id||0));
+function fifo(lots,q,p,rate){let r=q,c=0;for(const l of lots){if(r<=0)break;const t=Math.min(l.qty,r);c+=t*l.cost;r-=t}const rev=q*p,pr=rev-c,tax=pr>0?pr*rate:0;return{rev,pr,tax,net:rev-tax}}
+// Dönem getirisi: dönem başından önce alınan sepetler referans fiyata, dönem içinde alınanlar kendi maliyetine göre hesaplanır
+function chg(f,per){const r=refOf(f,per);let v=0,b=0;if(r)for(const l of f.lots){const base=r.d&&l.date<=r.d?r.p:(r.d||l.date>=r.to)?l.cost:f.price;b+=l.qty*base;v+=l.qty*(f.price-base)}return{v,b,p:b>0?v/b*100:0,r}}
+function ret(f,per){if(per!=='total')return chg(f,per);const c=C(f),v=V(f)-c;return{v,b:c,p:c>0?v/c*100:0}}
+function refLbl(per){if(per==='total')return'';const rs=S.funds.filter(f=>Q(f)>0).map(f=>refOf(f,per)).filter(Boolean);if(!rs.length)return'';
+  if(new Set(rs.map(r=>r.d+'|'+r.to)).size>1)return'Her fon kendi son fiyat tarihlerine göre';const r=rs[0];
+  if(!r.d)return'Karşılaştırılacak önceki fiyat yok';return dTR(r.d)+' → '+dTR(r.to)+' fiyatlarına göre'+(rs.some(x=>x.partial)?' (1 haftalık fiyat verisi yok)':'')}
+const cur=()=>S.funds.find(f=>f.code===view.code);
+const toast=(m)=>{const t=$('#t');t.textContent=m;t.classList.remove('show');void t.offsetWidth;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),2800)};
+/* Kalıcı kayıt: her değişiklik anında bu iPhone'daki uygulama deposuna yazılır */
+let saveOk=true,persisted=false;
+function save(r=true){S.updatedAt=Date.now();try{localStorage.setItem(KEY,JSON.stringify(S));saveOk=true}catch(e){saveOk=false;toast('Kaydedilemedi: depolama alanı dolu ya da kapalı.')}if(r)render()}
+// iOS'tan bu uygulamanın verisini kendiliğinden silmemesini iste
+(async()=>{try{if(navigator.storage&&navigator.storage.persist){persisted=await navigator.storage.persisted()||await navigator.storage.persist()}}catch(e){}})();
+const BK='fon-son-yedek';let lastBackup=0;try{lastBackup=+localStorage.getItem(BK)||0}catch(e){}
+function markBackup(){lastBackup=Date.now();try{localStorage.setItem(BK,String(lastBackup))}catch(e){}render()}
+const backupAge=()=>lastBackup?Math.floor((Date.now()-lastBackup)/864e5):null;
+async function exportFile(){const name='fon-portfoyu-yedek-'+today()+'.json',file=new File([JSON.stringify(S)],name,{type:'application/json'});
+  try{if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:'Fon portföyü yedeği'});markBackup();toast('Yedek dosyası paylaşıldı.');return}}catch(e){if(e&&e.name==='AbortError')return}
+  try{const a=document.createElement('a');a.href=URL.createObjectURL(file);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500);markBackup();toast('Yedek dosyası indirildi.')}catch(e){toast('Dosya oluşturulamadı; yedek kodunu kopyalayın.')}}
+
+/* Tema: Sistem / Açık / Koyu — tercih bu cihazda saklanır */
+const root=document.documentElement,mq=matchMedia('(prefers-color-scheme: dark)');
+let themePref='system',hostTheme=root.getAttribute('data-theme');try{themePref=localStorage.getItem(TK)||'system'}catch(e){}
+function applyTheme(){if(themePref==='system'){if(hostTheme)root.setAttribute('data-theme',hostTheme);else root.removeAttribute('data-theme')}else root.setAttribute('data-theme',themePref);
+  const tc=document.getElementById('tc');if(tc)tc.setAttribute('content',isDark()?'#060a13':'#e8edf5')}
+new MutationObserver(()=>{const v=root.getAttribute('data-theme');if(themePref==='system')hostTheme=v;else if(v!==themePref){hostTheme=v;applyTheme()}}).observe(root,{attributes:true,attributeFilter:['data-theme']});
+const isDark=()=>{const a=root.getAttribute('data-theme');return a?a==='dark':mq.matches};
+function setTheme(t){themePref=t;try{localStorage.setItem(TK,t)}catch(e){}applyTheme();render()}
+mq.addEventListener&&mq.addEventListener('change',()=>{applyTheme();render()});
+applyTheme();
+
+const I={
+  sun:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg>',
+  moon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z"/></svg>',
+  plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+  back:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>',
+  home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l5-5 4 3 8-8"/><path d="M15 7h5v5"/></svg>',
+  pie:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3v9h9A9 9 0 1 1 12 3Z"/><path d="M15 3.5A9 9 0 0 1 20.5 9H15Z"/></svg>',
+  gear:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg>'};
+const FC=['--f1','--f2','--f3','--f4','--f5','--f6'];
+// Her fona listedeki sırasına göre ayrı renk (6 fona kadar çakışma yok)
+const col=code=>{const i=Math.max(0,S.funds.findIndex(f=>f.code===code));return`var(${FC[i%FC.length]})`};
+const av=(f,cls='')=>`<span class="av ${cls}" style="--c:${col(f.code)}${vtAv===f.code?';view-transition-name:fav':''}">${esc(f.code.slice(0,3))}</span>`;
+const big=v=>{const [i,d]=NF.format(+v||0).split(',');return`<span class="cur">₺</span>${i}<span class="dec">,${d}</span>`};
+const FMT={big:v=>big(v),money:v=>money(v),sgn:v=>sgn(v),pc:v=>pc(v),pcabs:v=>pc(v).slice(1)};
+// Değişen sayılar eski değerden yenisine akar
+const T=(k,v,f)=>`<span data-tw="${esc(k)}" data-v="${v}" data-f="${f}">${FMT[f](v)}</span>`;
+const chipH=(x,per,k)=>`<div class="chg"><span class="chip ${x.v>=0?'up':'dn'}">${x.v>=0?'▲':'▼'} ${T(k+'-p',x.p,'pcabs')}</span><span class="${x.v>=0?'up':'dn'}">${T(k+'-v',x.v,'sgn')}</span>${per?`<span class="per">${per}</span>`:''}</div>`;
+
+function modal(h){const m=$('#m'),was=m.classList.contains('open')&&!m.classList.contains('closing');++closeTok;m.classList.remove('closing','fading');m.oninput=null;m.innerHTML='<div class="sheet glass'+(was?' noanim swap':'')+'" role="dialog" aria-modal="true"><div class="grab"></div>'+h+'</div>';m.classList.add('open');const i=m.querySelector('input:not([readonly]):not([type=date])');if(i)setTimeout(()=>i.focus(),50)}
+let closeTok=0;
+const sheetOpen=()=>{const m=$('#m');return m.classList.contains('open')&&!m.classList.contains('closing')&&!m.classList.contains('fading')};
+function finishClose(){const m=$('#m');m.classList.remove('open','closing','fading');m.innerHTML=''}
+function closeM(){const m=$('#m');if(!m.classList.contains('open')||m.classList.contains('closing'))return;if(RM()){finishClose();return}const tok=++closeTok;m.classList.add('closing');setTimeout(()=>{if(tok===closeTok)finishClose()},290)}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeM()});
+const fld=(id,l,v='',x='')=>`<div class="f"><div class="lh"><label for="${id}">${l}</label>${x}</div><input id="${id}" inputmode="decimal" autocomplete="off" value="${esc(v)}"></div>`;
+const txt=(id,l,v='',a='')=>`<div class="f"><div class="lh"><label for="${id}">${l}</label></div><input id="${id}" autocomplete="off" value="${esc(v)}" ${a}></div>`;
+const g=id=>{const e=$('#'+id);return e?e.value:''},setv=(id,v)=>{const e=$('#'+id);if(e)e.value=v};
+const segH=(act,items,on)=>`<div class="seg" data-seg="${act}" role="tablist"><i class="thumb" aria-hidden="true"></i>${items.map(([k,t])=>`<button role="tab" aria-selected="${on===k}" data-act="${act}" data-id="${k}" class="${on===k?'on':''}">${t}</button>`).join('')}</div>`;
+const hdr=(title)=>`<header class="hdr"><div><div class="eyebrow"><i class="dot ${saveOk?'on':''}"></i>${saveOk?'Bu iPhone’da kayıtlı':'Kayıt başarısız'}</div><h1>${title}</h1></div><div class="hbtns"><button class="ib glass" data-act="themetoggle" aria-label="${isDark()?'Açık moda geç':'Koyu moda geç'}">${isDark()?I.sun:I.moon}</button>${title==='Portföy'?`<button class="ib glass" data-act="newfund" aria-label="Fon ekle">${I.plus}</button>`:''}</div></header>`;
+
+function home(){
+  let v=0,val=0,base=0,rl=0;S.funds.forEach(f=>{const r=ret(f,view.period);v+=r.v;base+=r.b;val+=V(f);rl+=R(f)});
+  const p=base>0?v/base*100:0,rlb=refLbl(view.period),L={daily:'bugün',weekly:'bu hafta',total:'toplam'}[view.period];
+  const held=S.funds.filter(f=>V(f)>0),age=backupAge(),needBk=S.funds.some(f=>f.lots.length)&&(age===null||age>=14);
+  return `${hdr('Portföy')}
+  ${needBk?`<div class="warn glass"><div class="l"><b>Yedek alın</b><div class="sub" style="white-space:normal">${age===null?'Henüz hiç yedek almadınız.':age+' gündür yedek almadınız.'} Uygulama silinirse verileriniz de silinir.</div></div><button class="rowbtn" data-act="exportfile">Yedekle</button></div>`:''}
+  <section class="hero glass"><div class="lbl" style="position:relative">Toplam varlık</div><div class="big">${T('h-val',val,'big')}</div>
+  ${chipH({v,p},L,'h')}${rlb?`<div class="ref">${rlb}</div>`:''}${view.period==='total'&&Math.abs(rl)>.005?`<div class="ref">Satışlardan gerçekleşen (net): <span class="${rl>=0?'up':'dn'}">${sgn(rl)}</span></div>`:''}
+  ${segH('period',[['daily','Günlük'],['weekly','Haftalık'],['total','Toplam']],view.period)}</section>
+  ${held.length>1?`<section class="alloc glass"><div class="abar">${held.map(f=>`<i data-bk="a-${esc(f.code)}" data-bw="${(V(f)/val*100).toFixed(2)}" style="--c:${col(f.code)};width:0"></i>`).join('')}</div><div class="legend">${held.map(f=>`<span style="--c:${col(f.code)}">${esc(f.code)} %${(V(f)/val*100).toFixed(1).replace('.',',')}</span>`).join('')}</div></section>`:''}
+  <div class="sech"><h2>Fonlarım</h2><span>${S.funds.length} fon</span></div>
+  <div class="list glass">${S.funds.map(f=>{const r=ret(f,view.period);const k='r-'+f.code;return `<button class="row" data-k="f-${esc(f.code)}" data-act="open" data-id="${esc(f.code)}">${av(f)}<div class="l"><b>${esc(f.code)}</b><div class="sub">${esc(f.name)}</div></div><div class="r"><b>${T(k+'-val',V(f),'money')}</b><div class="d ${r.v>=0?'up':'dn'}">${T(k+'-p',r.p,'pc')} · ${T(k+'-v',r.v,'sgn')}</div></div></button>`}).join('')||'<div class="empty">Henüz fon yok. Sağ üstteki + ile ilk fonunuzu ekleyin.</div>'}</div>`}
+
+function detail(){
+  const f=cur();if(!f){view.page='home';return home()}const t=view.tab,r=ret(f,'total'),rl=R(f);
+  let body='';
+  if(t==='lots'){const L=sorted(f);body=`<div class="list glass"><div class="row"><div class="l sub">Ortalama maliyet</div><b>${num(A(f),6)} ₺</b></div>${Math.abs(rl)>.005?`<div class="row"><div class="l sub">Gerçekleşen kâr/zarar (stopaj sonrası)</div><b class="${rl>=0?'up':'dn'}">${sgn(rl)}</b></div>`:''}${L.map(l=>{const pr=(f.price-l.cost)*l.qty,pp=l.cost>0?(f.price/l.cost-1)*100:0;return `<div class="row" data-k="l-${esc(l.id)}"><div class="l"><b>${dTR(l.date)}</b><div class="sub">${num(l.qty)} adet · ${num(l.cost,6)} ₺</div></div><div class="r"><b>${money(l.qty*f.price)}</b><div class="d ${pr>=0?'up':'dn'}">${pc(pp)} · ${sgn(pr)}</div></div><button class="rowbtn del" data-act="dellot" data-id="${esc(l.id)}" aria-label="Sepeti sil">Sil</button></div>`}).join('')||'<div class="empty">Bu fonda aktif sepet yok. “Alım ekle” ile başlayın.</div>'}</div>`}
+  if(t==='cash')body=`<div class="glass card pad"><label class="lbl" for="c_v">Elime geçmesini istediğim net tutar (₺)</label><div class="two" style="grid-template-columns:1fr auto"><input id="c_v" class="inp" inputmode="decimal" placeholder="Örn: 10.000"><button class="btn pri" data-act="calc"><span>Hesapla</span></button></div><div id="cr"></div></div>`;
+  if(t==='hist'){const first=f.hist.find(h=>!h.undone&&h.prev);const N={buy:'Alım',sell:'Satış',edit:'Düzenleme',delete:'Silme'};body=`<div class="list glass">${f.hist.map(h=>`<div class="row" data-k="h-${esc(h.id)}${h.undone?'u':''}" style="${h.undone?'opacity:.5':''}"><div class="l"><span class="tag">${h.undone?'İptal edildi':N[h.type]||'İşlem'}</span> <span class="sub">${dTR(h.date)}</span><div class="sub" style="white-space:normal;margin-top:3px">${esc(h.detail)}</div></div><div class="r"><b class="${h.amount>=0?'up':'dn'}">${sgn(h.amount)}</b>${first&&first.id===h.id?`<div><button class="rowbtn" data-act="undo" style="margin-top:6px">Geri al</button></div>`:''}</div></div>`).join('')||'<div class="empty">Henüz işlem geçmişi yok.</div>'}</div>`}
+  const last=f.log[f.log.length-1];
+  return `<div class="dnav"><button class="cap glass" data-act="back">${I.back}<span>Portföy</span></button><button class="cap glass" data-act="editfund"><span>Düzenle</span></button></div>
+  <section class="dhead">${av(f,'lg')}<h2>${esc(f.name)}</h2><div class="lbl">${esc(f.code)} · ${esc(f.type)} · Stopaj ${rateTxt(f.tax)} · ${num(Q(f))} adet</div><div class="big md">${T('d-'+f.code+'-val',V(f),'big')}</div>${chipH(r,'toplam','d-'+f.code)}</section>
+  <div class="stats glass">${[['daily','Günlük'],['weekly','Haftalık'],['total','Toplam']].map(([k0,n])=>{const x=ret(f,k0);const k='s-'+f.code+'-'+k0;return `<div><div class="lbl">${n}</div><b class="${x.v>=0?'up':'dn'}">${T(k+'-v',x.v,'sgn')}</b><div class="d ${x.v>=0?'up':'dn'}">${T(k+'-p',x.p,'pc')}</div></div>`}).join('')}</div>
+  <div class="list glass"><div class="row"><div class="l"><div class="lbl">Birim fiyat${last?' · '+dTR(last.d):''}</div><b>${num(f.price,6)} ₺</b></div><button class="rowbtn" data-act="price">Fiyatı güncelle</button></div></div>
+  <div class="acts"><button class="btn pri" data-act="buy"><span>Alım ekle</span></button><button class="btn glass" data-act="sell"><span>Satış</span></button></div>
+  ${segH('tab',[['lots','Sepetler'],['cash','Nakit hesabı'],['hist','Geçmiş']],t)}<div class="tbody ${tabAnim}">${body}</div>`}
+
+function overview(){
+  let tot=0,net=0,tax=0,cst=0;S.funds.forEach(x=>{const r=fifo(sorted(x),Q(x),x.price,x.tax);tot+=V(x);net+=r.net;tax+=r.tax;cst+=C(x)});
+  return `${hdr('Özet')}
+  <section class="hero glass"><div class="lbl" style="position:relative">Hepsi bugün satılsa ele geçecek</div><div class="big">${T('o-net',net,'big')}</div>
+  <div class="pv" style="position:relative"><div><span>Toplam maliyet</span><b>${T('o-cst',cst,'money')}</b></div><div><span>Brüt değer</span><b>${T('o-tot',tot,'money')}</b></div><div><span>Tahmini stopaj</span><b class="dn">−${T('o-tax',tax,'money')}</b></div><div class="tot"><span>Net kâr/zarar</span><b class="${net-cst>=0?'up':'dn'}">${T('o-pl',net-cst,'sgn')}</b></div></div></section>
+  <div class="sech"><h2>Dağılım</h2><span>${S.funds.length} fon</span></div>
+  <div class="list glass">${S.funds.map(x=>{const w=tot>0?V(x)/tot*100:0,n=fifo(sorted(x),Q(x),x.price,x.tax).net;return `<button class="row" data-k="o-${esc(x.code)}" data-act="open" data-id="${esc(x.code)}">${av(x)}<div class="l"><div style="display:flex;justify-content:space-between;gap:8px"><b>${esc(x.code)}</b><b>%${w.toFixed(1).replace('.',',')}</b></div><div class="pbar" style="margin:7px 0 5px"><i data-bk="p-${esc(x.code)}" data-bw="${Math.min(100,w).toFixed(2)}" style="--c:${col(x.code)};width:0"></i></div><div class="sub" style="display:flex;justify-content:space-between;gap:8px"><span>Brüt ${money(V(x))}</span><span>Net ${money(n)}</span></div></div></button>`}).join('')||'<div class="empty">Henüz fon yok.</div>'}</div>`}
+
+function settings(){
+  return `${hdr('Ayarlar')}
+  <div class="grp"><div class="gl">Görünüm</div><div class="glass card pad"><div class="lbl">Tema</div>${segH('theme',[['system','Sistem'],['light','Açık'],['dark','Koyu']],themePref)}<div class="hint" style="margin:0">“Sistem”, cihazınızın açık/koyu ayarını izler. Seçiminiz bu cihazda saklanır.</div></div></div>
+  <div class="grp"><div class="gl">Veri</div><div class="list glass"><div class="row"><div class="l"><b>Kayıt yeri</b><div class="sub">Bu iPhone’da, uygulamanın içinde</div></div><i class="dot ${saveOk?'on':''}"></i></div><div class="row"><div class="l"><b>Kalıcı depolama</b><div class="sub">${persisted?'Açık: iOS bu veriyi kendiliğinden silmez':'Standart'}</div></div></div><div class="row"><div class="l"><b>Son yedek</b></div><span class="sub">${lastBackup?new Date(lastBackup).toLocaleDateString('tr-TR'):'Hiç alınmadı'}</span></div><div class="row"><div class="l"><b>Fon sayısı</b></div><span class="sub">${S.funds.length}</span></div></div></div>
+  <div class="grp"><div class="gl">Yedek dosyası</div><div class="glass card pad"><div class="fbtns"><button class="btn pri" data-act="exportfile"><span>Dışa aktar</span></button><button class="btn plain" data-act="importfile"><span>Dosyadan yükle</span></button></div><input type="file" id="b_f" class="hidefile" accept="application/json,.json,text/plain"><div class="hint" style="margin:0">“Dışa aktar” paylaşım menüsünü açar: “Dosyalar’a Kaydet” ile iCloud Drive’a kaydedin. Uygulamayı silerseniz veriler de silinir; yedek dosyası verilerinizi geri getirir.</div></div></div>
+  <div class="grp"><div class="gl">Yedek kodu</div><div class="glass card pad"><div class="f" style="margin:0"><div class="lh"><label for="b_j">Yedek kodu (JSON)</label><button type="button" class="lnk" data-act="bcopy">Kopyala</button></div><textarea id="b_j" rows="5" style="font-size:12px">${esc(JSON.stringify(S))}</textarea></div><div class="hint" style="margin:0">Claude’daki eski sürümün Ayarlar sayfasından kopyaladığınız yedek kodunu buraya yapıştırıp geri yükleyebilirsiniz.</div><p class="err" id="b_e" style="margin:0;min-height:0"></p><button class="btn plain" data-act="brest"><span>Yapıştırılan yedeği geri yükle</span></button></div></div>
+  <div class="hint" style="text-align:center;margin:4px 0 0">Fon Portföyüm · sürüm ${APPV}</div>`}
+
+/* ===== Hareket motoru ===== */
+const RM=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
+const canVT=()=>!!document.startViewTransition&&!RM();
+let enterMode=true,tabAnim='',vtAv=null,lastXY=null,navTo=null;const scrollMem={},TW={},SEGX={},BARW={};
+const TABS=['home','overview','settings'];
+function runVT(kind,update){
+  if(!canVT()){update();return}
+  root.dataset.vt=kind;
+  let tr;try{tr=document.startViewTransition(update)}catch(e){delete root.dataset.vt;update();return}
+  tr.ready.catch(()=>{});tr.updateCallbackDone.catch(()=>{});
+  tr.finished.catch(()=>{}).finally(()=>{if(root.dataset.vt===kind)delete root.dataset.vt;vtAv=null;document.querySelectorAll('.av').forEach(e=>{if(e.style.viewTransitionName)e.style.viewTransitionName=''})})}
+// Sayfa değiştir: fon detayına giriş/çıkış iOS gibi kayar, sekmeler yönüne göre geçer
+function go(page,patch={}){
+  const from=navTo||view.page;
+  if(page===from&&page!=='detail'){scrollTo({top:0,behavior:RM()?'auto':'smooth'});return}
+  const kind=page==='detail'?'push':from==='detail'?'pop':(TABS.indexOf(page)>TABS.indexOf(from)?'tab-fwd':'tab-bwd');
+  scrollMem[from]=scrollY;
+  const code=patch.code||view.code;
+  if(canVT()&&code&&(kind==='push'||kind==='pop')){
+    const src=kind==='push'?[...document.querySelectorAll('#app [data-act=open]')].find(e=>e.dataset.id===code)?.querySelector('.av'):$('#app .dhead .av');
+    if(src){src.style.viewTransitionName='fav';vtAv=code}}
+  navTo=page;
+  runVT(kind,()=>{navTo=null;Object.assign(view,{page},patch);enterMode=kind!=='push'&&kind!=='pop';render();scrollTo(0,kind==='pop'?(scrollMem[page]||0):0)})}
+function themeSwitch(t){
+  const willDark=t==='dark'||(t==='system'&&mq.matches);
+  if(!canVT()||willDark===isDark()){setTheme(t);return}
+  const p=lastXY||{x:innerWidth-40,y:60};root.style.setProperty('--vx',p.x+'px');root.style.setProperty('--vy',p.y+'px');root.classList.add('vt-theme');
+  try{const tr=document.startViewTransition(()=>setTheme(t));tr.ready.catch(()=>{});tr.updateCallbackDone.catch(()=>{});tr.finished.catch(()=>{}).finally(()=>root.classList.remove('vt-theme'))}catch(e){root.classList.remove('vt-theme');setTheme(t)}}
+function tween(el,a,b,f){const t0=performance.now(),d=700,fmt=FMT[f],html=f==='big',put=v=>{if(html)el.innerHTML=fmt(v);else el.textContent=fmt(v)};put(a);
+  const step=n=>{if(!el.isConnected)return;const t=Math.min(1,(n-t0)/d),e=1-Math.pow(1-t,4);put(t<1?a+(b-a)*e:b);if(t<1)requestAnimationFrame(step)};requestAnimationFrame(step)}
+function collapse(el){if(!el||RM()||!el.animate)return Promise.resolve();const h=el.offsetHeight;el.style.overflow='hidden';
+  return el.animate([{height:h+'px',opacity:1,transform:'none'},{height:'0px',opacity:0,paddingTop:'0px',paddingBottom:'0px',transform:'translateX(-24px)'}],{duration:320,easing:'cubic-bezier(.4,0,.2,1)',fill:'forwards'}).finished.catch(()=>{})}
+function afterRender(){
+  const rm=RM();
+  document.querySelectorAll('.seg,#nav').forEach(s=>{const on=s.querySelector('button.on'),th=s.querySelector(':scope>.thumb');if(!on||!th)return;
+    const key=s.id||s.dataset.seg,x=on.offsetLeft,w=on.offsetWidth,p=SEGX[key];
+    if(p&&!rm&&(p.x!==x||p.w!==w)){th.style.transition='none';th.style.width=p.w+'px';th.style.transform=`translateX(${p.x}px)`;void th.offsetWidth;th.style.transition=''}
+    th.style.width=w+'px';th.style.transform=`translateX(${x}px)`;SEGX[key]={x,w}});
+  const bars=[...document.querySelectorAll('#app [data-bw]')];
+  bars.forEach(el=>{el.style.width=(rm?+el.dataset.bw:(BARW[el.dataset.bk]??0))+'%'});
+  if(bars.length){void bars[0].offsetWidth;bars.forEach(el=>{el.style.width=el.dataset.bw+'%';BARW[el.dataset.bk]=+el.dataset.bw})}
+  document.querySelectorAll('#app [data-tw]').forEach(el=>{const k=el.dataset.tw,v=+el.dataset.v,o=TW[k];TW[k]=v;if(o!==undefined&&Math.abs(o-v)>1e-9&&!rm)tween(el,o,v,el.dataset.f)})}
+function render(){
+  const pg=view.page,app=$('#app'),same=pg===lastPage;
+  const prevK=same?new Set([...app.querySelectorAll('[data-k]')].map(e=>e.dataset.k)):null;
+  if(!same){app.classList.remove('pg-fwd','pg-back','pg-fade');if(lastPage&&!root.dataset.vt&&!RM()){void app.offsetWidth;app.classList.add(pg==='detail'?'pg-fwd':lastPage==='detail'?'pg-back':'pg-fade')}lastPage=pg}
+  app.classList.toggle('enter',enterMode&&!RM());enterMode=false;
+  app.innerHTML=pg==='detail'?detail():pg==='overview'?overview():pg==='settings'?settings():home();
+  tabAnim='';
+  if(prevK)app.querySelectorAll('[data-k]').forEach(e=>{if(!prevK.has(e.dataset.k))e.classList.add('row-new')});
+  [...app.children].forEach((c,i)=>c.style.setProperty('--i',i));app.querySelectorAll('.list').forEach(l=>[...l.children].forEach((r,i)=>r.style.setProperty('--i',i)));
+  const tab=pg==='detail'?'home':pg;
+  $('#nav').innerHTML='<i class="thumb" aria-hidden="true"></i>'+[['home','Portföy',I.home],['overview','Özet',I.pie],['settings','Ayarlar',I.gear]].map(([k,n,ic])=>`<button data-act="nav" data-id="${k}" class="${tab===k?'on':''}" ${tab===k?'aria-current="page"':''}>${ic}<span>${n}</span></button>`).join('');
+  afterRender()}
+
+function openTx(kind,pre){
+  const f=cur(),sell=kind==='sell';
+  modal(`<h3>${sell?'Satış (FIFO)':'Alım ekle'} · ${esc(f.code)}</h3>
+  <div class="f"><div class="lh"><label for="t_d">İşlem tarihi</label></div><input id="t_d" type="date" max="${today()}" value="${today()}"></div>
+  ${sell?'':fld('t_a','Toplam tutar (₺)')}
+  <div class="two">${fld('t_q','Adet',pre||'',sell?`<button type="button" class="lnk" data-act="all">Tümü (${num(Q(f))})</button>`:'')}${fld('t_p','Birim fiyat (₺)',f.price)}</div>
+  <div id="t_pv"></div><p class="err" id="t_e"></p>
+  <div class="btns"><button class="btn plain" data-act="close">Vazgeç</button><button class="btn ${sell?'red':'pri'}" data-act="${kind}ok">${sell?'Satışı onayla':'Portföye ekle'}</button></div>`);
+  const upd=()=>{if(!sell)return;const q=pn(g('t_q')),p=pn(g('t_p')),el=$('#t_pv');if(!(q>0&&p>0)){el.innerHTML='';return}const r=fifo(sorted(f),q,p,f.tax);el.innerHTML=`<div class="pv"><div><span>Brüt tutar</span><b>${money(r.rev)}</b></div><div><span>FIFO kâr / zarar</span><b class="${r.pr>=0?'up':'dn'}">${sgn(r.pr)}</b></div><div><span>Stopaj (${rateTxt(f.tax)})</span><b class="dn">−${money(r.tax)}</b></div><div class="tot"><span>Net ele geçecek</span><b>${money(r.net)}</b></div></div>`};
+  $('#m').oninput=e=>{const id=e.target.id,p=pn(g('t_p'));if(id==='t_a'){const a=pn(g('t_a'));if(p>0&&a>0){const x=a/p;setv('t_q',Math.abs(x-Math.round(x))<.001?String(Math.round(x)):x.toFixed(3))}else setv('t_q','')}
+  if((id==='t_q'||id==='t_p')&&!sell){const q=pn(g('t_q'));if(p>0&&q>0)setv('t_a',(q*p).toFixed(2))}upd()};
+  $('#m')._upd=upd;if(pre)upd();
+}
+function priceModal(f){const L=[...f.log].reverse().slice(0,10);
+  modal(`<h3>Fiyat · ${esc(f.code)}</h3><div class="two"><div class="f"><div class="lh"><label for="p_d">Fiyat tarihi</label></div><input id="p_d" type="date" max="${today()}" value="${today()}"></div>${fld('p_v','Birim fiyat (₺)',f.price)}</div>
+  <p class="hint">Günlük getiri son iki fiyat günü arasındaki değişimdir; eksik günlerin fiyatını tarihiyle girebilirsiniz.</p><p class="err" id="p_e"></p>
+  <div class="btns"><button class="btn plain" data-act="close">Vazgeç</button><button class="btn pri" data-act="priceok">Kaydet</button></div>
+  <div class="lbl" style="margin:20px 4px 6px">Fiyat geçmişi</div><div class="list" style="background:var(--field)">${L.map((e,i)=>{const pr=L[i+1];return `<div class="row"><div class="l"><b>${dTR(e.d)}</b>${pr?`<div class="d ${e.p>=pr.p?'up':'dn'}">${pc((e.p/pr.p-1)*100)}</div>`:''}</div><b>${num(e.p,6)} ₺</b>${f.log.length>1?`<button class="rowbtn del" data-act="dellog" data-id="${e.d}" aria-label="Fiyat kaydını sil">Sil</button>`:''}</div>`}).join('')}</div>`);
+  setTimeout(()=>{const i=$('#p_v');if(i){i.focus();i.select()}},60)}
+function commit(f,type,date,detail,amount,lots,gain=0){f.hist.unshift({id:Date.now(),type,date,detail,amount,gain,prev:f.lots,undone:false});f.lots=lots}
+function txOk(kind){
+  const f=cur(),q=pn(g('t_q')),p=pn(g('t_p')),d=g('t_d')||today(),e=$('#t_e');
+  if(!(q>0&&p>0)){e.textContent='Geçerli bir adet ve birim fiyat girin.';return}
+  if(!isDate(d)||d>today()){e.textContent='İleri tarihli işlem girilemez.';return}
+  if(kind==='buy'){commit(f,'buy',d,`${num(q)} adet × ${num(p,6)} ₺ eklendi.`,q*p,[...f.lots,{id:Date.now(),date:d,qty:q,cost:p}]);toast('Alım kaydedildi.')}
+  else{if(q>Q(f)+1e-4){e.textContent=`Portföydeki toplam adetten (${num(Q(f))}) fazla satamazsınız.`;return}
+    const r=fifo(sorted(f),q,p,f.tax);let rem=q;const nl=[];for(const l of sorted(f)){if(rem<=0){nl.push(l);continue}const t=Math.min(l.qty,rem);rem-=t;const left=+(l.qty-t).toFixed(6);if(left>1e-6)nl.push({...l,qty:left})}
+    commit(f,'sell',d,`${num(q)} adet × ${num(p,6)} ₺ FIFO ile satıldı. Kâr/zarar: ${sgn(r.pr)} · Stopaj: ${money(r.tax)}`,-r.net,nl,r.pr-r.tax);toast('Satış kaydedildi.')}
+  closeM();save()}
+
+function act(a,id){
+  const f=cur();
+  switch(a){
+    case 'nav':go(id);break;
+    case 'theme':themeSwitch(id);break;
+    case 'themetoggle':themeSwitch(isDark()?'light':'dark');break;
+    case 'period':view.period=id;render();break;
+    case 'open':go('detail',{code:id,tab:'lots'});break;
+    case 'back':go('home');break;
+    case 'tab':{if(id===view.tab)break;const o=['lots','cash','hist'];tabAnim=o.indexOf(id)>o.indexOf(view.tab)?'tb-fwd':'tb-bwd';view.tab=id;render();break}
+    case 'close':closeM();break;
+    case 'buy':case 'sell':openTx(a);break;
+    case 'buyok':case 'sellok':txOk(a.slice(0,-2));break;
+    case 'all':setv('t_q',+Q(f).toFixed(6));$('#m')._upd();break;
+    case 'price':priceModal(f);break;
+    case 'priceok':{const p=pn(g('p_v')),d=g('p_d')||today();if(!(p>0)){$('#p_e').textContent='Geçerli bir fiyat girin.';return}if(!isDate(d)||d>today()){$('#p_e').textContent='İleri tarihli fiyat girilemez.';return}
+      const prev=f.log.filter(e=>e.d<d).pop();f.log=sortLog([...f.log.filter(e=>e.d!==d),{d,p}]);f.price=f.log[f.log.length-1].p;closeM();save();
+      toast(prev&&Math.abs(prev.p-p)<1e-12?'Fiyat önceki fiyatla aynı; yeni fiyat günü sayılmadı.':'Fiyat kaydedildi.');break}
+    case 'dellog':{if(f.log.length<2)return;f.log=sortLog(f.log.filter(e=>e.d!==id));f.price=f.log[f.log.length-1].p;save();priceModal(f);toast('Fiyat kaydı silindi.');break}
+    case 'dellot':{const l=f.lots.find(x=>String(x.id)===id);if(!l)return;modal(`<h3>Sepeti sil</h3><p>${dTR(l.date)} tarihli, ${num(l.qty)} adetlik sepet silinsin mi? Geçmiş sekmesinden geri alabilirsiniz.</p><div class="btns"><button class="btn plain" data-act="close">Vazgeç</button><button class="btn red" data-act="dellotok" data-id="${esc(id)}">Evet, sil</button></div>`);break}
+    case 'dellotok':{const l=f.lots.find(x=>String(x.id)===id);closeM();if(!l)return;const el=[...document.querySelectorAll('#app [data-k]')].find(e=>e.dataset.k==='l-'+l.id);
+      collapse(el).then(()=>{if(!f.lots.includes(l))return;commit(f,'delete',today(),`${dTR(l.date)} tarihli ${num(l.qty)} adetlik sepet silindi.`,-l.qty*l.cost,f.lots.filter(x=>x!==l));save()});break}
+    case 'undo':{const h=f.hist.find(x=>!x.undone&&x.prev);if(h){f.lots=h.prev;h.undone=true;save();toast('İşlem geri alındı.')}break}
+    case 'calc':{const T=pn(g('c_v')),q=Q(f),el=$('#cr');if(!(T>0&&f.price>0)){el.innerHTML='<p class="err">Geçerli bir hedef tutar girin.</p>';return}
+      if(q<=0){el.innerHTML='<p class="err">Bu fonda satılabilecek pay yok.</p>';return}
+      const L=sorted(f),sim=n=>fifo(L,Math.min(n,q),f.price,f.tax);let n,ex=false;
+      {let lo=1,hi=Math.ceil(q);if(sim(hi).net<T){ex=true;n=hi}else{while(lo<hi){const mid=(lo+hi)>>1;sim(mid).net>=T?hi=mid:lo=mid+1}n=lo}}
+      const r=sim(n);
+      el.innerHTML=`<div class="pv"><div><span>Satılması gereken adet</span><b>${num(Math.min(n,q),3)}</b></div><div><span>Brüt satış tutarı</span><b>${money(r.rev)}</b></div><div><span>Tahmini stopaj (${rateTxt(f.tax)})</span><b class="dn">−${money(r.tax)}</b></div><div class="tot"><span>Tahmini net</span><b>${money(r.net)}</b></div></div>${ex?`<p class="err">Hedef tutar portföyünüzü aşıyor; en fazla ${num(q)} adet satılabilir.</p>`:`<button class="btn red" style="margin-top:10px;width:100%" data-act="sellpre" data-id="${n}">Bu adetle satış ekranını aç</button>`}`;break}
+    case 'sellpre':openTx('sell',id);break;
+    case 'newfund':modal(`<h3>Yeni fon</h3><div class="f"><div class="lh"><label for="n_c">Fon kodu</label></div><input id="n_c" autocapitalize="characters" autocomplete="off" placeholder="Örn: TLY"></div>${txt('n_n','Fon adı')}<div class="two">${txt('n_t','Fon türü','Para Piyasası')}${fld('n_p','Birim fiyat (₺)')}</div>${fld('n_x','Stopaj oranı (%)','17,5')}<p class="hint">Varsayılan %17,5. Farklı oran uygulanan bir fonunuz varsa buradan değiştirebilirsiniz.</p><p class="err" id="n_e"></p><div class="btns"><button class="btn plain" data-act="close">Vazgeç</button><button class="btn pri" data-act="newok">Portföye ekle</button></div>`);break;
+    case 'newok':{const c=g('n_c').trim().toUpperCase(),n=g('n_n').trim(),p=pn(g('n_p')),x=pn(g('n_x'));if(!c||!n||!(p>0)){$('#n_e').textContent='Kod, ad ve geçerli bir fiyat girin.';return}if(!(x>=0&&x<100)){$('#n_e').textContent='Stopaj oranı 0 ile 100 arasında olmalı.';return}if(S.funds.some(y=>y.code===c)){$('#n_e').textContent='Bu fon kodu zaten var.';return}S.funds.push({...mk(c,n,g('n_t').trim()||'Yatırım Fonu',p,x/100),taxSet:true});view.page='home';closeM();save();toast(c+' eklendi.');break}
+    case 'editfund':modal(`<h3>Fonu düzenle</h3>${txt('e_c','Fon kodu',f.code,'readonly')}${txt('e_n','Fon adı',f.name)}<div class="two">${txt('e_t','Fon türü',f.type)}${fld('e_x','Stopaj oranı (%)',num(f.tax*100,2))}</div><p class="hint">Stopaj oranı satış önizlemesini, nakit hesabını ve özeti etkiler. Geçmiş satış kayıtları değişmez.</p><p class="err" id="e_e"></p><div class="btns"><button class="btn red" data-act="delfund">Fonu sil</button><button class="btn plain" data-act="close">Vazgeç</button><button class="btn pri" data-act="editok">Kaydet</button></div>`);break;
+    case 'editok':{const n=g('e_n').trim(),x=pn(g('e_x'));if(!n){$('#e_e').textContent='Fon adı boş olamaz.';return}if(!(x>=0&&x<100)){$('#e_e').textContent='Stopaj oranı 0 ile 100 arasında olmalı.';return}f.name=n;f.type=g('e_t').trim()||'Yatırım Fonu';f.tax=x/100;f.taxSet=true;closeM();save();toast('Fon bilgileri güncellendi.');break}
+    case 'delfund':modal(`<h3>${esc(f.code)} silinsin mi?</h3><p>Fon, ${f.lots.length} sepeti ve tüm işlem geçmişiyle birlikte kalıcı olarak silinecek. Bu işlem geri alınamaz; önce Ayarlar’dan yedek almak isteyebilirsiniz.</p><div class="btns"><button class="btn plain" data-act="close">Vazgeç</button><button class="btn red" data-act="delfundok">Evet, kalıcı olarak sil</button></div>`);break;
+    case 'delfundok':{const c=f.code;S.funds=S.funds.filter(x=>x!==f);closeM();save(false);go('home');toast(c+' silindi.');break}
+    case 'overview':go('overview');break;
+    case 'backup':go('settings');break;
+    case 'exportfile':exportFile();break;
+    case 'importfile':{const i=$('#b_f');if(i){i.value='';i.click()}else go('settings');break}
+    case 'bcopy':{const t=g('b_j');(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>{markBackup();toast('Yedek kodu kopyalandı.')}).catch(()=>{$('#b_j').select();try{document.execCommand('copy');toast('Yedek kodu kopyalandı.')}catch(e){toast('Kopyalanamadı, metni elle seçin.')}});break}
+    case 'brest':{try{const o=JSON.parse(g('b_j'));let n;
+      if(Array.isArray(o)&&o.length)n=norm({funds:o.map(x=>({code:x.code,name:x.name,type:x.type||'Yatırım Fonu',price:+x.currentPrice||0,lots:(x.baskets||[]).map(b=>({id:b.id,date:String(b.date).split('.').reverse().join('-'),qty:+b.quantity,cost:+b.cost})),hist:(x.history||[]).map(h=>({id:h.id,type:h.type,date:String(h.date).split('.').reverse().join('-'),detail:h.details||'',amount:+h.amount||0,prev:null,undone:!!h.isUndone}))}))});
+      else n=norm(o);
+      if(!n||!n.funds.length)throw 0;
+      pend=n;const lots=n.funds.reduce((a,x)=>a+x.lots.length,0);
+      modal(`<h3>Yedek geri yüklensin mi?</h3><p>Yedekte ${n.funds.length} fon ve ${lots} sepet var: ${n.funds.map(x=>esc(x.code)).join(', ')}.</p><p class="sub" style="white-space:normal">Şu anki portföyünüzün yerine geçecek. Mevcut verileri saklamak istiyorsanız önce vazgeçip yedek kodunu kopyalayın.</p><div class="btns"><button class="btn plain" data-act="close">Vazgeç</button><button class="btn red" data-act="brestok">Evet, değiştir</button></div>`)}catch(e){$('#b_e').textContent='Yedek kodu okunamadı. Geçerli bir JSON yapıştırın.'}break}
+    case 'brestok':if(pend){S=pend;pend=null;closeM();save(false);if(view.page==='home')render();else go('home');toast('Yedek geri yüklendi.')}break;
+  }
+}
+document.addEventListener('click',e=>{lastXY={x:e.clientX,y:e.clientY};const t=e.target.closest('[data-act]');if(t){act(t.dataset.act,t.dataset.id);return}if(e.target.id==='m')closeM()});
+document.addEventListener('keydown',e=>{if(e.key!=='Enter')return;if(e.target.id==='c_v'){act('calc');return}
+  if(e.target.tagName==='INPUT'&&e.target.closest('#m')){const b=$('#m .btns .btn:last-child');if(b){e.preventDefault();b.click()}}});
+// Yedek dosyasını oku → aynı onaylı geri yükleme akışı
+document.addEventListener('change',e=>{if(e.target.id!=='b_f'||!e.target.files||!e.target.files[0])return;const r=new FileReader();
+  r.onload=()=>{setv('b_j',String(r.result||''));act('brest')};r.onerror=()=>toast('Dosya okunamadı.');r.readAsText(e.target.files[0])});
+// Detay sayfasında ekranın sol kenarından sağa çekince sayfa parmağı izler; yeterince çekilirse geri döner
+let sw=null;
+document.addEventListener('touchstart',e=>{const t=e.touches[0];sw=view.page==='detail'&&!sheetOpen()&&t.clientX<28?{x:t.clientX,y:t.clientY,dx:0,on:false,t:performance.now()}:null},{passive:true});
+document.addEventListener('touchmove',e=>{if(!sw)return;const t=e.touches[0],dx=t.clientX-sw.x,dy=t.clientY-sw.y;
+  if(!sw.on){if(Math.abs(dy)>Math.abs(dx)&&Math.abs(dy)>8){sw=null;return}if(dx<8)return;sw.on=true}
+  sw.dx=Math.max(0,dx);const a=$('#app');a.style.transition='none';a.style.transform=`translateX(${sw.dx}px)`;a.style.opacity=String(1-Math.min(.45,sw.dx/innerWidth*.8))},{passive:true});
+const swEnd=()=>{if(!sw)return;const s=sw;sw=null;if(!s.on)return;const a=$('#app'),v=s.dx/Math.max(1,performance.now()-s.t);
+  if(s.dx>innerWidth*.33||v>.65){const fin=()=>{a.style.transform='';a.style.opacity='';a.style.transition='';scrollMem.detail=scrollY;view.page='home';enterMode=false;render();scrollTo(0,scrollMem.home||0)};
+    if(a.animate&&!RM())a.animate([{transform:`translateX(${s.dx}px)`,opacity:a.style.opacity||1},{transform:'translateX(100%)',opacity:0}],{duration:220,easing:'ease-out'}).onfinish=fin;else fin()}
+  else{a.style.transition='transform .4s var(--spring),opacity .4s';a.style.transform='';a.style.opacity='';setTimeout(()=>{a.style.transition=''},420)}};
+document.addEventListener('touchend',swEnd,{passive:true});document.addEventListener('touchcancel',swEnd,{passive:true});
+// Alt paneli tutup aşağı çekince kapanır
+let dg=null;const M=$('#m');
+M.addEventListener('touchstart',e=>{const s=e.target.closest('.sheet');if(!s||/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)||s.scrollTop>0){dg=null;return}dg={s,y:e.touches[0].clientY,dy:0,on:false,t:performance.now()}},{passive:true});
+M.addEventListener('touchmove',e=>{if(!dg)return;const dy=e.touches[0].clientY-dg.y;if(!dg.on){if(dy<=4){if(dy<0)dg=null;return}dg.on=true;dg.s.classList.add('drag')}
+  dg.dy=Math.max(0,dy);dg.s.style.transform=`translateY(${dg.dy}px)`;e.preventDefault()},{passive:false});
+M.addEventListener('touchend',()=>{if(!dg)return;const {s,dy,on,t}=dg;dg=null;if(!on)return;s.classList.remove('drag');s.classList.add('snap');
+  if(dy>120||dy/Math.max(1,performance.now()-t)>.7){s.style.transform='translateY(110%)';M.classList.add('fading');const tok=++closeTok;setTimeout(()=>{if(tok===closeTok)finishClose()},300)}
+  else{s.style.transform='';setTimeout(()=>s.classList.remove('snap'),380)}},{passive:true});
+// Uygulama arka plandan dönünce tarih değişmiş olabilir: ekranı tazele
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&!sheetOpen())render()});
+render();
+// Çevrimdışı çalışma: uygulama dosyaları cihazda saklanır
+if('serviceWorker' in navigator&&location.protocol!=='file:')addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+</script>
+</body>
+</html>

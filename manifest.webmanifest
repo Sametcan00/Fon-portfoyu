@@ -1,0 +1,20 @@
+{
+  "id": "./",
+  "name": "Fon Portföyüm",
+  "short_name": "Portföy",
+  "description": "Kişisel fon portföyü takibi: FIFO satış, stopaj, günlük ve haftalık getiri.",
+  "lang": "tr",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#e8edf5",
+  "theme_color": "#e8edf5",
+  "categories": ["finance"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
