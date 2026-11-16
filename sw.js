@@ -1,7 +1,7 @@
 /* Fon Portföyüm — çevrimdışı çalışma.
    Uygulama dosyaları ilk açılışta iPhone'a kaydedilir; sonraki açılışlar internet olmadan da çalışır.
    Yeni sürüm yayınladığınızda aşağıdaki VERSION değerini artırın. */
-const VERSION = '1.4.0';
+const VERSION = '1.5.0';
 const CACHE = 'fon-portfoyu-' + VERSION;
 const FILES = [
   './',
