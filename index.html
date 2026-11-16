@@ -395,6 +395,34 @@ html.pwa .wrap{min-height:calc(var(--scrH) + 1px)}
 /* Sekme ve segment geçişi: kayma yok, yerinde yumuşak geçiş */
 #app.en-tab-fwd,#app.en-tab-bwd{animation:fadeIn .22s ease-out;--ex:0px}
 .tb-fwd>*,.tb-bwd>*{animation:fadeIn .2s ease-out both;--ex:0px}
+/* ================= v1.8.1 — Düzeltmeler =================
+   1) Çift dokunma yakınlaştırması kapatıldı: arka arkaya dokunuşlar yutulmuyor, sayfa küçülüp kaymıyor.
+   2) Mercek artık esnetilmiyor (scale yok): gerçek boyutu büyüyor, böylece hep düzgün kapsül kalır ve kabın dışına taşar.
+      İç içe bulanıklık (Safari'de kesik/yamuk kenar yapıyordu) kaldırıldı. */
+html,body{touch-action:manipulation}
+button,a,input,label,.row{touch-action:manipulation}
+.tabbar,.tabbar *{touch-action:none}
+#app{overflow-x:clip}
+:root{--lens-bg:rgba(255,255,255,.30);--lens-sh:inset 0 1.5px 0 #fff,inset 0 -1px 0 rgba(255,255,255,.85),inset 3px 0 4px -2px rgba(255,70,170,.45),inset -3px 0 4px -2px rgba(70,170,255,.45),0 0 0 .5px rgba(0,0,0,.10),0 8px 22px rgba(30,50,90,.20)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--lens-bg:rgba(255,255,255,.07);--lens-sh:inset 0 1.5px 0 rgba(255,255,255,.6),inset 0 -1px 0 rgba(255,255,255,.32),inset 3px 0 4px -2px rgba(255,70,170,.6),inset -3px 0 4px -2px rgba(70,200,255,.6),0 0 0 .5px rgba(255,255,255,.32),0 10px 24px rgba(0,0,0,.4)}}
+:root[data-theme="dark"]{--lens-bg:rgba(255,255,255,.07);--lens-sh:inset 0 1.5px 0 rgba(255,255,255,.6),inset 0 -1px 0 rgba(255,255,255,.32),inset 3px 0 4px -2px rgba(255,70,170,.6),inset -3px 0 4px -2px rgba(70,200,255,.6),0 0 0 .5px rgba(255,255,255,.32),0 10px 24px rgba(0,0,0,.4)}
+.seg>.thumb,.tabbar>.thumb,.seg>.thumb.sw,.tabbar>.thumb.sw{background:none!important;box-shadow:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;scale:none!important;
+  transition:transform .5s var(--spring),width .5s var(--spring)}
+.tabbar.drag>.thumb{transition:width .2s var(--spring)}
+.seg>.thumb::before,.tabbar>.thumb::before{content:"";position:absolute;top:0;right:0;bottom:0;left:0;border-radius:99px;background:var(--segth);box-shadow:var(--segsh);
+  transition:top .4s var(--spring),right .4s var(--spring),bottom .4s var(--spring),left .4s var(--spring),background-color .25s,box-shadow .25s}
+.tabbar>.thumb::before{background:var(--tb-thumb);box-shadow:none}
+.seg>.thumb.sw::before{top:-6px;bottom:-6px;left:-5px;right:-5px;background:var(--lens-bg);box-shadow:var(--lens-sh)}
+.tabbar>.thumb.sw::before{top:-14px;bottom:-14px;left:-14px;right:-14px;background:var(--lens-bg);box-shadow:var(--lens-sh)}
+@media (prefers-reduced-motion:reduce){.seg>.thumb.sw::before,.tabbar>.thumb.sw::before{top:0;right:0;bottom:0;left:0}}
+/* Sekme çubuğu kırpılmıyor: cam zemin (bulanıklık, renk, kenar) ayrı katmanda ve yalnızca o katman yuvarlak kırpılır;
+   böylece mercek çubuğun üstünden/altından kesilmeden taşar (önceden üstü-altı düz kesildiği için yamuk görünüyordu) */
+.tabbar{clip-path:none;background:transparent;-webkit-backdrop-filter:none;backdrop-filter:none;border-color:transparent;box-shadow:0 8px 28px rgba(0,0,0,.18)}
+.tabbar::after{content:"";position:absolute;top:-.5px;right:-.5px;bottom:-.5px;left:-.5px;z-index:-1;pointer-events:none;border-radius:99px;
+  background:var(--tb-fill);-webkit-backdrop-filter:blur(16px) saturate(190%);backdrop-filter:blur(16px) saturate(190%);
+  border:.5px solid var(--tb-rim);box-shadow:inset 0 1px 0 rgba(255,255,255,.12);clip-path:inset(0 round 99px)}
+html.vt-theme .tabbar::after{-webkit-backdrop-filter:none;backdrop-filter:none}
+.tabbar::before{z-index:-1}
 </style>
 </head>
 <body>
@@ -403,7 +431,7 @@ html.pwa .wrap{min-height:calc(var(--scrH) + 1px)}
 <nav class="tabbar glass" id="nav" aria-label="Sekmeler"></nav>
 <div id="m"></div><div id="t" class="glass" role="status" aria-live="polite"></div>
 <script>
-const APPV='1.8.0',KEY='fon-portfoyum-v2',TK='fon-tema',$=s=>document.querySelector(s);
+const APPV='1.8.1',KEY='fon-portfoyum-v2',TK='fon-tema',$=s=>document.querySelector(s);
 const NF=new Intl.NumberFormat('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2});
 const money=v=>NF.format(+v||0)+' ₺',num=(v,d=3)=>new Intl.NumberFormat('tr-TR',{maximumFractionDigits:d}).format(+v||0);
 const sgn=v=>(v>=0?'+':'−')+money(Math.abs(v)),pc=v=>(v>=0?'+':'−')+'%'+Math.abs(isFinite(v)?v:0).toFixed(2).replace('.',',');
@@ -743,8 +771,12 @@ if('serviceWorker' in navigator&&location.protocol!=='file:')addEventListener('l
     else if(cur)place(th,cur.offsetLeft,cur.offsetWidth)};
   nav.addEventListener('touchstart',e=>{if(e.touches.length!==1){d=null;return}const t=e.touches[0];start(t.clientX,t.clientY)},{passive:true});
   nav.addEventListener('touchmove',e=>{if(!d)return;const t=e.touches[0];if(move(t.clientX)&&e.cancelable)e.preventDefault()},{passive:false});
-  nav.addEventListener('touchend',()=>end(false),{passive:true});
-  nav.addEventListener('touchcancel',()=>end(true),{passive:true});
+  /* Dokunma: parmak kalkınca altındaki sekmeye doğrudan geçilir (click beklenmez; iOS hızlı dokunuşları yutmaz) */
+  const hit=cx=>parts().b.find(k=>{const r=k.getBoundingClientRect();return cx>=r.left&&cx<=r.right});
+  nav.addEventListener('touchend',e=>{if(!d)return;if(d.moved){end(false);return}d=null;const t=e.changedTouches[0],k=t&&hit(t.clientX);if(!k)return;
+    if(e.cancelable)e.preventDefault();blockClick=true;setTimeout(()=>blockClick=false,400);go(k.dataset.id)},{passive:false});
+  /* iOS sürüklemeyi bazen iptal eder: parmak bir sekmeye taşındıysa yine de o sekmeye geç */
+  nav.addEventListener('touchcancel',()=>end(false),{passive:true});
   nav.addEventListener('pointerdown',e=>{if(e.pointerType==='touch'||e.button>0)return;start(e.clientX,e.clientY)});
   addEventListener('pointermove',e=>{if(e.pointerType==='touch')return;move(e.clientX)});
   addEventListener('pointerup',e=>{if(e.pointerType==='touch')return;end(false)});
@@ -758,10 +790,10 @@ if('serviceWorker' in navigator&&location.protocol!=='file:')addEventListener('l
   new MutationObserver(()=>{if(!raf)raf=requestAnimationFrame(tick)}).observe(document.body,{subtree:true,attributes:true,attributeFilter:['class','style']});
 })();
 /* Gösterge cam mercek modu: ms>0 → o süre sonra koyu kapsüle döner; ms=0 → parmak kalkana kadar */
-function lens(th,ms){if(!th||RM())return;th.classList.add('sw');clearTimeout(th._t);th._hold=!ms;if(ms)th._t=setTimeout(()=>{if(!th._hold)th.classList.remove('sw')},ms)}
+function lens(th,ms){if(!th||RM())return;th.classList.add('sw');clearTimeout(th._t);th._hold=!ms;th._t=setTimeout(()=>{if(!ms)th._hold=false;if(!th._hold)th.classList.remove('sw')},ms||2500)}
 /* Basılı tutunca da gösterge cam merceğe dönüşür (bırakınca kayıp oturur) */
 document.addEventListener('pointerdown',e=>{const b=e.target.closest('.seg button,.tabbar button');if(!b)return;const th=b.parentElement.querySelector(':scope>.thumb');if(th)lens(th,0)},{passive:true});
-['pointerup','pointercancel'].forEach(ev=>document.addEventListener(ev,()=>document.querySelectorAll('.seg>.thumb.sw,.tabbar>.thumb.sw').forEach(th=>{if(th._hold){th._hold=false;lens(th,320)}}),{passive:true}));
+['pointerup','pointercancel','touchend','touchcancel'].forEach(ev=>document.addEventListener(ev,()=>document.querySelectorAll('.seg>.thumb.sw,.tabbar>.thumb.sw').forEach(th=>{if(th._hold){th._hold=false;lens(th,320)}}),{passive:true}));
 /* Ana ekran uygulaması: sekme çubuğunu her sayfada aynı yükseklikte tut */
 function placeNav(){const st=navigator.standalone||matchMedia('(display-mode: standalone)').matches;root.classList.toggle('pwa',!!st);if(!st)return;
   const land=innerWidth>innerHeight,H=land?Math.min(screen.width,screen.height):Math.max(screen.width,screen.height);
