@@ -301,6 +301,11 @@ input[type=date]::-webkit-date-and-time-value{text-align:left;margin:0}
 .tabbar button.pre{color:var(--ac)}
 .tabbar.drag>.thumb{transition:width .2s var(--spring),scale .35s var(--spring)}
 .wrap{padding-bottom:calc(104px + var(--sab))}
+/* v1.6.1 — Ana ekran uygulamasında çubuk ekranın altına göre değil üstüne göre (ekran yüksekliğinden) konumlanır:
+   iOS 27 kısa sayfalarda görünür alanı ~62pt kısalttığı için alttan konumlama sayfadan sayfaya kayıyordu */
+html.pwa .tabbar{bottom:auto;top:calc(var(--scrH) - var(--tbH,65px) - 22px)}
+/* Kısa sayfalar da ekrandan 1px uzun: iOS her sayfayı Ayarlar gibi tam ekran çizer (alt şerit/kısalma olmaz) */
+html.pwa .wrap{min-height:calc(var(--scrH) + 1px)}
 </style>
 </head>
 <body>
@@ -309,7 +314,7 @@ input[type=date]::-webkit-date-and-time-value{text-align:left;margin:0}
 <nav class="tabbar glass" id="nav" aria-label="Sekmeler"></nav>
 <div id="m"></div><div id="t" class="glass" role="status" aria-live="polite"></div>
 <script>
-const APPV='1.6.0',KEY='fon-portfoyum-v2',TK='fon-tema',$=s=>document.querySelector(s);
+const APPV='1.6.1',KEY='fon-portfoyum-v2',TK='fon-tema',$=s=>document.querySelector(s);
 const NF=new Intl.NumberFormat('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2});
 const money=v=>NF.format(+v||0)+' ₺',num=(v,d=3)=>new Intl.NumberFormat('tr-TR',{maximumFractionDigits:d}).format(+v||0);
 const sgn=v=>(v>=0?'+':'−')+money(Math.abs(v)),pc=v=>(v>=0?'+':'−')+'%'+Math.abs(isFinite(v)?v:0).toFixed(2).replace('.',',');
@@ -648,6 +653,11 @@ if('serviceWorker' in navigator&&location.protocol!=='file:')addEventListener('l
   nav.addEventListener('pointerup',e=>end(e,false));nav.addEventListener('pointercancel',e=>end(e,true));
   nav.addEventListener('click',e=>{if(blockClick){e.stopPropagation();e.preventDefault()}},true);
 })();
+/* Ana ekran uygulaması: sekme çubuğunu her sayfada aynı yükseklikte tut */
+function placeNav(){const st=navigator.standalone||matchMedia('(display-mode: standalone)').matches;root.classList.toggle('pwa',!!st);if(!st)return;
+  const land=innerWidth>innerHeight,H=land?Math.min(screen.width,screen.height):Math.max(screen.width,screen.height);
+  root.style.setProperty('--scrH',H+'px');const n=document.getElementById('nav');if(n&&n.offsetHeight)root.style.setProperty('--tbH',n.offsetHeight+'px')}
+placeNav();addEventListener('resize',placeNav);addEventListener('orientationchange',()=>setTimeout(placeNav,300));addEventListener('pageshow',placeNav);
 </script>
 </body>
 </html>
