@@ -36,7 +36,6 @@ Bu dosya yeni Claude sohbetlerinde otomatik okunur. Her sürümden sonra güncel
 - `localStorage` anahtarları: `fon-portfoyum-v2` (veriler), `fon-tema` (tema), `fon-son-yedek` (son yedek tarihi).
 - `navigator.storage.persist()` ile kalıcı depolama istenir.
 - Yedekleme: "Dışa aktar" paylaşım menüsünü açar (iCloud Drive'a kaydedilebilir). "Dosyadan yükle" ile geri yüklenir. Yedek kodunu kopyalama ve eski yedek formatını içe aktarma da var.
-- İkinci yedek: kullanıcı yedek kodunu elle, **özel** `Sametcan00/fon-yedek` deposuna `yedek-TARİH.txt` olarak koyar. Bu depoya oturumdan erişim yok (bilerek). Yedek dosyası asla herkese açık `fon-portfoyu` deposuna konmamalı.
 - Yüklenen her veri `norm()` ile aynı şemaya getirilir. Bu davranış bozulmamalı.
 
 ## Finans mantığı (doğru çalışıyor, korunmalı)
