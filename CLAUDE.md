@@ -23,7 +23,7 @@ Bu dosya yeni Claude sohbetlerinde otomatik okunur. Her sürümden sonra güncel
 
 - `index.html`: tüm CSS ve JS tek dosyada, harici kütüphane yok.
 - `sw.js`: service worker. Önce cihazdaki kopyayı açar, arka planda internetten günceller. Önbellek adı `fon-portfoyu-` + `VERSION`.
-- `manifest.webmanifest`, `icons/` ve kökte simge PNG'leri, `KURULUM.md`.
+- `manifest.webmanifest`, `icons/` (simgeler yalnızca burada), `KURULUM.md`.
 
 ## Sürüm kuralı
 
