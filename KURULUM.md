@@ -73,6 +73,13 @@ Uygulama içindeki bütün geçişler animasyonlu: fona girip çıkarken sayfa k
 - **Güncelleme:** `index.html` dosyasını değiştirdiğinde GitHub'a yeniden yükle ve `sw.js` içindeki `VERSION` değerini artır (örneğin `1.0.1`). Uygulamayı iki kez kapatıp açınca yeni sürüm gelir; verilerin kaybolmaz.
 - **Fiyatlar elle giriliyor.** Bu sürüm TEFAS'tan otomatik fiyat çekmiyor.
 
+## İkinci yedek: GitHub'da özel depo
+
+- Verilerin ikinci kopyası için GitHub'da **Private** (özel) bir depo aç, örneğin `fon-yedek`.
+- Ayarlar'daki **Yedek kodu**nu kopyala. Depoda **Add file → Create new file** ile `yedek-YYYY-AA-GG.txt` adlı bir dosya aç, kodu eksiksiz yapıştır ve **Commit changes** de.
+- **Yedek dosyasını asla `fon-portfoyu` deposuna koyma.** O depo herkese açıktır, finans verin görünür olur.
+- Geri yüklerken: dosyadaki metni kopyala, Ayarlar → Yedek kodu kutusuna yapıştır ve geri yükle.
+
 ## Sorun giderme
 
 | Belirti | Çözüm |
