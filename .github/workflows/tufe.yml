@@ -1,0 +1,31 @@
+# Enflasyon verisini her gün TCMB'den kontrol eder; yeni ay açıklandıysa tufe.json'u günceller ve main'e kaydeder.
+# Uygulama bu dosyayı okuyarak reel (enflasyona göre) getiriyi hesaplar.
+name: TÜFE güncelle
+on:
+  schedule:
+    - cron: '23 8 * * *'   # her gün 08:23 UTC = 11:23 Türkiye (TÜİK verisi ayın 3'ünde 10:00'da açıklanır)
+  workflow_dispatch:       # Actions sekmesinden elle de çalıştırılabilir
+permissions:
+  contents: write
+  pages: write
+concurrency:
+  group: tufe
+  cancel-in-progress: false
+jobs:
+  guncelle:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: TCMB TÜFE tablosunu oku
+        run: python3 .github/scripts/tufe.py tufe.json
+      - name: Değiştiyse kaydet ve yayınla
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if git diff --quiet -- tufe.json; then echo "Yeni veri yok."; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add tufe.json
+          git commit -m "TÜFE verisi güncellendi ($(python3 -c 'import json;print(json.load(open("tufe.json"))["son"])'))"
+          git push
+          gh api -X POST "repos/${{ github.repository }}/pages/builds" >/dev/null || echo "Pages yeniden yayın isteği gönderilemedi (push zaten yayını başlatır)."

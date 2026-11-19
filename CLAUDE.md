@@ -22,18 +22,22 @@ Bu dosya yeni Claude sohbetlerinde otomatik okunur. Her sürümden sonra güncel
 ## Dosyalar
 
 - `index.html`: tüm CSS ve JS tek dosyada, harici kütüphane yok.
-- `sw.js`: service worker. Önce cihazdaki kopyayı açar, arka planda internetten günceller. Önbellek adı `fon-portfoyu-` + `VERSION`.
+- `sw.js`: service worker. Önce cihazdaki kopyayı açar, arka planda internetten günceller. Önbellek adı `fon-portfoyu-` + `VERSION`. `tufe.json` için tersi: önce internet, yoksa cihazdaki kopya.
+- `tufe.json`: TCMB TÜFE verisi (`{kaynak, guncelleme, son:'YYYY-AA', m:{'YYYY-AA':[yıllık%, aylık%]}}`). Elle düzenlenmez; GitHub Actions üretir.
+- `.github/workflows/tufe.yml` + `.github/scripts/tufe.py`: her gün 11:23 (TR) TCMB'nin Tüketici Fiyatları sayfasını okur, yeni ay varsa `tufe.json`'u `main`'e yazar. Tablo okunamazsa iş hata verir (GitHub e-posta atar).
 - `manifest.webmanifest`, `icons/` (simgeler yalnızca burada), `KURULUM.md`.
 
 ## Sürüm kuralı
 
-- Güncel sürüm: **1.8.1**
+- Güncel sürüm: **1.9.0**
 - Her güncellemede **iki yerde** sürüm artırılır: `sw.js` içinde `VERSION`, `index.html` içinde `APPV`.
 - Ayarlar sayfasının altında "sürüm X.Y.Z" yazar; kullanıcı bununla kontrol eder.
 
 ## Veri
 
-- `localStorage` anahtarları: `fon-portfoyum-v2` (veriler), `fon-tema` (tema), `fon-son-yedek` (son yedek tarihi).
+- `localStorage` anahtarları: `fon-portfoyum-v2` (veriler), `fon-tema` (tema), `fon-son-yedek` (son yedek tarihi), `fon-gizli` (gizlilik modu), `fon-kilit` (Face ID geçiş anahtarı kimliği), `fon-tufe` (TÜFE verisinin cihazdaki kopyası).
+- 1.9 veri alanları (norm() korur): fonda `chk` (fiyatın son kontrol tarihi). İşlem kayıtlarında `q` (adet), `p` (fiyat), `lot` (alımın sepet kimliği), `used` (satışta kullanılan sepet parçaları), `tax`, `rev`. Geçmişten düzenleme/silme kayıtlarında `ref` + `old` (geri almak için). Eski kayıtlarda bu alanlar yoktur; `buyInfo`/`sellInfo` metinden, `usedOf` satış öncesi/sonrası sepet farkından bulur.
+- Fiyat geçmişi fon başına en çok 4000 kayıt (1.8.1'e kadar 400'dü).
 - `navigator.storage.persist()` ile kalıcı depolama istenir.
 - Yedekleme: "Dışa aktar" paylaşım menüsünü açar (iCloud Drive'a kaydedilebilir). "Dosyadan yükle" ile geri yüklenir. Yedek kodunu kopyalama ve eski yedek formatını içe aktarma da var.
 - Yüklenen her veri `norm()` ile aynı şemaya getirilir. Bu davranış bozulmamalı.
@@ -47,7 +51,10 @@ Bu dosya yeni Claude sohbetlerinde otomatik okunur. Her sürümden sonra güncel
   - Haftalık getiri: son fiyat tarihinden en az 7 gün önceki fiyata göre.
   - Dönem içinde alınan lotlar kendi maliyetiyle hesaplanır.
 - **Biçim:** fiyat girişinde Türkçe ondalık virgül desteklenir. Her fonun rengi kendine ait.
-- **Fiyatlar elle girilir.** TEFAS'tan otomatik fiyat çekme yok.
+- **Fiyatlar elle girilir.** TEFAS'tan otomatik fiyat çekme yok ve yapılmamalı: TEFAS botları F5 korumasıyla bilerek engelliyor, eski `api/DB/BindHistoryInfo` kapatılmış (2026-11 denendi). Bu korumayı atlatmaya çalışılmaz.
+- **Toplu fiyat girişi** (`bulkModal`): tüm fonlar tek ekranda. Kullanıcının TEFAS'tan kendi kopyaladığı metin `parsePaste` ile okunur: fon kodundan sonraki ilk ondalıklı sayı fiyat, kodun hemen önündeki tarih o fiyatın tarihi.
+- **Enflasyon (reel getiri):** her sepet kendi alış ayından son açıklanan aya kadar TÜFE ile karşılaştırılır (`inflFrom`, `realOf`). Satılmış sepetler dahil değil.
+- **Fiyat hatırlatıcısı:** elde tutulan fonun fiyatı en az 2 iş günü girilmediyse (ya da kontrol edilmediyse) uyarı çıkar (`staleDays`).
 
 ## Arayüz (iOS 27 tarzı)
 
@@ -72,6 +79,14 @@ Bu dosya yeni Claude sohbetlerinde otomatik okunur. Her sürümden sonra güncel
   - Soldan kaydırarak geri dönülür.
   - Alt paneller aşağı çekerek kapatılır.
 - **Sayılar:** değişirken animasyonla güncellenir (`tween`).
+- **1.9 ekranları:**
+  - Portföy: değer grafiği (1H/1A/3A/1Y/Tümü, parmakla gezinme, kesikli çizgi = yatırılan para). Getiri yüzdesi = dönem kâr/zararı ÷ (dönem başı değer + dönem içi alımlar).
+  - Fon detayı: birim fiyat grafiği, alım günü işaretleri, reel getiri satırı.
+  - Özet: İşlem geçmişi ve Yıllık özet bağlantıları, enflasyon kartı, ısı haritası.
+  - Alt sayfalar `PARENT` ile tanımlı (`tx` ve `year` → Özet, `detail` → Portföy); soldan kaydırınca üst sayfaya dönülür.
+  - İşlem geçmişi: alım/satış düzenleme ve silme. Kısmen satılmış alım ya da sepet bilgisi bulunamayan eski satış kilitlidir, nedeni yazılır. Her değişiklik fonun Geçmiş sekmesine düşer ve "Geri al" ile geri alınır.
+  - Gizlilik modu (göz düğmesi): tutarlar `••••`. Kayda yazılan metinler her zaman `moneyR`/`sgnR` ile gerçek tutarla yazılır.
+  - Face ID kilidi (WebAuthn geçiş anahtarı): açılışta ve 60 sn'den uzun arka planda kalınca. Bir gizlilik perdesidir, veri şifrelenmez. 2 başarısız denemeden sonra "Face ID çalışmıyor mu?" ile kaldırılabilir.
 - **CSS yapısı:** sürüm sürüm eklenmiş katmanlardan oluşur; sonraki bloklar öncekileri ezer. En sondaki "v1.8.1 — Düzeltmeler" bloğu geçerli olanıdır. Değişiklik yaparken önceki kuralların özgüllüğüne dikkat et (örnek: `:root[data-theme="light"] .tabbar>.thumb.sw`).
 
 ## Çözülen sorunlar (tekrar etmesin)
@@ -107,4 +122,6 @@ Kullanıcı isterse dosyaları elle de yükleyebilir: GitHub → Add file → Up
 ## Açık konular
 
 - 1.8.1'in gerçek iPhone'da doğrulanması: hızlı dokunma, parmakla sürükleme, merceğin taşması.
-- Henüz istenmemiş olası geliştirmeler: TEFAS'tan otomatik fiyat çekme, Mac edinilirse yerel SwiftUI sürümü.
+- 1.9.0'ın gerçek iPhone'da doğrulanması: Face ID kilidi (ana ekran uygulamasında WebAuthn), grafikte parmakla gezinme, TEFAS'tan kopyalanan gerçek metnin okunması.
+- TÜFE işinin ilk otomatik güncellemesi (3 Aralık 2026, Kasım verisi) Actions sekmesinden kontrol edilmeli.
+- Henüz istenmemiş olası geliştirmeler: hedef dağılım ve dengeleme, düzenli yatırım planı, Mac edinilirse yerel SwiftUI sürümü.
