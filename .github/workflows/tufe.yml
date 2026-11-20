@@ -5,6 +5,11 @@ on:
   schedule:
     - cron: '23 8 * * *'   # her gün 08:23 UTC = 11:23 Türkiye (TÜİK verisi ayın 3'ünde 10:00'da açıklanır)
   workflow_dispatch:       # Actions sekmesinden elle de çalıştırılabilir
+    inputs:
+      yayinla:
+        description: 'Veri değişmese de GitHub Pages yayınını başlat (deneme için)'
+        type: boolean
+        default: false
 permissions:
   contents: write
   pages: write
@@ -18,14 +23,20 @@ jobs:
       - uses: actions/checkout@v5
       - name: TCMB TÜFE tablosunu oku
         run: python3 .github/scripts/tufe.py tufe.json
-      - name: Değiştiyse kaydet ve yayınla
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Değiştiyse kaydet
+        id: kayit
         run: |
-          if git diff --quiet -- tufe.json; then echo "Yeni veri yok."; exit 0; fi
+          if git diff --quiet -- tufe.json; then echo "Yeni veri yok."; echo "degisti=0" >> "$GITHUB_OUTPUT"; exit 0; fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add tufe.json
           git commit -m "TÜFE verisi güncellendi ($(python3 -c 'import json;print(json.load(open("tufe.json"))["son"])'))"
           git push
-          gh api -X POST "repos/${{ github.repository }}/pages/builds" >/dev/null || echo "Pages yeniden yayın isteği gönderilemedi (push zaten yayını başlatır)."
+          echo "degisti=1" >> "$GITHUB_OUTPUT"
+      # GITHUB_TOKEN ile yapılan push, Pages yayınını her zaman kendiliğinden başlatmayabilir; bu yüzden açıkça istenir.
+      # Başarısız olursa iş kırmızı biter (GitHub e-posta gönderir), hata sessizce geçilmez.
+      - name: GitHub Pages yayınını başlat
+        if: steps.kayit.outputs.degisti == '1' || inputs.yayinla == true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X POST "repos/${{ github.repository }}/pages/builds" --jq '.status'

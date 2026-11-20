@@ -29,7 +29,7 @@ Bu dosya yeni Claude sohbetlerinde otomatik okunur. Her sürümden sonra güncel
 
 ## Sürüm kuralı
 
-- Güncel sürüm: **1.9.0**
+- Güncel sürüm: **1.9.1**
 - Her güncellemede **iki yerde** sürüm artırılır: `sw.js` içinde `VERSION`, `index.html` içinde `APPV`.
 - Ayarlar sayfasının altında "sürüm X.Y.Z" yazar; kullanıcı bununla kontrol eder.
 
@@ -46,15 +46,21 @@ Bu dosya yeni Claude sohbetlerinde otomatik okunur. Her sürümden sonra güncel
 
 - **Stopaj:** her fon için varsayılan %17,5, fon bazında değiştirilebilir. Hisse fonlarına %0 uygulamak yanlıştı ve geri alındı. Elle değiştirilen oran `taxSet` bayrağıyla korunur.
 - **Satış:** FIFO lot mantığıyla hesaplanır. Gerçekleşen kâr/zarar ayrıca tutulur.
+  - 1.9.1: satış yalnızca **satış tarihinde portföyde olan** sepetlerden yapılır (`byDate`); sonradan alınan sepet geçmiş tarihli satışta kullanılamaz.
+  - Aynı fonda kendisinden sonra satış olan eski bir satış düzenlenemez/silinemez (`laterSell`): FIFO sırası bozulmasın diye önce sonrakiler silinir. Sonraki satışları yeniden hesaplayan bir "tekrar oynatma" bilerek yapılmadı.
+  - Satış düzenlenirken satışın kendi stopaj oranı korunur (`rateOf`), fonun güncel oranı değil.
 - **Getiri (Midas mantığı):** her fonun tarihli fiyat kaydı tutulur (aynı gün tek kayıt).
   - Günlük getiri: bir önceki fiyat gününe göre.
   - Haftalık getiri: son fiyat tarihinden en az 7 gün önceki fiyata göre.
   - Dönem içinde alınan lotlar kendi maliyetiyle hesaplanır.
 - **Biçim:** fiyat girişinde Türkçe ondalık virgül desteklenir. Her fonun rengi kendine ait.
+  - Sayı okuma: `pn` (fiyat/adet girişi; tek nokta ondalık sayılır), `pnM` (tutar kutuları; `10.000` = on bin), `trN` (uygulamanın kendi yazdığı Türkçe metinler, örn. eski kayıtlardaki "10.000 adet"). Eski kayıt metni asla `pn` ile okunmamalı.
+  - `isDate` gerçek takvim tarihini doğrular (2025-19-05, 2025-02-30 reddedilir); `norm()` bozuk tarihli fiyat kayıtlarını atar.
 - **Fiyatlar elle girilir.** TEFAS'tan otomatik fiyat çekme yok ve yapılmamalı: TEFAS botları F5 korumasıyla bilerek engelliyor, eski `api/DB/BindHistoryInfo` kapatılmış (2026-11 denendi). Bu korumayı atlatmaya çalışılmaz.
 - **Toplu fiyat girişi** (`bulkModal`): tüm fonlar tek ekranda. Kullanıcının TEFAS'tan kendi kopyaladığı metin `parsePaste` ile okunur: fon kodundan sonraki ilk ondalıklı sayı fiyat, kodun hemen önündeki tarih o fiyatın tarihi.
 - **Enflasyon (reel getiri):** her sepet kendi alış ayından son açıklanan aya kadar TÜFE ile karşılaştırılır (`inflFrom`, `realOf`). Satılmış sepetler dahil değil.
-- **Fiyat hatırlatıcısı:** elde tutulan fonun fiyatı en az 2 iş günü girilmediyse (ya da kontrol edilmediyse) uyarı çıkar (`staleDays`).
+- **Fiyat hatırlatıcısı:** elde tutulan fonun fiyatı en az 2 iş günü girilmediyse (ya da kontrol edilmediyse) uyarı çıkar (`staleDays`). `chk` yalnız ileri gider: geçmiş bir güne fiyat eklemek fonu "güncel" yapmaz.
+- **TEFAS yapıştırma:** tarih yalnız fon kodunun hemen önündeki hücreden alınır; mevcut fiyattan %50'den fazla sapan değer (getiri tablosu gibi) kutuya yazılmaz, kullanıcıya gösterilir.
 
 ## Arayüz (iOS 27 tarzı)
 
@@ -118,6 +124,15 @@ Bu dosya yeni Claude sohbetlerinde otomatik okunur. Her sürümden sonra güncel
 4. Kullanıcıya şunu söyle: uygulamayı iki kez kapatıp açsın ve Ayarlar'ın altındaki sürüm numarasına baksın.
 
 Kullanıcı isterse dosyaları elle de yükleyebilir: GitHub → Add file → Upload files ile `index.html` ve `sw.js`.
+
+## 1.9.1 düzeltmeleri (Gemini/Antigravity kalite kontrolünden)
+
+- Eski kayıtlarda 1.000+ adetin 1.000 kat küçük okunması (`trN`).
+- Geçersiz takvim tarihinin kaydedilmesi (`isDate`).
+- Eski satış silme/düzenlemede FIFO sırasının bozulması ve sonradan alınan sepetin satılabilmesi.
+- Kapanan alt panelde çift dokunuşla işlemin iki kez yapılması (`#m.closing` dokunmaya kapalı).
+- Gizlilikte Geçmiş sekmesinde tutar sızması (`dtl`); sepet silinince alım kaydının kalması; grafikte "Tümü" getirisinin ilk günün kârını düşmesi; fon grafiğinde çift nokta; toplu girişte yapıştırma kalıntıları; Face ID anahtarının kilit kaldırılınca açık görünmesi; "Ocak–Ocak"; `tufe.json` sunucu hatasında önbelleğe dönülmemesi.
+- `tufe.yml`: Pages yayın isteği artık hata verirse iş kırmızı biter (sessizce geçilmez); `yayinla` seçeneğiyle elle denenebilir.
 
 ## Açık konular
 
