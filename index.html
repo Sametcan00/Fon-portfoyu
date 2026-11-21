@@ -415,6 +415,8 @@ button,a,input,label,.row{touch-action:manipulation}
 .tabbar>.thumb::before{background:var(--tb-thumb);box-shadow:none}
 .seg>.thumb.sw::before{top:-6px;bottom:-6px;left:-5px;right:-5px;background:var(--lens-bg);box-shadow:var(--lens-sh)}
 .tabbar>.thumb.sw::before{top:-14px;bottom:-14px;left:-14px;right:-14px;background:var(--lens-bg);box-shadow:var(--lens-sh)}
+/* 1.9.3: mercek videodaki gibi daha geniş ve basık kapsül (çubuktan az taşar) */
+.tabbar>.thumb.sw::before{top:-8px;bottom:-8px;left:-16px;right:-16px}
 @media (prefers-reduced-motion:reduce){.seg>.thumb.sw::before,.tabbar>.thumb.sw::before{top:0;right:0;bottom:0;left:0}}
 /* Sekme çubuğu kırpılmıyor: cam zemin (bulanıklık, renk, kenar) ayrı katmanda ve yalnızca o katman yuvarlak kırpılır;
    böylece mercek çubuğun üstünden/altından kesilmeden taşar (önceden üstü-altı düz kesildiği için yamuk görünüyordu) */
@@ -504,6 +506,22 @@ button.tgl:active{transform:none}
    sürüklerken gösterge parmağı gecikmesiz izler (yalnız genişlik yumuşak değişir) */
 .seg,.seg *{touch-action:pan-y;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .seg.drag>.thumb,.seg.drag>.thumb.sw{transition:width .2s var(--spring)}
+/* 1.9.3 — Sıvı cam kırılması: merceğin içindeki bükülen kopya (.lq) ve merceğin altında gizlenen gerçek seçenekler */
+.thumb>.lq{position:absolute;border-radius:99px;overflow:hidden;pointer-events:none;visibility:hidden}
+.seg>.thumb>.lq{top:-6px;bottom:-6px;left:-5px;right:-5px}
+.tabbar>.thumb>.lq{top:-8px;bottom:-8px;left:-16px;right:-16px}
+.thumb>.lq.vis{visibility:visible}
+.lq>.lqi{position:absolute;left:0;top:0;font-style:normal}
+.lqi>button{position:absolute!important;margin:0!important;box-sizing:border-box;z-index:auto!important;pointer-events:none;transform-origin:50% 50%}
+/* Filtrelenen kopyada geçiş/animasyon yok (Safari'de ayrı katmana alınıp filtreden kaçmasın) */
+.lqi,.lqi *{transition:none!important;animation:none!important}
+.tabbar>.thumb.sw .lqi>button.on,.seg>.thumb.sw .lqi>button.on{color:var(--ink)}
+.seg.lqon>button,.tabbar.lqon>button{-webkit-mask-image:linear-gradient(90deg,#000 var(--ml),transparent var(--ml),transparent var(--mr),#000 var(--mr));mask-image:linear-gradient(90deg,#000 var(--ml),transparent var(--ml),transparent var(--mr),#000 var(--mr))}
+.seg.lqon>button.under,.tabbar.lqon>button.under svg,.tabbar.lqon>button.under span{transform:none;filter:none}
+/* Mercek kenarı videodaki gibi ince; üstte koyu kırılma bandı; sahte pembe/mavi parlama azaltıldı (gerçek renk kırılması artık kopyada) */
+:root{--lens-sh:inset 0 1.5px 0 #fff,inset 0 -1px 0 rgba(255,255,255,.85),inset 0 6px 6px -5px rgba(0,0,0,.10),inset 2px 0 3px -2px rgba(255,70,170,.3),inset -2px 0 3px -2px rgba(70,170,255,.3),0 0 0 .5px rgba(0,0,0,.10),0 8px 22px rgba(30,50,90,.18)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--lens-sh:inset 0 1px 0 rgba(255,255,255,.45),inset 0 -1px 0 rgba(255,255,255,.18),inset 0 7px 7px -5px rgba(0,0,0,.55),inset 2px 0 3px -2px rgba(255,70,170,.35),inset -2px 0 3px -2px rgba(70,200,255,.35),0 0 0 .5px rgba(255,255,255,.28),0 8px 20px rgba(0,0,0,.35)}}
+:root[data-theme="dark"]{--lens-sh:inset 0 1px 0 rgba(255,255,255,.45),inset 0 -1px 0 rgba(255,255,255,.18),inset 0 7px 7px -5px rgba(0,0,0,.55),inset 2px 0 3px -2px rgba(255,70,170,.35),inset -2px 0 3px -2px rgba(70,200,255,.35),0 0 0 .5px rgba(255,255,255,.28),0 8px 20px rgba(0,0,0,.35)}
 </style>
 </head>
 <body>
@@ -998,14 +1016,15 @@ function collapse(el){if(!el||RM()||!el.animate)return Promise.resolve();const h
   return el.animate([{height:h+'px',opacity:1,transform:'none'},{height:'0px',opacity:0,paddingTop:'0px',paddingBottom:'0px',transform:'translateX(-24px)'}],{duration:320,easing:'cubic-bezier(.4,0,.2,1)',fill:'forwards'}).finished.catch(()=>{})}
 function afterRender(){
   const rm=RM();
-  document.querySelectorAll('.seg,#nav').forEach(s=>{const on=s.querySelector('button.on'),th=s.querySelector(':scope>.thumb');if(!on||!th)return;
+  document.querySelectorAll('.seg,#nav').forEach(s=>{const on=s.querySelector(':scope>button.on'),th=s.querySelector(':scope>.thumb');if(!on||!th)return;
     const key=s.id||s.dataset.seg,x=on.offsetLeft,w=on.offsetWidth,p=SEGX[key];
     const q=p||{x,w};th.style.transition='none';th.style.width=q.w+'px';th.style.transform=`translateX(${q.x}px)`;void th.offsetWidth;th.style.transition='';
     if(rm||q.x===x&&q.w===w){th.style.transition='none';th.style.width=w+'px';th.style.transform=`translateX(${x}px)`;void th.offsetWidth;th.style.transition=''}else{th.style.width=w+'px';th.style.transform=`translateX(${x}px)`;lens(th,420)}SEGX[key]={x,w}});
   const bars=[...document.querySelectorAll('#app [data-bw]')];
   bars.forEach(el=>{el.style.width=(rm?+el.dataset.bw:(BARW[el.dataset.bk]??0))+'%'});
   if(bars.length){void bars[0].offsetWidth;bars.forEach(el=>{el.style.width=el.dataset.bw+'%';BARW[el.dataset.bk]=+el.dataset.bw})}
-  document.querySelectorAll('#app [data-tw]').forEach(el=>{const k=el.dataset.tw,v=+el.dataset.v,o=TW[k];TW[k]=v;if(o!==undefined&&Math.abs(o-v)>1e-9&&!rm)tween(el,o,v,el.dataset.f)})}
+  document.querySelectorAll('#app [data-tw]').forEach(el=>{const k=el.dataset.tw,v=+el.dataset.v,o=TW[k];TW[k]=v;if(o!==undefined&&Math.abs(o-v)>1e-9&&!rm)tween(el,o,v,el.dataset.f)});
+  clearTimeout(afterRender._w);afterRender._w=setTimeout(lqWarm,700)}
 function render(){
   const pg=view.page,app=$('#app'),same=pg===lastPage;
   const prevK=same?new Set([...app.querySelectorAll('[data-k]')].map(e=>e.dataset.k)):null;
@@ -1018,8 +1037,8 @@ function render(){
   [...app.children].forEach((c,i)=>c.style.setProperty('--i',i));app.querySelectorAll('.list').forEach(l=>[...l.children].forEach((r,i)=>r.style.setProperty('--i',i)));
   const tab=PARENT[pg]||pg;
   const nav=$('#nav');
-  if(!nav.querySelector('button'))nav.innerHTML='<i class="thumb" aria-hidden="true"></i>'+[['home','Portföy',I.home],['overview','Özet',I.pie],['settings','Ayarlar',I.gear]].map(([k,n,ic])=>`<button data-act="nav" data-id="${k}" aria-label="${n}">${ic}<span>${n}</span></button>`).join('');
-  nav.querySelectorAll('button').forEach(b=>{const on=b.dataset.id===tab;if(on&&!b.classList.contains('on')&&nav.dataset.ready&&!RM()){b.classList.remove('pop');void b.offsetWidth;b.classList.add('pop');clearTimeout(b._p);b._p=setTimeout(()=>b.classList.remove('pop'),600)}b.classList.toggle('on',on);if(on)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});nav.dataset.ready=1;
+  if(!nav.querySelector(':scope>button'))nav.innerHTML='<i class="thumb" aria-hidden="true"></i>'+[['home','Portföy',I.home],['overview','Özet',I.pie],['settings','Ayarlar',I.gear]].map(([k,n,ic])=>`<button data-act="nav" data-id="${k}" aria-label="${n}">${ic}<span>${n}</span></button>`).join('');
+  nav.querySelectorAll(':scope>button').forEach(b=>{const on=b.dataset.id===tab;if(on&&!b.classList.contains('on')&&nav.dataset.ready&&!RM()){b.classList.remove('pop');void b.offsetWidth;b.classList.add('pop');clearTimeout(b._p);b._p=setTimeout(()=>b.classList.remove('pop'),600)}b.classList.toggle('on',on);if(on)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});nav.dataset.ready=1;
   afterRender()}
 
 function openTx(kind,pre){
@@ -1156,7 +1175,7 @@ if('serviceWorker' in navigator&&location.protocol!=='file:')addEventListener('l
 /* Sekme çubuğu: parmakla sürükleyerek seçim (bırakınca en yakın sekmeye geçer); dokunma da çalışır */
 /* iPhone'da dokunma olayları (touch) kullanılır: iOS'ta en güvenilir yol budur; fare için pointer olayları */
 (()=>{const nav=document.getElementById('nav');let d=null,blockClick=false;
-  const parts=()=>{const th=nav.querySelector('.thumb'),b=[...nav.querySelectorAll('button')];return{th,b}};
+  const parts=()=>{const th=nav.querySelector('.thumb'),b=[...nav.querySelectorAll(':scope>button')];return{th,b}};
   const place=(th,x,w)=>{th.style.width=w+'px';th.style.transform=`translateX(${x}px)`};
   const start=(cx,cy)=>{d={x0:cx,y0:cy,moved:false,x:0,w:0,t:null}};
   const move=cx=>{if(!d)return false;const{th,b}=parts();if(!th||!b.length)return false;
@@ -1169,7 +1188,7 @@ if('serviceWorker' in navigator&&location.protocol!=='file:')addEventListener('l
   const end=cancel=>{if(!d)return;const m=d.moved,t=d.t,x=d.x,w=d.w;d=null;if(!m)return;
     blockClick=true;setTimeout(()=>blockClick=false,400);nav.classList.remove('drag');
     const{th,b}=parts();b.forEach(k=>k.classList.remove('pre'));th._hold=false;lens(th,360);
-    const cur=nav.querySelector('button.on');
+    const cur=nav.querySelector(':scope>button.on');
     if(!cancel&&t&&cur&&t!==cur.dataset.id){SEGX.nav={x,w};go(t)}
     else if(cur)place(th,cur.offsetLeft,cur.offsetWidth)};
   nav.addEventListener('touchstart',e=>{if(e.touches.length!==1){d=null;return}const t=e.touches[0];start(t.clientX,t.clientY)},{passive:true});
@@ -1227,10 +1246,76 @@ if('serviceWorker' in navigator&&location.protocol!=='file:')addEventListener('l
 /* Mercek hareket ederken altından geçen simge/yazı büyür ve renk kırılması alır */
 (()=>{let raf=0;const tick=()=>{raf=0;let any=false;
   document.querySelectorAll('.seg>.thumb,.tabbar>.thumb').forEach(th=>{const on=th.classList.contains('sw');const r=th.getBoundingClientRect();
-    th.parentElement.querySelectorAll(':scope>button').forEach(b=>{let u=false;if(on){const q=b.getBoundingClientRect(),c=q.left+q.width/2;u=c>r.left+6&&c<r.right-6}b.classList.toggle('under',u)});if(on)any=true});
+    const btns=[...th.parentElement.querySelectorAll(':scope>button')];
+    btns.forEach(b=>{let u=false;if(on){const q=b.getBoundingClientRect(),c=q.left+q.width/2;u=c>r.left+6&&c<r.right-6}b.classList.toggle('under',u)});
+    if(lqSync(th,on,btns)||on)any=true});
   if(any)raf=requestAnimationFrame(tick)};
   new MutationObserver(()=>{if(!raf)raf=requestAnimationFrame(tick)}).observe(document.body,{subtree:true,attributes:true,attributeFilter:['class','style']});
 })();
+/* 1.9.3 — Sıvı cam kırılması (iOS 27 Liquid Glass gibi): mercek kenarından geçen simge ve yazılar bükülür, uzar ve
+   kenarlarda gökkuşağı renk kırılması alır. Safari camın arkasını (backdrop-filter) bükemediği için merceğin içine
+   seçeneklerin bir kopyası konur; kopya SVG yer değiştirme filtresiyle (feDisplacementMap) bükülür, gerçek seçenekler
+   merceğin altında maskeyle gizlenir. Kopya her karede merceğin o anki yerine ve büyüklüğüne göre hizalanır. */
+const LQ_EX={seg:[5,6],tabbar:[16,8]};   /* merceğin göstergeden taşma payı (yatay, dikey); CSS'teki ::before ile aynı */
+const lqMade=new Set();let lqSvg=null;
+/* Bükme haritası: kapsülün kenarına yaklaştıkça içeriden (merkeze doğru) örnek alınır → kenarda içerik uzar/bükülür */
+function lqMap(w,h,b){const k=2,W=Math.round(w*k),H=Math.round(h*k),c=document.createElement('canvas');c.width=W;c.height=H;
+  const g=c.getContext('2d'),im=g.createImageData(W,H),D=im.data,r=h/2,x1=Math.min(r,w/2),x2=Math.max(w-r,w/2);
+  for(let j=0;j<H;j++){const dy=(j+.5)/k-r;for(let i=0;i<W;i++){const x=(i+.5)/k,dx=x-(x<x1?x1:x>x2?x2:x),ds=Math.hypot(dx,dy),d=r-ds,o=(j*W+i)*4;
+    /* dikey bükülme yarı yarıya: simgeler üst/alt kenara yakın, orada çizgi gibi uzamasınlar (videoda da asıl bükülme yanlarda) */
+    let fx=0,fy=0;if(d>=0&&d<b&&ds>0){let f=1-d/b;f*=f;fx=dx/ds*f;fy=dy/ds*f*.45}
+    D[o]=128-127*fx;D[o+1]=128-127*fy;D[o+2]=128;D[o+3]=255}}
+  g.putImageData(im,0,0);return c.toDataURL()}
+/* Mercek boyutuna özel filtre (önbellekli): R/G/B kanalları farklı miktarda bükülüp birleştirilir → renk kırılması */
+function lqFilter(w,h){w=Math.max(8,Math.round(w/2)*2);h=Math.max(8,Math.round(h/2)*2);const id='lqf'+w+'x'+h;if(lqMade.has(id))return id;
+  const NS='http://www.w3.org/2000/svg';
+  if(!lqSvg){lqSvg=document.createElementNS(NS,'svg');lqSvg.setAttribute('aria-hidden','true');lqSvg.setAttribute('width','0');lqSvg.setAttribute('height','0');lqSvg.style.cssText='position:fixed;left:0;top:0;width:0;height:0;pointer-events:none';document.body.appendChild(lqSvg)}
+  const b=Math.min(20,Math.max(6,h*.3)),S=b*1.05,f=document.createElementNS(NS,'filter');
+  const at=(e,a)=>{for(const k in a)e.setAttribute(k,a[k]);return e},add=(n,a)=>f.appendChild(at(document.createElementNS(NS,n),a));
+  at(f,{id,x:0,y:0,width:1,height:1,filterUnits:'objectBoundingBox',primitiveUnits:'userSpaceOnUse','color-interpolation-filters':'sRGB'});
+  /* nötr zemin: harita görüntüsü henüz yüklenmediyse içerik kaymaz (yalnızca bükülmez) */
+  add('feFlood',{'flood-color':'rgb(128,128,128)','flood-opacity':1,result:'n'});
+  const u=lqMap(w,h,b),img=add('feImage',{x:0,y:0,width:w,height:h,preserveAspectRatio:'none',result:'i',href:u});img.setAttributeNS('http://www.w3.org/1999/xlink','xlink:href',u);
+  const mg=add('feMerge',{result:'m'});['n','i'].forEach(k=>mg.appendChild(at(document.createElementNS(NS,'feMergeNode'),{in:k})));
+  /* kanallar hafif sızdırılır: saf kırmızı/yeşil/mavi yerine yumuşak gökkuşağı */
+  const M={r:'1 0 0 0 0 0 .18 0 0 0 0 0 .18 0 0 0 0 0 1 0',g:'.18 0 0 0 0 0 1 0 0 0 0 0 .18 0 0 0 0 0 1 0',b:'.18 0 0 0 0 0 .18 0 0 0 0 0 1 0 0 0 0 0 1 0'};
+  [['r',.82],['g',1],['b',1.2]].forEach(([c,s])=>{add('feDisplacementMap',{in:'SourceGraphic',in2:'m',scale:(S*s).toFixed(2),xChannelSelector:'R',yChannelSelector:'G',result:'d'+c});add('feColorMatrix',{in:'d'+c,type:'matrix',values:M[c],result:'c'+c})});
+  add('feBlend',{in:'cr',in2:'cg',mode:'screen',result:'rg'});add('feBlend',{in:'rg',in2:'cb',mode:'screen',result:'x'});
+  /* üç kanal üst üste binince kenar saydamlığı 1-(1-a)³ olur ve yazı kalınlaşır; bu tablo saydamlığı geri a'ya çevirir */
+  f.appendChild(at(document.createElementNS(NS,'feComponentTransfer'),{in:'x'})).appendChild(at(document.createElementNS(NS,'feFuncA'),{type:'table',tableValues:Array.from({length:21},(_,i)=>(1-Math.cbrt(1-i/20)).toFixed(3)).join(' ')}));
+  lqSvg.appendChild(f);lqMade.add(id);return id}
+/* Haritalar boşta önceden üretilir: ilk dokunuşta hazır olsunlar (Safari görüntüyü geç yükleyebilir) */
+function lqWarm(){if(RM())return;document.querySelectorAll('.seg>.thumb,.tabbar>.thumb').forEach(th=>{const[ex,ey]=th.parentElement.classList.contains('tabbar')?LQ_EX.tabbar:LQ_EX.seg;if(th.offsetWidth)lqFilter(th.offsetWidth+2*ex,th.offsetHeight+2*ey)})}
+/* Mercek açıkken ya da bırakıldıktan sonra küçülürken true döner (çizim döngüsü sürsün diye) */
+function lqSync(th,on,btns){const p=th.parentElement;let L=th._lq;
+  const hide=()=>{if(L&&L.vis){L.vis=false;L.el.classList.remove('vis');p.classList.remove('lqon');btns.forEach(b=>{b.style.removeProperty('--ml');b.style.removeProperty('--mr')})}return false};
+  if(RM()||!btns.length||!on&&!(L&&L.vis))return hide();
+  const tab=p.classList.contains('tabbar'),[ex,ey]=tab?LQ_EX.tabbar:LQ_EX.seg,cs=getComputedStyle(th,'::before');
+  const iT=parseFloat(cs.top)||0,iR=parseFloat(cs.right)||0,iB=parseFloat(cs.bottom)||0,iL=parseFloat(cs.left)||0;
+  /* g: merceğin ne kadar açık olduğu (0 = koyu kapsül, 1 = tam mercek); bırakınca küçülürken büyütme de yumuşakça söner */
+  const g=Math.min(1,Math.max(0,-iT/ey,-iL/ex));if(!on&&g<.04)return hide();
+  if(!L||L.n!==btns.length||!L.el.isConnected){
+    if(L&&L.el)L.el.remove();
+    const el=document.createElement('span'),inn=document.createElement('span');el.className='lq';inn.className='lqi';el.setAttribute('aria-hidden','true');el.appendChild(inn);
+    const cl=btns.map(b=>{const c=b.cloneNode(true);['data-act','data-id','role','aria-selected','aria-current','aria-label','aria-pressed'].forEach(a=>c.removeAttribute(a));c.classList.remove('under','pop');c.tabIndex=-1;inn.appendChild(c);return c});
+    th.appendChild(el);L=th._lq={el,inn,cl,ic:cl.map(c=>[c.querySelector('svg'),c.querySelector('span')]),n:btns.length,w:0,h:0,pw:-1,ph:-1,pos:[],vis:false,tab}}
+  /* önce ölç, sonra yaz (sayfa yerleşimi her karede bir kez hesaplansın) */
+  const pr=p.getBoundingClientRect(),tr=th.getBoundingClientRect();
+  const relayout=L.pw!==p.offsetWidth||L.ph!==p.offsetHeight;if(relayout){L.pw=p.offsetWidth;L.ph=p.offsetHeight;L.pos=btns.map(b=>[b.offsetLeft,b.offsetTop,b.offsetWidth,b.offsetHeight])}
+  const bw=tr.width+2*ex,bh=tr.height+2*ey,vl=tr.left+iL-pr.left,vr=tr.right-iR-pr.left,lc=(vl+vr)/2,lw=Math.max(1,(vr-vl)/2);
+  if(!L.vis){L.vis=true;L.el.classList.add('vis');p.classList.add('lqon')}
+  if(relayout){L.inn.style.width=L.pw+'px';L.inn.style.height=L.ph+'px';L.cl.forEach((c,i)=>{const[x,y,w,h]=L.pos[i];c.style.cssText=`left:${x}px;top:${y}px;width:${w}px;height:${h}px`})}
+  if(Math.abs(L.w-bw)>1.5||Math.abs(L.h-bh)>1.5){L.w=bw;L.h=bh;L.el.style.filter=`url(#${lqFilter(bw,bh)})`}
+  L.inn.style.transform=`translate(${(pr.left-tr.left+ex).toFixed(2)}px,${(pr.top-tr.top+ey).toFixed(2)}px)`;
+  L.el.style.clipPath=`inset(${(iT+ey).toFixed(2)}px ${(iR+ex).toFixed(2)}px ${(iB+ey).toFixed(2)}px ${(iL+ex).toFixed(2)}px round 99px)`;
+  btns.forEach((b,i)=>{const[x,,w]=L.pos[i],c=L.cl[i];
+    b.style.setProperty('--ml',(vl-x).toFixed(1)+'px');b.style.setProperty('--mr',(vr-x).toFixed(1)+'px');
+    c.classList.toggle('on',b.classList.contains('on'));c.classList.toggle('pre',b.classList.contains('pre'));
+    /* merkeze yaklaşan simge büyür (büyüteç camı) */
+    let k=Math.max(0,1-Math.abs(x+w/2-lc)/lw);k*=k*g;
+    if(L.tab){const[sv,sp]=L.ic[i];if(sv)sv.style.transform=`scale(${(1+.22*k).toFixed(3)})`;if(sp)sp.style.transform=`scale(${(1+.1*k).toFixed(3)})`}
+    else c.style.transform=`scale(${(1+.08*k).toFixed(3)})`});
+  return true}
 /* Gösterge cam mercek modu: ms>0 → o süre sonra koyu kapsüle döner; ms=0 → parmak kalkana kadar */
 function lens(th,ms){if(!th||RM())return;th.classList.add('sw');clearTimeout(th._t);th._hold=!ms;th._t=setTimeout(()=>{if(!ms)th._hold=false;if(!th._hold)th.classList.remove('sw')},ms||2500)}
 /* Basılı tutunca da gösterge cam merceğe dönüşür (bırakınca kayıp oturur) */

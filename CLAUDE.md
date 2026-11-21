@@ -111,7 +111,7 @@ Bu dosya yeni Claude sohbetlerinde otomatik okunur. Her sürümden sonra güncel
 
 ## Bilinen sınırlar
 
-- Apple'ın gerçek Liquid Glass kırılması (camın arkasını bükme/büyütme) Safari'de yapılamıyor, yakın bir taklit uygulandı.
+- Apple'ın gerçek Liquid Glass kırılması (camın arkasındaki sayfayı bükme) Safari'de yapılamıyor (`backdrop-filter:url()` yok). 1.9.3'ten itibaren merceğin kendi seçeneklerini bükme kopya + SVG filtreyle yapılıyor; arkadaki sayfa içeriği bükülmüyor.
 - Safari'de iç içe `backdrop-filter` bozuk görünür. Merceğe bulanıklık verilmemeli.
 - Uygulama silinirse veriler de silinir. Kullanıcı düzenli "Dışa aktar" yapmalı.
 - Testler gerçek iOS'ta değil, Chromium'da (Playwright iPhone taklidi). Gerçek cihaz davranışı kullanıcının videolarıyla doğrulanır.
@@ -138,6 +138,17 @@ Kullanıcı isterse dosyaları elle de yükleyebilir: GitHub → Add file → Up
 
 - Kullanıcı düzeltmeleri parça parça veriyor (video + açıklama). Sürüm numarası kullanıcı isteyince artırılıp `main`'e gönderilir.
 - **Segment seçicilerde parmakla sürükleme:** Sepetler/Nakit hesabı/Geçmiş, tema, Günlük/Haftalık/Toplam, grafik aralığı, ısı haritası, işlem türü. Sekme çubuğundaki gibi mercek parmağı izler, bırakınca en yakın seçeneğe geçer. `.seg{touch-action:pan-y}`: yatay sürükleme sayfayı kaydırmaz, dikey kaydırma çalışır. Alt sayfada sol kenardan (x<28) başlayan hareket geri kaydırmaya bırakılır. Engelleyen `touchmove`/`touchend` dinleyicileri yalnızca `.seg` öğelerine bağlanır (MutationObserver ile).
+
+## Yayınlanmamış değişiklikler (sonraki sürüm, 1.9.3 olacak)
+
+- **Sıvı cam kırılması** (kullanıcının başka bir uygulamasındaki iOS 27 Liquid Glass sekme çubuğu referans alındı): mercek kenarından geçen simge/yazılar bükülür, uzar, kenarda gökkuşağı renk kırılması alır; merkez temiz kalır. Sekme çubuğu ve tüm segment seçicilerde.
+  - Yöntem: merceğin içine seçeneklerin kopyası (`.lq` > `.lqi` > kopya düğmeler, `data-act`/`role` silinmiş) konur, kopyaya `filter:url(#lqfWxH)` (SVG `feDisplacementMap`, R/G/B ayrı miktarda + `screen` birleştirme + saydamlık düzeltme tablosu) uygulanır. Gerçek düğmeler merceğin altında `mask-image` (`--ml`/`--mr`) ile gizlenir (`.lqon`).
+  - Bükme haritası `lqMap` canvas'ta üretilir: kapsül kenarına yaklaştıkça içeriden örnek alınır; dikey bükülme yarıya indirildi (simge tepesinde çizgi oluşuyordu). Filtreler boyuta göre önbellekli; `lqWarm` boşta önceden üretir; harita yüklenmezse `feFlood` nötr zemin kaymayı önler.
+  - `lqSync` her karede (mevcut `.under` döngüsünden) kopyayı merceğin `::before` ölçüsüne göre hizalar, `clip-path` ile kırpar; bırakınca mercek küçülürken büyütme yumuşakça söner.
+  - Kopyada geçiş/animasyon yok (Safari'de ayrı katmana alınıp filtreden kaçmasın). Gösterge bir `<i>` olduğu için kopyada `font-style:normal` şart (yoksa yazılar italik çıkıyordu).
+  - Kopyalar göstergenin içinde olduğu için `nav.querySelector('button…')` gibi sorgular `:scope>button` yapıldı; yeni kodda da gerçek düğmeler için hep `:scope>button` kullanılmalı.
+  - Sekme çubuğu merceği videodaki gibi daha basık: 108×68 (`::before` ve `.lq` -8px dikey, -16px yatay). Mercek kenarı inceltildi, üstte koyu kırılma bandı, sahte pembe/mavi parlama azaltıldı.
+  - Yalnız Chromium'da test edildi (ortamda WebKit yok). Safari'de `filter:url()` + `feImage` davranışı kullanıcının cihazında doğrulanmalı.
 
 ## Açık konular
 
