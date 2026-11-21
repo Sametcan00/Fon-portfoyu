@@ -134,6 +134,11 @@ Kullanıcı isterse dosyaları elle de yükleyebilir: GitHub → Add file → Up
 - Gizlilikte Geçmiş sekmesinde tutar sızması (`dtl`); sepet silinince alım kaydının kalması; grafikte "Tümü" getirisinin ilk günün kârını düşmesi; fon grafiğinde çift nokta; toplu girişte yapıştırma kalıntıları; Face ID anahtarının kilit kaldırılınca açık görünmesi; "Ocak–Ocak"; `tufe.json` sunucu hatasında önbelleğe dönülmemesi.
 - `tufe.yml`: Pages yayın isteği artık hata verirse iş kırmızı biter (sessizce geçilmez); `yayinla` seçeneğiyle elle denenebilir.
 
+## Yayınlanmamış değişiklikler (sonraki sürüme girecek)
+
+- Kullanıcı düzeltmeleri parça parça veriyor; sürüm numarasını kendisi "bitti" deyince artırıyoruz. O zamana kadar `VERSION`/`APPV` değişmez, `main`'e gönderilmez, iş çalışma dalında birikir.
+- **Segment seçicilerde parmakla sürükleme:** Sepetler/Nakit hesabı/Geçmiş, tema, Günlük/Haftalık/Toplam, grafik aralığı, ısı haritası, işlem türü. Sekme çubuğundaki gibi mercek parmağı izler, bırakınca en yakın seçeneğe geçer. `.seg{touch-action:pan-y}`: yatay sürükleme sayfayı kaydırmaz, dikey kaydırma çalışır. Alt sayfada sol kenardan (x<28) başlayan hareket geri kaydırmaya bırakılır. Engelleyen `touchmove`/`touchend` dinleyicileri yalnızca `.seg` öğelerine bağlanır (MutationObserver ile).
+
 ## Açık konular
 
 - 1.8.1'in gerçek iPhone'da doğrulanması: hızlı dokunma, parmakla sürükleme, merceğin taşması.

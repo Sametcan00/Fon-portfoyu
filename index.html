@@ -500,6 +500,10 @@ button.tgl:active{transform:none}
 /* Gizlilik modunda yedek kodu bulanık; dokununca görünür */
 .privta{filter:blur(5px)}.privta:focus{filter:none}
 #lock.cover .lk{visibility:hidden}
+/* Segment seçiciler de sekme çubuğu gibi parmakla sürüklenir: yatay hareket sayfaya gitmez (dikey kaydırma çalışır),
+   sürüklerken gösterge parmağı gecikmesiz izler (yalnız genişlik yumuşak değişir) */
+.seg,.seg *{touch-action:pan-y;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.seg.drag>.thumb,.seg.drag>.thumb.sw{transition:width .2s var(--spring)}
 </style>
 </head>
 <body>
@@ -1180,6 +1184,45 @@ if('serviceWorker' in navigator&&location.protocol!=='file:')addEventListener('l
   addEventListener('pointermove',e=>{if(e.pointerType==='touch')return;move(e.clientX)});
   addEventListener('pointerup',e=>{if(e.pointerType==='touch')return;end(false)});
   nav.addEventListener('click',e=>{if(blockClick){e.stopPropagation();e.preventDefault()}},true);
+})();
+/* Segment seçiciler (Sepetler/Nakit hesabı/Geçmiş, tema, dönem, grafik aralığı…): sekme çubuğundaki gibi parmakla
+   sürüklenince mercek parmağı izler, bırakınca en yakın seçeneğe geçer. Segmentler her çizimde yeniden oluştuğu için
+   başlangıç belgeden dinlenir, yeni segmentlere de dinleyici otomatik bağlanır. Dikey başlayan hareket sayfa kaydırmasıdır, ona karışılmaz. */
+(()=>{let d=null,blockUntil=0;
+  const parts=s=>({th:s.querySelector(':scope>.thumb'),b:[...s.querySelectorAll(':scope>button')]});
+  const place=(th,x,w)=>{th.style.width=w+'px';th.style.transform=`translateX(${x}px)`};
+  const start=(s,cx,cy)=>{d={s,x0:cx,y0:cy,cx,cy,moved:false,x:0,w:0,t:null}};
+  const move=(cx,cy)=>{if(!d)return false;const s=d.s,{th,b}=parts(s);if(!s.isConnected||!th||!b.length){d=null;return false}
+    d.cx=cx;d.cy=cy;
+    if(!d.moved){const dx=Math.abs(cx-d.x0),dy=Math.abs(cy-d.y0);if(dy>8&&dy>dx){d=null;return false}if(dx<6)return false;
+      d.moved=true;s.classList.add('drag');th._hold=true;th.classList.add('sw');clearTimeout(th._t)}
+    const r=s.getBoundingClientRect(),c=cx-r.left;
+    let best=b[0],bd=1e9;b.forEach(k=>{const dd=Math.abs(k.offsetLeft+k.offsetWidth/2-c);if(dd<bd){bd=dd;best=k}});
+    const w=best.offsetWidth,lo=b[0].offsetLeft,hi=b[b.length-1].offsetLeft+b[b.length-1].offsetWidth-w;
+    const x=Math.max(lo-8,Math.min(hi+8,c-w/2));d.x=x;d.w=w;place(th,x,w);
+    if(d.t!==best.dataset.id&&d.t!==null&&navigator.vibrate)try{navigator.vibrate(4)}catch(_){}
+    d.t=best.dataset.id;b.forEach(k=>k.classList.toggle('pre',k===best));return true};
+  const end=()=>{if(!d)return false;const{s,moved,t,x,w,cx,cy}=d;d=null;if(!moved)return false;
+    blockUntil=performance.now()+400;s.classList.remove('drag');
+    const{th,b}=parts(s);b.forEach(k=>k.classList.remove('pre'));if(th){th._hold=false;lens(th,360)}
+    const cur=s.querySelector(':scope>button.on'),tb=b.find(k=>k.dataset.id===t);
+    if(tb&&tb!==cur&&s.isConnected){SEGX[s.id||s.dataset.seg]={x,w};lastXY={x:cx,y:cy};act(tb.dataset.act,tb.dataset.id)}
+    else if(cur&&th)place(th,cur.offsetLeft,cur.offsetWidth);
+    return true};
+  document.addEventListener('touchstart',e=>{const s=e.target.closest('.seg');
+    /* Alt sayfada ekranın sol kenarından başlayan hareket "geri" kaydırmasıdır */
+    if(!s||e.touches.length!==1||(PARENT[view.page]&&e.touches[0].clientX<28)){d=null;return}start(s,e.touches[0].clientX,e.touches[0].clientY)},{passive:true});
+  /* Engelleyen (passive:false) dinleyiciler yalnızca segmentlere bağlanır; sayfanın geri kalanında kaydırma JS'i beklemez */
+  const tm=e=>{if(!d)return;const t=e.touches[0];if(t&&move(t.clientX,t.clientY)&&e.cancelable)e.preventDefault()};
+  const te=e=>{if(end()&&e.cancelable)e.preventDefault()};
+  const bind=()=>document.querySelectorAll('.seg').forEach(s=>{if(s._dg)return;s._dg=1;s.addEventListener('touchmove',tm,{passive:false});s.addEventListener('touchend',te,{passive:false})});
+  bind();new MutationObserver(bind).observe(document.getElementById('app'),{childList:true,subtree:true});
+  /* iOS sürüklemeyi bazen iptal eder: parmak başka seçeneğe taşındıysa yine de ona geçilir */
+  document.addEventListener('touchcancel',()=>end(),{passive:true});
+  document.addEventListener('pointerdown',e=>{if(e.pointerType==='touch'||e.button>0)return;const s=e.target.closest('.seg');if(s)start(s,e.clientX,e.clientY)});
+  addEventListener('pointermove',e=>{if(e.pointerType==='touch')return;move(e.clientX,e.clientY)});
+  addEventListener('pointerup',e=>{if(e.pointerType==='touch')return;end()});
+  document.addEventListener('click',e=>{if(performance.now()<blockUntil&&e.target.closest('.seg')){e.stopPropagation();e.preventDefault()}},true);
 })();
 /* Mercek hareket ederken altından geçen simge/yazı büyür ve renk kırılması alır */
 (()=>{let raf=0;const tick=()=>{raf=0;let any=false;
