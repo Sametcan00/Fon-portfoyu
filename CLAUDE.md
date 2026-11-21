@@ -10,7 +10,6 @@ Bu dosya yeni Claude sohbetlerinde otomatik okunur. Her sürümden sonra güncel
 - Kullanıcı referansı ekran görüntüsü ve videoyla verir (iPhone ekran kaydı .mp4). Videoları `ffmpeg` ile kareye ayırıp incele.
 - Görsel referans: **Midas** uygulaması ve **iOS 27 Liquid Glass** görünümü.
 - Kullanıcının bilgisayarı Windows; Xcode/Mac yok.
-- Kullanıcı düzeltmeleri parça parça (video + açıklama) verir. **Her parça bitince onay beklemeden** test et, sürümü artır ve `main`'e yayınla.
 
 ## Proje nedir?
 
@@ -137,7 +136,6 @@ Kullanıcı isterse dosyaları elle de yükleyebilir: GitHub → Add file → Up
 
 ## 1.9.2 düzeltmeleri
 
-- Kullanıcı düzeltmeleri parça parça veriyor (video + açıklama). **Her parça bitince onay beklemeden** sürüm artırılıp `main`'e gönderilir (kullanıcı 1.9.3'te böyle istedi).
 - **Segment seçicilerde parmakla sürükleme:** Sepetler/Nakit hesabı/Geçmiş, tema, Günlük/Haftalık/Toplam, grafik aralığı, ısı haritası, işlem türü. Sekme çubuğundaki gibi mercek parmağı izler, bırakınca en yakın seçeneğe geçer. `.seg{touch-action:pan-y}`: yatay sürükleme sayfayı kaydırmaz, dikey kaydırma çalışır. Alt sayfada sol kenardan (x<28) başlayan hareket geri kaydırmaya bırakılır. Engelleyen `touchmove`/`touchend` dinleyicileri yalnızca `.seg` öğelerine bağlanır (MutationObserver ile).
 
 ## 1.9.3 düzeltmeleri
