@@ -29,7 +29,7 @@ Bu dosya yeni Claude sohbetlerinde otomatik okunur. Her sürümden sonra güncel
 
 ## Sürüm kuralı
 
-- Güncel sürüm: **1.9.4**
+- Güncel sürüm: **1.9.5**
 - Her güncellemede **iki yerde** sürüm artırılır: `sw.js` içinde `VERSION`, `index.html` içinde `APPV`.
 - Ayarlar sayfasının altında "sürüm X.Y.Z" yazar; kullanıcı bununla kontrol eder.
 
@@ -138,7 +138,7 @@ Kullanıcı isterse dosyaları elle de yükleyebilir: GitHub → Add file → Up
 
 - **Segment seçicilerde parmakla sürükleme:** Sepetler/Nakit hesabı/Geçmiş, tema, Günlük/Haftalık/Toplam, grafik aralığı, ısı haritası, işlem türü. Sekme çubuğundaki gibi mercek parmağı izler, bırakınca en yakın seçeneğe geçer. `.seg{touch-action:pan-y}`: yatay sürükleme sayfayı kaydırmaz, dikey kaydırma çalışır. Alt sayfada sol kenardan (x<28) başlayan hareket geri kaydırmaya bırakılır. Engelleyen `touchmove`/`touchend` dinleyicileri yalnızca `.seg` öğelerine bağlanır (MutationObserver ile).
 
-## 1.9.3–1.9.4: Sıvı cam kırılması
+## 1.9.3–1.9.5: Sıvı cam kırılması
 
 - Referans: kullanıcının başka bir uygulamasındaki iOS 27 Liquid Glass sekme çubuğu (ekran kaydı). Efekt sekme çubuğunda ve tüm segment seçicilerde.
 - **Videodaki efekt (1.9.4'te doğru anlaşıldı):** merceğin kenarı, merceğin DIŞINDAKİ görüntüyü içeri çeker ve sıkıştırır. Mercek çubuktan üstte ve altta biraz taştığı için çubuğun kenar çizgisi içeri kayar. Sonuç: merceğin içinde üstte ve altta koyu kalın bantlar (dışarıdaki siyah sayfa), bantların kenar boyunca kıvrılan uçlarında gökkuşağı. Kenara gelen simge/yazı sıkışıp kıvrılır, kenarın hemen dışındaki görüntü kenarda bir kez daha görünür. Mercek içi çubuktan biraz açık; merkez temiz.
@@ -159,13 +159,16 @@ Kullanıcı isterse dosyaları elle de yükleyebilir: GitHub → Add file → Up
   - Kopyada geçiş/animasyon yok (Safari'de ayrı katmana alınıp filtreden kaçmasın).
   - Gösterge bir `<i>` olduğu için kopyada `font-style:normal` şart (yoksa yazılar italik çıkar).
   - Kopyalar göstergenin içinde olduğu için gerçek düğme sorguları hep `:scope>button` olmalı.
+- **1.9.5 (telefon kaydından):** 1.9.4 Safari'de bozuktu: yazı mercekte aşağı kayıyor, her yer renkli, sekme çubuğunun ucunda kapkara hilal çıkıyordu. Sebep (büyük olasılık): Safari `feImage` görüntüsünü verilen ölçüyle değil kendi piksel boyutuyla çiziyor; 2x üretilen harita 2 kat büyük çiziliyordu. Çözüm: harita 1x ve filtre alanının (mercek + `LQ_PAD`) tamamını kaplıyor, `x=0,y=0`. Böylece ölçü dikkate alınsa da alınmasa da aynı sonuç.
+  - Çubuğun altındaki "BGP … 0,00 ₺" fon satırı sayfa içeriği; çubuk camın arkasında görünür. Dış zemin rengi artık yalnız çubuğun/izin yatay uzunluğunca (`.lqo`, uçları yumuşak maske); koyu temada uçların dışı saydam, gerçek içerik görünür. Açık temada yarı saydam yer kırılınca griye döndüğü için mercek içi tamamen opak (sayfa zemini).
+  - Mercek açıkken alttaki eski `::before` zemini/gölgesi kapalı (`.thumb.lqv::before`), uçta çizgi/gölge yapıyordu.
 - Yalnız Chromium'da test edildi (ortamda WebKit yok). Safari'de `filter:url()` + `feImage` davranışı kullanıcının cihazında doğrulanmalı. Kullanıcı 1.9.3'te efekti telefonda yalnız sekme çubuğunda gördüğünü söyledi; 1.9.4'te segmentlerde de bantlar her zaman görünür.
 
 ## Açık konular
 
 - 1.8.1'in gerçek iPhone'da doğrulanması: hızlı dokunma, parmakla sürükleme, merceğin taşması.
 - 1.9.2'nin gerçek iPhone'da doğrulanması: segmentlerde parmakla sürükleme.
-- 1.9.4'ün gerçek iPhone'da doğrulanması: sıvı cam kırılması (bantlar, uçlardaki gökkuşağı) Safari'de sekme çubuğunda ve segmentlerde görünüyor mu, akıcı mı.
+- 1.9.5'in gerçek iPhone'da doğrulanması: sıvı cam kırılması (bantlar, uçlardaki gökkuşağı) Safari'de sekme çubuğunda ve segmentlerde görünüyor mu, akıcı mı.
 - 1.9.0'ın gerçek iPhone'da doğrulanması: Face ID kilidi (ana ekran uygulamasında WebAuthn), grafikte parmakla gezinme, TEFAS'tan kopyalanan gerçek metnin okunması.
 - TÜFE işinin ilk otomatik güncellemesi (3 Aralık 2026, Kasım verisi) Actions sekmesinden kontrol edilmeli.
 - Henüz istenmemiş olası geliştirmeler: hedef dağılım ve dengeleme, düzenli yatırım planı, Mac edinilirse yerel SwiftUI sürümü.

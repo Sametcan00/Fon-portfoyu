@@ -516,11 +516,15 @@ button.tgl:active{transform:none}
 .thumb>.lq.vis{visibility:visible}
 .lq>.lqi{position:absolute;left:0;top:0}
 .lqi>.lqb{position:absolute;left:0;top:0;box-sizing:border-box}
+/* dış zemin yalnız çubuğun/izin üstünde ve altında (bantlar buradan); uçların dışı saydam, arkadaki gerçek içerik görünür */
+.lqi>.lqo{position:absolute;left:0;top:-80px;bottom:-80px;-webkit-mask-image:linear-gradient(90deg,transparent,#000 16px,#000 calc(100% - 16px),transparent);mask-image:linear-gradient(90deg,transparent,#000 16px,#000 calc(100% - 16px),transparent)}
 .lqi>button{position:absolute!important;margin:0!important;box-sizing:border-box;z-index:auto!important;pointer-events:none;transform-origin:50% 50%}
 /* Filtrelenen kopyada geçiş/animasyon yok (Safari'de ayrı katmana alınıp filtreden kaçmasın) */
 .lqi,.lqi *{transition:none!important;animation:none!important}
 .tabbar>.thumb.sw .lqi>button.on,.seg>.thumb.sw .lqi>button.on{color:var(--ink)}
 .seg>.thumb.lqv,.tabbar>.thumb.lqv{z-index:2}
+/* kopya açıkken alttaki eski mercek zemini/kenarı görünmesin (uçta kopyanın saydam kaldığı yerde çizgi yapıyordu) */
+.seg>.thumb.lqv::before,.tabbar>.thumb.lqv::before{background:none;box-shadow:none}
 .seg.lqon>button.under,.tabbar.lqon>button.under svg,.tabbar.lqon>button.under span{transform:none;filter:none}
 /* Camın ince kenar çizgisi kopyanın üstünde */
 .seg>.thumb::after,.tabbar>.thumb::after{content:"";position:absolute;top:0;right:0;bottom:0;left:0;border-radius:99px;pointer-events:none;opacity:0;box-shadow:var(--lens-rim);
@@ -539,7 +543,7 @@ button.tgl:active{transform:none}
 <nav class="tabbar glass" id="nav" aria-label="Sekmeler"></nav>
 <div id="m"></div><div id="t" class="glass" role="status" aria-live="polite"></div>
 <script>
-const APPV='1.9.4',KEY='fon-portfoyum-v2',TK='fon-tema',$=s=>document.querySelector(s);
+const APPV='1.9.5',KEY='fon-portfoyum-v2',TK='fon-tema',$=s=>document.querySelector(s);
 const NF=new Intl.NumberFormat('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2});
 // Gizlilik modu: ekrandaki tutarlar maskelenir (kayıtlara yazılan metinler her zaman gerçek tutarla: moneyR/sgnR)
 const PK='fon-gizli';let priv=false;try{priv=localStorage.getItem(PK)==='1'}catch(e){}
@@ -1269,9 +1273,11 @@ if('serviceWorker' in navigator&&location.protocol!=='file:')addEventListener('l
 const LQ_EX={seg:[5,6],tabbar:[18,10]},LQ_PAD=14;   /* merceğin göstergeden taşma payı (yatay, dikey; CSS ::before ile aynı) + örnekleme payı */
 const lqMade=new Set();let lqSvg=null;
 /* Bükme haritası (R = yatay, G = dikey, 128 = bükülme yok): kapsülün kenarına yaklaştıkça dışarıdan örnek alınır */
-function lqMap(w,h,b){const k=2,W=Math.round(w*k),H=Math.round(h*k),c=document.createElement('canvas');c.width=W;c.height=H;
-  const g=c.getContext('2d'),im=g.createImageData(W,H),D=im.data,r=h/2,x1=Math.min(r,w/2),x2=Math.max(w-r,w/2);
-  for(let j=0;j<H;j++){const dy=(j+.5)/k-r;for(let i=0;i<W;i++){const x=(i+.5)/k,dx=x-(x<x1?x1:x>x2?x2:x),ds=Math.hypot(dx,dy),d=r-ds,o=(j*W+i)*4;
+function lqMap(w,h,b,P){const W=Math.round(w+2*P),H=Math.round(h+2*P),c=document.createElement('canvas');c.width=W;c.height=H;
+  /* Harita filtre alanının (mercek + P payı) TAMAMINI, 1 piksel = 1 nokta ölçüsünde kaplar: Safari görüntüyü verilen ölçü
+     yerine kendi piksel boyutuyla yerleştirse bile sonuç aynı olsun (1.9.4'te 2x harita Safari'de kayık çiziliyordu) */
+  const g=c.getContext('2d'),im=g.createImageData(W,H),D=im.data,r=h/2,x1=P+Math.min(r,w/2),x2=P+Math.max(w-r,w/2),cy=P+r;
+  for(let j=0;j<H;j++){const dy=j+.5-cy;for(let i=0;i<W;i++){const x=i+.5,dx=x-(x<x1?x1:x>x2?x2:x),ds=Math.hypot(dx,dy),d=r-ds,o=(j*W+i)*4;
     let fx=0,fy=0;if(d>=0&&d<b&&ds>0){const f=Math.pow(1-d/b,1.5);fx=dx/ds*f;fy=dy/ds*f}
     D[o]=128+127*fx;D[o+1]=128+127*fy;D[o+2]=128;D[o+3]=255}}
   g.putImageData(im,0,0);return c.toDataURL()}
@@ -1285,7 +1291,7 @@ function lqFilter(w,h,sg){w=Math.max(8,Math.round(w/2)*2);h=Math.max(8,Math.roun
   at(f,{id,x:0,y:0,width:1,height:1,filterUnits:'objectBoundingBox',primitiveUnits:'userSpaceOnUse','color-interpolation-filters':'sRGB'});
   /* nötr zemin: harita görüntüsü henüz yüklenmediyse içerik kaymaz (yalnızca bükülmez) */
   add('feFlood',{'flood-color':'rgb(128,128,128)','flood-opacity':1,result:'n'});
-  const u=lqMap(w,h,b),img=add('feImage',{x:P,y:P,width:w,height:h,preserveAspectRatio:'none',result:'i',href:u});img.setAttributeNS('http://www.w3.org/1999/xlink','xlink:href',u);
+  const u=lqMap(w,h,b,P),img=add('feImage',{x:0,y:0,width:w+2*P,height:h+2*P,preserveAspectRatio:'none',result:'i',href:u});img.setAttributeNS('http://www.w3.org/1999/xlink','xlink:href',u);
   const mg=add('feMerge',{result:'m'});['n','i'].forEach(k=>mg.appendChild(at(document.createElementNS(NS,'feMergeNode'),{in:k})));
   /* içerik opak olduğu için kanallar ayrı bükülüp toplanır: kaymayan yerde birebir aynı renk, kenarda gökkuşağı */
   const C={r:'1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0',g:'0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 1 0',b:'0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 1 0'};
@@ -1319,16 +1325,18 @@ function lqSync(th,on,btns){const p=th.parentElement;let L=th._lq;
   const g=Math.min(1,Math.max(0,-iT/ey,-iL/ex));if(!on&&g<.04)return hide();
   if(!L||L.n!==btns.length||!L.el.isConnected){
     if(L&&L.el)L.el.remove();
-    const el=document.createElement('span'),inn=document.createElement('span'),bg=document.createElement('span');el.className='lq';inn.className='lqi';bg.className='lqb';el.setAttribute('aria-hidden','true');el.appendChild(inn);inn.appendChild(bg);
+    const el=document.createElement('span'),inn=document.createElement('span'),bo=document.createElement('span'),bg=document.createElement('span');el.className='lq';inn.className='lqi';bo.className='lqo';bg.className='lqb';el.setAttribute('aria-hidden','true');el.appendChild(inn);inn.appendChild(bo);inn.appendChild(bg);
     const cl=btns.map(b=>{const c=b.cloneNode(true);['data-act','data-id','role','aria-selected','aria-current','aria-label','aria-pressed'].forEach(a=>c.removeAttribute(a));c.classList.remove('under','pop');c.tabIndex=-1;inn.appendChild(c);return c});
-    th.appendChild(el);L=th._lq={el,inn,bg,cl,ic:cl.map(c=>[c.querySelector('svg'),c.querySelector('span')]),n:btns.length,w:0,h:0,pw:-1,ph:-1,pos:[],vis:false,tab}}
+    th.appendChild(el);L=th._lq={el,inn,bo,bg,cl,ic:cl.map(c=>[c.querySelector('svg'),c.querySelector('span')]),n:btns.length,w:0,h:0,pw:-1,ph:-1,pos:[],vis:false,tab}}
   /* önce ölç, sonra yaz (sayfa yerleşimi her karede bir kez hesaplansın) */
   const pr=p.getBoundingClientRect(),tr=th.getBoundingClientRect();
   const relayout=L.pw!==p.offsetWidth||L.ph!==p.offsetHeight;if(relayout){L.pw=p.offsetWidth;L.ph=p.offsetHeight;L.pos=btns.map(b=>[b.offsetLeft,b.offsetTop,b.offsetWidth,b.offsetHeight])}
   const bw=tr.width+2*ex,bh=tr.height+2*ey,vl=tr.left+iL-pr.left,vr=tr.right-iR-pr.left,lc=(vl+vr)/2,lw=Math.max(1,(vr-vl)/2);
-  if(!L.vis){const C=lqColors(p,tab,(tr.left+tr.right)/2,(pr.top+pr.bottom)/2);L.el.style.background=C.out;Object.assign(L.bg.style,{background:C.bar,borderRadius:C.rad,boxShadow:C.sh});
+  if(!L.vis){const C=lqColors(p,tab,(tr.left+tr.right)/2,(pr.top+pr.bottom)/2);L.bo.style.background=C.out;
+    /* açık temada yarı saydam yer kırılınca griye dönüyor: orada merceğin içi tamamen opak (sayfa zemini); koyu temada çubuğun uçlarının dışı saydam, arkadaki içerik görünür */
+    L.el.style.background=isDark()?'transparent':C.out;Object.assign(L.bg.style,{background:C.bar,borderRadius:C.rad,boxShadow:C.sh});
     L.vis=true;L.el.classList.add('vis');th.classList.add('lqv');p.classList.add('lqon')}
-  if(relayout){L.inn.style.width=L.pw+'px';L.inn.style.height=L.ph+'px';L.bg.style.width=L.pw+'px';L.bg.style.height=L.ph+'px';L.cl.forEach((c,i)=>{const[x,y,w,h]=L.pos[i];c.style.cssText=`left:${x}px;top:${y}px;width:${w}px;height:${h}px`})}
+  if(relayout){L.inn.style.width=L.pw+'px';L.inn.style.height=L.ph+'px';L.bg.style.width=L.pw+'px';L.bg.style.height=L.ph+'px';L.bo.style.width=L.pw+'px';L.cl.forEach((c,i)=>{const[x,y,w,h]=L.pos[i];c.style.cssText=`left:${x}px;top:${y}px;width:${w}px;height:${h}px`})}
   if(Math.abs(L.w-bw)>1.5||Math.abs(L.h-bh)>1.5){L.w=bw;L.h=bh;L.el.style.filter=`url(#${lqFilter(bw,bh,!tab)})`}
   L.inn.style.transform=`translate(${(pr.left-tr.left+ex+P).toFixed(2)}px,${(pr.top-tr.top+ey+P).toFixed(2)}px)`;
   L.el.style.clipPath=`inset(${(iT+ey+P).toFixed(2)}px ${(iR+ex+P).toFixed(2)}px ${(iB+ey+P).toFixed(2)}px ${(iL+ex+P).toFixed(2)}px round 99px)`;
