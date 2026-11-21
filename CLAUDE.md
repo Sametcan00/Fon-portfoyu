@@ -10,6 +10,7 @@ Bu dosya yeni Claude sohbetlerinde otomatik okunur. Her sürümden sonra güncel
 - Kullanıcı referansı ekran görüntüsü ve videoyla verir (iPhone ekran kaydı .mp4). Videoları `ffmpeg` ile kareye ayırıp incele.
 - Görsel referans: **Midas** uygulaması ve **iOS 27 Liquid Glass** görünümü.
 - Kullanıcının bilgisayarı Windows; Xcode/Mac yok.
+- Kullanıcı düzeltmeleri parça parça (video + açıklama) verir. **Her parça bitince onay beklemeden** test et, sürümü artır ve `main`'e yayınla.
 
 ## Proje nedir?
 
@@ -29,7 +30,7 @@ Bu dosya yeni Claude sohbetlerinde otomatik okunur. Her sürümden sonra güncel
 
 ## Sürüm kuralı
 
-- Güncel sürüm: **1.9.2**
+- Güncel sürüm: **1.9.3**
 - Her güncellemede **iki yerde** sürüm artırılır: `sw.js` içinde `VERSION`, `index.html` içinde `APPV`.
 - Ayarlar sayfasının altında "sürüm X.Y.Z" yazar; kullanıcı bununla kontrol eder.
 
@@ -136,10 +137,10 @@ Kullanıcı isterse dosyaları elle de yükleyebilir: GitHub → Add file → Up
 
 ## 1.9.2 düzeltmeleri
 
-- Kullanıcı düzeltmeleri parça parça veriyor (video + açıklama). Sürüm numarası kullanıcı isteyince artırılıp `main`'e gönderilir.
+- Kullanıcı düzeltmeleri parça parça veriyor (video + açıklama). **Her parça bitince onay beklemeden** sürüm artırılıp `main`'e gönderilir (kullanıcı 1.9.3'te böyle istedi).
 - **Segment seçicilerde parmakla sürükleme:** Sepetler/Nakit hesabı/Geçmiş, tema, Günlük/Haftalık/Toplam, grafik aralığı, ısı haritası, işlem türü. Sekme çubuğundaki gibi mercek parmağı izler, bırakınca en yakın seçeneğe geçer. `.seg{touch-action:pan-y}`: yatay sürükleme sayfayı kaydırmaz, dikey kaydırma çalışır. Alt sayfada sol kenardan (x<28) başlayan hareket geri kaydırmaya bırakılır. Engelleyen `touchmove`/`touchend` dinleyicileri yalnızca `.seg` öğelerine bağlanır (MutationObserver ile).
 
-## Yayınlanmamış değişiklikler (sonraki sürüm, 1.9.3 olacak)
+## 1.9.3 düzeltmeleri
 
 - **Sıvı cam kırılması** (kullanıcının başka bir uygulamasındaki iOS 27 Liquid Glass sekme çubuğu referans alındı): mercek kenarından geçen simge/yazılar bükülür, uzar, kenarda gökkuşağı renk kırılması alır; merkez temiz kalır. Sekme çubuğu ve tüm segment seçicilerde.
   - Yöntem: merceğin içine seçeneklerin kopyası (`.lq` > `.lqi` > kopya düğmeler, `data-act`/`role` silinmiş) konur, kopyaya `filter:url(#lqfWxH)` (SVG `feDisplacementMap`, R/G/B ayrı miktarda + `screen` birleştirme + saydamlık düzeltme tablosu) uygulanır. Gerçek düğmeler merceğin altında `mask-image` (`--ml`/`--mr`) ile gizlenir (`.lqon`).
@@ -154,6 +155,7 @@ Kullanıcı isterse dosyaları elle de yükleyebilir: GitHub → Add file → Up
 
 - 1.8.1'in gerçek iPhone'da doğrulanması: hızlı dokunma, parmakla sürükleme, merceğin taşması.
 - 1.9.2'nin gerçek iPhone'da doğrulanması: segmentlerde parmakla sürükleme.
+- 1.9.3'ün gerçek iPhone'da doğrulanması: sıvı cam kırılması Safari'de görünüyor mu, akıcı mı.
 - 1.9.0'ın gerçek iPhone'da doğrulanması: Face ID kilidi (ana ekran uygulamasında WebAuthn), grafikte parmakla gezinme, TEFAS'tan kopyalanan gerçek metnin okunması.
 - TÜFE işinin ilk otomatik güncellemesi (3 Aralık 2026, Kasım verisi) Actions sekmesinden kontrol edilmeli.
 - Henüz istenmemiş olası geliştirmeler: hedef dağılım ve dengeleme, düzenli yatırım planı, Mac edinilirse yerel SwiftUI sürümü.
