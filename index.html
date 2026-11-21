@@ -415,8 +415,8 @@ button,a,input,label,.row{touch-action:manipulation}
 .tabbar>.thumb::before{background:var(--tb-thumb);box-shadow:none}
 .seg>.thumb.sw::before{top:-6px;bottom:-6px;left:-5px;right:-5px;background:var(--lens-bg);box-shadow:var(--lens-sh)}
 .tabbar>.thumb.sw::before{top:-14px;bottom:-14px;left:-14px;right:-14px;background:var(--lens-bg);box-shadow:var(--lens-sh)}
-/* 1.9.3: mercek videodaki gibi daha geniş ve basık kapsül (çubuktan az taşar) */
-.tabbar>.thumb.sw::before{top:-8px;bottom:-8px;left:-16px;right:-16px}
+/* 1.9.3: mercek videodaki gibi geniş kapsül; çubuktan üstte ve altta biraz taşar (kırılma bantları buradan oluşur) */
+.tabbar>.thumb.sw::before{top:-10px;bottom:-10px;left:-18px;right:-18px}
 @media (prefers-reduced-motion:reduce){.seg>.thumb.sw::before,.tabbar>.thumb.sw::before{top:0;right:0;bottom:0;left:0}}
 /* Sekme çubuğu kırpılmıyor: cam zemin (bulanıklık, renk, kenar) ayrı katmanda ve yalnızca o katman yuvarlak kırpılır;
    böylece mercek çubuğun üstünden/altından kesilmeden taşar (önceden üstü-altı düz kesildiği için yamuk görünüyordu) */
@@ -506,22 +506,31 @@ button.tgl:active{transform:none}
    sürüklerken gösterge parmağı gecikmesiz izler (yalnız genişlik yumuşak değişir) */
 .seg,.seg *{touch-action:pan-y;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .seg.drag>.thumb,.seg.drag>.thumb.sw{transition:width .2s var(--spring)}
-/* 1.9.3 — Sıvı cam kırılması: merceğin içindeki bükülen kopya (.lq) ve merceğin altında gizlenen gerçek seçenekler */
-.thumb>.lq{position:absolute;border-radius:99px;overflow:hidden;pointer-events:none;visibility:hidden}
-.seg>.thumb>.lq{top:-6px;bottom:-6px;left:-5px;right:-5px}
-.tabbar>.thumb>.lq{top:-8px;bottom:-8px;left:-16px;right:-16px}
+/* 1.9.3 — Sıvı cam kırılması (videodaki iOS 27 Liquid Glass): merceğin kenarı DIŞARIDAKİ görüntüyü içeri çeker.
+   Mercek çubuktan/izden biraz taştığı için kenarın çizgisi üstte ve altta içeri kayar → bantlar; bantların ve kenara gelen
+   simgelerin kıvrıldığı uçlarda gökkuşağı renk kırılması. Merceğin içi çubuğun zemini + seçeneklerin kopyasıyla opak
+   doldurulur (.lq) ve SVG filtresiyle bükülür; mercek açıkken gösterge seçeneklerin üstüne çıkar (.lqv). */
+.thumb>.lq{position:absolute;overflow:hidden;pointer-events:none;visibility:hidden;font-style:normal}
+.seg>.thumb>.lq{top:-20px;bottom:-20px;left:-19px;right:-19px}
+.tabbar>.thumb>.lq{top:-24px;bottom:-24px;left:-32px;right:-32px}
 .thumb>.lq.vis{visibility:visible}
-.lq>.lqi{position:absolute;left:0;top:0;font-style:normal}
+.lq>.lqi{position:absolute;left:0;top:0}
+.lqi>.lqb{position:absolute;left:0;top:0;box-sizing:border-box}
 .lqi>button{position:absolute!important;margin:0!important;box-sizing:border-box;z-index:auto!important;pointer-events:none;transform-origin:50% 50%}
 /* Filtrelenen kopyada geçiş/animasyon yok (Safari'de ayrı katmana alınıp filtreden kaçmasın) */
 .lqi,.lqi *{transition:none!important;animation:none!important}
 .tabbar>.thumb.sw .lqi>button.on,.seg>.thumb.sw .lqi>button.on{color:var(--ink)}
-.seg.lqon>button,.tabbar.lqon>button{-webkit-mask-image:linear-gradient(90deg,#000 var(--ml),transparent var(--ml),transparent var(--mr),#000 var(--mr));mask-image:linear-gradient(90deg,#000 var(--ml),transparent var(--ml),transparent var(--mr),#000 var(--mr))}
+.seg>.thumb.lqv,.tabbar>.thumb.lqv{z-index:2}
 .seg.lqon>button.under,.tabbar.lqon>button.under svg,.tabbar.lqon>button.under span{transform:none;filter:none}
-/* Mercek kenarı videodaki gibi ince; üstte koyu kırılma bandı; sahte pembe/mavi parlama azaltıldı (gerçek renk kırılması artık kopyada) */
-:root{--lens-sh:inset 0 1.5px 0 #fff,inset 0 -1px 0 rgba(255,255,255,.85),inset 0 6px 6px -5px rgba(0,0,0,.10),inset 2px 0 3px -2px rgba(255,70,170,.3),inset -2px 0 3px -2px rgba(70,170,255,.3),0 0 0 .5px rgba(0,0,0,.10),0 8px 22px rgba(30,50,90,.18)}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--lens-sh:inset 0 1px 0 rgba(255,255,255,.45),inset 0 -1px 0 rgba(255,255,255,.18),inset 0 7px 7px -5px rgba(0,0,0,.55),inset 2px 0 3px -2px rgba(255,70,170,.35),inset -2px 0 3px -2px rgba(70,200,255,.35),0 0 0 .5px rgba(255,255,255,.28),0 8px 20px rgba(0,0,0,.35)}}
-:root[data-theme="dark"]{--lens-sh:inset 0 1px 0 rgba(255,255,255,.45),inset 0 -1px 0 rgba(255,255,255,.18),inset 0 7px 7px -5px rgba(0,0,0,.55),inset 2px 0 3px -2px rgba(255,70,170,.35),inset -2px 0 3px -2px rgba(70,200,255,.35),0 0 0 .5px rgba(255,255,255,.28),0 8px 20px rgba(0,0,0,.35)}
+/* Camın ince kenar çizgisi kopyanın üstünde */
+.seg>.thumb::after,.tabbar>.thumb::after{content:"";position:absolute;top:0;right:0;bottom:0;left:0;border-radius:99px;pointer-events:none;opacity:0;box-shadow:var(--lens-rim);
+  transition:top .4s var(--spring),right .4s var(--spring),bottom .4s var(--spring),left .4s var(--spring),opacity .2s}
+.seg>.thumb.sw::after{top:-6px;bottom:-6px;left:-5px;right:-5px}
+.tabbar>.thumb.sw::after{top:-10px;bottom:-10px;left:-18px;right:-18px}
+.seg>.thumb.lqv::after,.tabbar>.thumb.lqv::after{opacity:1}
+:root{--lens-tint:rgba(255,255,255,.14);--lens-rim:inset 0 0 0 1px rgba(0,0,0,.13),inset 0 1.5px 1px -1px #fff,inset 0 -1.5px 1px -1px rgba(255,255,255,.8)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--lens-tint:rgba(255,255,255,.09);--lens-rim:inset 0 0 0 1px rgba(0,0,0,.65),inset 0 1.5px 1px -1px rgba(255,255,255,.32),inset 0 -1.5px 1px -1px rgba(255,255,255,.14)}}
+:root[data-theme="dark"]{--lens-tint:rgba(255,255,255,.09);--lens-rim:inset 0 0 0 1px rgba(0,0,0,.65),inset 0 1.5px 1px -1px rgba(255,255,255,.32),inset 0 -1.5px 1px -1px rgba(255,255,255,.14)}
 </style>
 </head>
 <body>
@@ -530,7 +539,7 @@ button.tgl:active{transform:none}
 <nav class="tabbar glass" id="nav" aria-label="Sekmeler"></nav>
 <div id="m"></div><div id="t" class="glass" role="status" aria-live="polite"></div>
 <script>
-const APPV='1.9.3',KEY='fon-portfoyum-v2',TK='fon-tema',$=s=>document.querySelector(s);
+const APPV='1.9.4',KEY='fon-portfoyum-v2',TK='fon-tema',$=s=>document.querySelector(s);
 const NF=new Intl.NumberFormat('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2});
 // Gizlilik modu: ekrandaki tutarlar maskelenir (kayıtlara yazılan metinler her zaman gerçek tutarla: moneyR/sgnR)
 const PK='fon-gizli';let priv=false;try{priv=localStorage.getItem(PK)==='1'}catch(e){}
@@ -1252,69 +1261,83 @@ if('serviceWorker' in navigator&&location.protocol!=='file:')addEventListener('l
   if(any)raf=requestAnimationFrame(tick)};
   new MutationObserver(()=>{if(!raf)raf=requestAnimationFrame(tick)}).observe(document.body,{subtree:true,attributes:true,attributeFilter:['class','style']});
 })();
-/* 1.9.3 — Sıvı cam kırılması (iOS 27 Liquid Glass gibi): mercek kenarından geçen simge ve yazılar bükülür, uzar ve
-   kenarlarda gökkuşağı renk kırılması alır. Safari camın arkasını (backdrop-filter) bükemediği için merceğin içine
-   seçeneklerin bir kopyası konur; kopya SVG yer değiştirme filtresiyle (feDisplacementMap) bükülür, gerçek seçenekler
-   merceğin altında maskeyle gizlenir. Kopya her karede merceğin o anki yerine ve büyüklüğüne göre hizalanır. */
-const LQ_EX={seg:[5,6],tabbar:[16,8]};   /* merceğin göstergeden taşma payı (yatay, dikey); CSS'teki ::before ile aynı */
+/* 1.9.3 — Sıvı cam kırılması (videodaki iOS 27 Liquid Glass): merceğin kenarı, merceğin dışında kalan görüntüyü içeri
+   çeker ve sıkıştırır. Mercek çubuktan/izden biraz taştığı için çubuğun kenar çizgisi üstte ve altta içeri kayar (bantlar),
+   kenara gelen simge ve yazılar kıvrılır; R/G/B kanalları farklı miktarda büküldüğü için uçlarda gökkuşağı oluşur.
+   Safari camın arkasını (backdrop-filter:url) bükemediği için merceğin içine çubuğun zemini ve seçeneklerin kopyası
+   konur (opak), kopya SVG yer değiştirme filtresiyle (feDisplacementMap) bükülür. Her karede merceğe hizalanır. */
+const LQ_EX={seg:[5,6],tabbar:[18,10]},LQ_PAD=14;   /* merceğin göstergeden taşma payı (yatay, dikey; CSS ::before ile aynı) + örnekleme payı */
 const lqMade=new Set();let lqSvg=null;
-/* Bükme haritası: kapsülün kenarına yaklaştıkça içeriden (merkeze doğru) örnek alınır → kenarda içerik uzar/bükülür */
+/* Bükme haritası (R = yatay, G = dikey, 128 = bükülme yok): kapsülün kenarına yaklaştıkça dışarıdan örnek alınır */
 function lqMap(w,h,b){const k=2,W=Math.round(w*k),H=Math.round(h*k),c=document.createElement('canvas');c.width=W;c.height=H;
   const g=c.getContext('2d'),im=g.createImageData(W,H),D=im.data,r=h/2,x1=Math.min(r,w/2),x2=Math.max(w-r,w/2);
   for(let j=0;j<H;j++){const dy=(j+.5)/k-r;for(let i=0;i<W;i++){const x=(i+.5)/k,dx=x-(x<x1?x1:x>x2?x2:x),ds=Math.hypot(dx,dy),d=r-ds,o=(j*W+i)*4;
-    /* dikey bükülme yarı yarıya: simgeler üst/alt kenara yakın, orada çizgi gibi uzamasınlar (videoda da asıl bükülme yanlarda) */
-    let fx=0,fy=0;if(d>=0&&d<b&&ds>0){let f=1-d/b;f*=f;fx=dx/ds*f;fy=dy/ds*f*.45}
-    D[o]=128-127*fx;D[o+1]=128-127*fy;D[o+2]=128;D[o+3]=255}}
+    let fx=0,fy=0;if(d>=0&&d<b&&ds>0){const f=Math.pow(1-d/b,1.5);fx=dx/ds*f;fy=dy/ds*f}
+    D[o]=128+127*fx;D[o+1]=128+127*fy;D[o+2]=128;D[o+3]=255}}
   g.putImageData(im,0,0);return c.toDataURL()}
-/* Mercek boyutuna özel filtre (önbellekli): R/G/B kanalları farklı miktarda bükülüp birleştirilir → renk kırılması */
-function lqFilter(w,h){w=Math.max(8,Math.round(w/2)*2);h=Math.max(8,Math.round(h/2)*2);const id='lqf'+w+'x'+h;if(lqMade.has(id))return id;
-  const NS='http://www.w3.org/2000/svg';
+/* Mercek boyutuna özel filtre (önbellekli) */
+function lqFilter(w,h,sg){w=Math.max(8,Math.round(w/2)*2);h=Math.max(8,Math.round(h/2)*2);const id=(sg?'lqs':'lqf')+w+'x'+h;if(lqMade.has(id))return id;
+  const NS='http://www.w3.org/2000/svg',P=LQ_PAD;
   if(!lqSvg){lqSvg=document.createElementNS(NS,'svg');lqSvg.setAttribute('aria-hidden','true');lqSvg.setAttribute('width','0');lqSvg.setAttribute('height','0');lqSvg.style.cssText='position:fixed;left:0;top:0;width:0;height:0;pointer-events:none';document.body.appendChild(lqSvg)}
-  const b=Math.min(20,Math.max(6,h*.3)),S=b*1.05,f=document.createElementNS(NS,'filter');
+  /* M: kenarda dışarıdan çekilen mesafe, b: bükülen kenar şeridinin genişliği (küçük segment merceğinde oransal olarak daha güçlü) */
+  const M=h*(sg?.17:.11),b=h*(sg?.3:.22),S=2*M,f=document.createElementNS(NS,'filter');
   const at=(e,a)=>{for(const k in a)e.setAttribute(k,a[k]);return e},add=(n,a)=>f.appendChild(at(document.createElementNS(NS,n),a));
   at(f,{id,x:0,y:0,width:1,height:1,filterUnits:'objectBoundingBox',primitiveUnits:'userSpaceOnUse','color-interpolation-filters':'sRGB'});
   /* nötr zemin: harita görüntüsü henüz yüklenmediyse içerik kaymaz (yalnızca bükülmez) */
   add('feFlood',{'flood-color':'rgb(128,128,128)','flood-opacity':1,result:'n'});
-  const u=lqMap(w,h,b),img=add('feImage',{x:0,y:0,width:w,height:h,preserveAspectRatio:'none',result:'i',href:u});img.setAttributeNS('http://www.w3.org/1999/xlink','xlink:href',u);
+  const u=lqMap(w,h,b),img=add('feImage',{x:P,y:P,width:w,height:h,preserveAspectRatio:'none',result:'i',href:u});img.setAttributeNS('http://www.w3.org/1999/xlink','xlink:href',u);
   const mg=add('feMerge',{result:'m'});['n','i'].forEach(k=>mg.appendChild(at(document.createElementNS(NS,'feMergeNode'),{in:k})));
-  /* kanallar hafif sızdırılır: saf kırmızı/yeşil/mavi yerine yumuşak gökkuşağı */
-  const M={r:'1 0 0 0 0 0 .18 0 0 0 0 0 .18 0 0 0 0 0 1 0',g:'.18 0 0 0 0 0 1 0 0 0 0 0 .18 0 0 0 0 0 1 0',b:'.18 0 0 0 0 0 .18 0 0 0 0 0 1 0 0 0 0 0 1 0'};
-  [['r',.82],['g',1],['b',1.2]].forEach(([c,s])=>{add('feDisplacementMap',{in:'SourceGraphic',in2:'m',scale:(S*s).toFixed(2),xChannelSelector:'R',yChannelSelector:'G',result:'d'+c});add('feColorMatrix',{in:'d'+c,type:'matrix',values:M[c],result:'c'+c})});
-  add('feBlend',{in:'cr',in2:'cg',mode:'screen',result:'rg'});add('feBlend',{in:'rg',in2:'cb',mode:'screen',result:'x'});
-  /* üç kanal üst üste binince kenar saydamlığı 1-(1-a)³ olur ve yazı kalınlaşır; bu tablo saydamlığı geri a'ya çevirir */
-  f.appendChild(at(document.createElementNS(NS,'feComponentTransfer'),{in:'x'})).appendChild(at(document.createElementNS(NS,'feFuncA'),{type:'table',tableValues:Array.from({length:21},(_,i)=>(1-Math.cbrt(1-i/20)).toFixed(3)).join(' ')}));
+  /* içerik opak olduğu için kanallar ayrı bükülüp toplanır: kaymayan yerde birebir aynı renk, kenarda gökkuşağı */
+  const C={r:'1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0',g:'0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 1 0',b:'0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 1 0'};
+  [['r',.8],['g',1],['b',1.22]].forEach(([c,k])=>{add('feDisplacementMap',{in:'SourceGraphic',in2:'m',scale:(S*k).toFixed(2),xChannelSelector:'R',yChannelSelector:'G',result:'d'+c});add('feColorMatrix',{in:'d'+c,type:'matrix',values:C[c],result:'c'+c})});
+  add('feComposite',{in:'cr',in2:'cg',operator:'arithmetic',k1:0,k2:1,k3:1,k4:0,result:'rg'});add('feComposite',{in:'rg',in2:'cb',operator:'arithmetic',k1:0,k2:1,k3:1,k4:0});
   lqSvg.appendChild(f);lqMade.add(id);return id}
 /* Haritalar boşta önceden üretilir: ilk dokunuşta hazır olsunlar (Safari görüntüyü geç yükleyebilir) */
-function lqWarm(){if(RM())return;document.querySelectorAll('.seg>.thumb,.tabbar>.thumb').forEach(th=>{const[ex,ey]=th.parentElement.classList.contains('tabbar')?LQ_EX.tabbar:LQ_EX.seg;if(th.offsetWidth)lqFilter(th.offsetWidth+2*ex,th.offsetHeight+2*ey)})}
+function lqWarm(){if(RM())return;document.querySelectorAll('.seg>.thumb,.tabbar>.thumb').forEach(th=>{const[ex,ey]=th.parentElement.classList.contains('tabbar')?LQ_EX.tabbar:LQ_EX.seg;if(th.offsetWidth)lqFilter(th.offsetWidth+2*ex,th.offsetHeight+2*ey,!th.parentElement.classList.contains('tabbar'))})}
+/* Merceğin altındaki renkler: dış zemin (kart/sayfa) ve çubuğun/izin zemini, üst üste bindirilmiş opak renk olarak */
+function lqColors(p,tab,x,y){
+  const rd=v=>{const m=String(v).match(/rgba?\(([^)]+)\)/);if(!m)return null;const a=m[1].split(/[\s,\/]+/).filter(Boolean).map(parseFloat);return[a[0],a[1],a[2],a.length>3?a[3]:1]};
+  const ov=(t,b)=>t&&t[3]>0?[0,1,2].map(i=>t[i]*t[3]+b[i]*(1-t[3])):b;
+  /* öğe listesindeki (üstten alta) zeminleri ilk opak olana kadar üst üste bindirir */
+  const base=els=>{const st=[];for(const e of els){const c=rd(getComputedStyle(e).backgroundColor);if(c&&c[3]>0){st.push(c);if(c[3]>=1)break}}
+    let o=isDark()?[0,0,0]:[255,255,255];for(let i=st.length-1;i>=0;i--)o=ov(st[i],o);return o};
+  const up=e=>{const a=[];for(;e;e=e.parentElement)a.push(e);return a};
+  /* segment: dışı kendi kartı/sayfası. Yüzen sekme çubuğu: dışı sayfa zemini (videodaki gibi bantlar belirgin olsun),
+     çubuğun içi ise arkasında o an duran öğenin (kart ya da sayfa) üstündeki cam rengi */
+  const out=base(tab?up(document.body):up(p.parentElement)),under=tab?base(document.elementsFromPoint(x,y).filter(e=>!p.contains(e))):out;
+  /* cam, altındaki çubuğu biraz aydınlatır (videoda mercek içi çubuktan açık); dış zemin olduğu gibi kalır → bant belirgin */
+  const cs=tab?getComputedStyle(p,'::after'):getComputedStyle(p),lift=isDark()?.09:.4,bar=ov([255,255,255,lift],ov(rd(cs.backgroundColor),under)),bd=tab?rd(cs.borderTopColor):null;
+  const rgb=c=>`rgb(${c.map(Math.round).join(',')})`,sh=[];if(bd&&bd[3]>0)sh.push(`inset 0 0 0 1px rgba(${bd.join(',')})`);if(tab&&cs.boxShadow&&cs.boxShadow!=='none')sh.push(cs.boxShadow);
+  return{out:rgb(out),bar:rgb(bar),sh:sh.join(',')||'none',rad:cs.borderTopLeftRadius||'99px'}}
 /* Mercek açıkken ya da bırakıldıktan sonra küçülürken true döner (çizim döngüsü sürsün diye) */
 function lqSync(th,on,btns){const p=th.parentElement;let L=th._lq;
-  const hide=()=>{if(L&&L.vis){L.vis=false;L.el.classList.remove('vis');p.classList.remove('lqon');btns.forEach(b=>{b.style.removeProperty('--ml');b.style.removeProperty('--mr')})}return false};
+  const hide=()=>{if(L&&L.vis){L.vis=false;L.el.classList.remove('vis');th.classList.remove('lqv');p.classList.remove('lqon')}return false};
   if(RM()||!btns.length||!on&&!(L&&L.vis))return hide();
-  const tab=p.classList.contains('tabbar'),[ex,ey]=tab?LQ_EX.tabbar:LQ_EX.seg,cs=getComputedStyle(th,'::before');
+  const tab=p.classList.contains('tabbar'),[ex,ey]=tab?LQ_EX.tabbar:LQ_EX.seg,P=LQ_PAD,cs=getComputedStyle(th,'::before');
   const iT=parseFloat(cs.top)||0,iR=parseFloat(cs.right)||0,iB=parseFloat(cs.bottom)||0,iL=parseFloat(cs.left)||0;
   /* g: merceğin ne kadar açık olduğu (0 = koyu kapsül, 1 = tam mercek); bırakınca küçülürken büyütme de yumuşakça söner */
   const g=Math.min(1,Math.max(0,-iT/ey,-iL/ex));if(!on&&g<.04)return hide();
   if(!L||L.n!==btns.length||!L.el.isConnected){
     if(L&&L.el)L.el.remove();
-    const el=document.createElement('span'),inn=document.createElement('span');el.className='lq';inn.className='lqi';el.setAttribute('aria-hidden','true');el.appendChild(inn);
+    const el=document.createElement('span'),inn=document.createElement('span'),bg=document.createElement('span');el.className='lq';inn.className='lqi';bg.className='lqb';el.setAttribute('aria-hidden','true');el.appendChild(inn);inn.appendChild(bg);
     const cl=btns.map(b=>{const c=b.cloneNode(true);['data-act','data-id','role','aria-selected','aria-current','aria-label','aria-pressed'].forEach(a=>c.removeAttribute(a));c.classList.remove('under','pop');c.tabIndex=-1;inn.appendChild(c);return c});
-    th.appendChild(el);L=th._lq={el,inn,cl,ic:cl.map(c=>[c.querySelector('svg'),c.querySelector('span')]),n:btns.length,w:0,h:0,pw:-1,ph:-1,pos:[],vis:false,tab}}
+    th.appendChild(el);L=th._lq={el,inn,bg,cl,ic:cl.map(c=>[c.querySelector('svg'),c.querySelector('span')]),n:btns.length,w:0,h:0,pw:-1,ph:-1,pos:[],vis:false,tab}}
   /* önce ölç, sonra yaz (sayfa yerleşimi her karede bir kez hesaplansın) */
   const pr=p.getBoundingClientRect(),tr=th.getBoundingClientRect();
   const relayout=L.pw!==p.offsetWidth||L.ph!==p.offsetHeight;if(relayout){L.pw=p.offsetWidth;L.ph=p.offsetHeight;L.pos=btns.map(b=>[b.offsetLeft,b.offsetTop,b.offsetWidth,b.offsetHeight])}
   const bw=tr.width+2*ex,bh=tr.height+2*ey,vl=tr.left+iL-pr.left,vr=tr.right-iR-pr.left,lc=(vl+vr)/2,lw=Math.max(1,(vr-vl)/2);
-  if(!L.vis){L.vis=true;L.el.classList.add('vis');p.classList.add('lqon')}
-  if(relayout){L.inn.style.width=L.pw+'px';L.inn.style.height=L.ph+'px';L.cl.forEach((c,i)=>{const[x,y,w,h]=L.pos[i];c.style.cssText=`left:${x}px;top:${y}px;width:${w}px;height:${h}px`})}
-  if(Math.abs(L.w-bw)>1.5||Math.abs(L.h-bh)>1.5){L.w=bw;L.h=bh;L.el.style.filter=`url(#${lqFilter(bw,bh)})`}
-  L.inn.style.transform=`translate(${(pr.left-tr.left+ex).toFixed(2)}px,${(pr.top-tr.top+ey).toFixed(2)}px)`;
-  L.el.style.clipPath=`inset(${(iT+ey).toFixed(2)}px ${(iR+ex).toFixed(2)}px ${(iB+ey).toFixed(2)}px ${(iL+ex).toFixed(2)}px round 99px)`;
+  if(!L.vis){const C=lqColors(p,tab,(tr.left+tr.right)/2,(pr.top+pr.bottom)/2);L.el.style.background=C.out;Object.assign(L.bg.style,{background:C.bar,borderRadius:C.rad,boxShadow:C.sh});
+    L.vis=true;L.el.classList.add('vis');th.classList.add('lqv');p.classList.add('lqon')}
+  if(relayout){L.inn.style.width=L.pw+'px';L.inn.style.height=L.ph+'px';L.bg.style.width=L.pw+'px';L.bg.style.height=L.ph+'px';L.cl.forEach((c,i)=>{const[x,y,w,h]=L.pos[i];c.style.cssText=`left:${x}px;top:${y}px;width:${w}px;height:${h}px`})}
+  if(Math.abs(L.w-bw)>1.5||Math.abs(L.h-bh)>1.5){L.w=bw;L.h=bh;L.el.style.filter=`url(#${lqFilter(bw,bh,!tab)})`}
+  L.inn.style.transform=`translate(${(pr.left-tr.left+ex+P).toFixed(2)}px,${(pr.top-tr.top+ey+P).toFixed(2)}px)`;
+  L.el.style.clipPath=`inset(${(iT+ey+P).toFixed(2)}px ${(iR+ex+P).toFixed(2)}px ${(iB+ey+P).toFixed(2)}px ${(iL+ex+P).toFixed(2)}px round 99px)`;
   btns.forEach((b,i)=>{const[x,,w]=L.pos[i],c=L.cl[i];
-    b.style.setProperty('--ml',(vl-x).toFixed(1)+'px');b.style.setProperty('--mr',(vr-x).toFixed(1)+'px');
     c.classList.toggle('on',b.classList.contains('on'));c.classList.toggle('pre',b.classList.contains('pre'));
-    /* merkeze yaklaşan simge büyür (büyüteç camı) */
+    /* merkeze yaklaşan simge biraz büyür (büyüteç camı) */
     let k=Math.max(0,1-Math.abs(x+w/2-lc)/lw);k*=k*g;
-    if(L.tab){const[sv,sp]=L.ic[i];if(sv)sv.style.transform=`scale(${(1+.22*k).toFixed(3)})`;if(sp)sp.style.transform=`scale(${(1+.1*k).toFixed(3)})`}
-    else c.style.transform=`scale(${(1+.08*k).toFixed(3)})`});
+    if(L.tab){const[sv,sp]=L.ic[i];if(sv)sv.style.transform=`scale(${(1+.18*k).toFixed(3)})`;if(sp)sp.style.transform=`scale(${(1+.08*k).toFixed(3)})`}
+    else c.style.transform=`scale(${(1+.06*k).toFixed(3)})`});
   return true}
 /* Gösterge cam mercek modu: ms>0 → o süre sonra koyu kapsüle döner; ms=0 → parmak kalkana kadar */
 function lens(th,ms){if(!th||RM())return;th.classList.add('sw');clearTimeout(th._t);th._hold=!ms;th._t=setTimeout(()=>{if(!ms)th._hold=false;if(!th._hold)th.classList.remove('sw')},ms||2500)}
