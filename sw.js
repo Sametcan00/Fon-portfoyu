@@ -1,7 +1,7 @@
 /* Fon Portföyüm — çevrimdışı çalışma.
    Uygulama dosyaları ilk açılışta iPhone'a kaydedilir; sonraki açılışlar internet olmadan da çalışır.
    Yeni sürüm yayınladığınızda aşağıdaki VERSION değerini artırın. */
-const VERSION = '1.9.6';
+const VERSION = '1.9.7';
 const CACHE = 'fon-portfoyu-' + VERSION;
 const FILES = [
   './',
@@ -14,7 +14,8 @@ const FILES = [
 ];
 
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILES)).then(() => self.skipWaiting()));
+  // cache:'reload' → tarayıcının HTTP önbelleği atlanır (GitHub Pages dosyaları 10 dk önbellekli gönderir; yoksa yeni sürüm eski sayfayla kurulabiliyordu)
+  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILES.map((u) => new Request(u, { cache: 'reload' })))).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', (e) => {
@@ -46,7 +47,8 @@ self.addEventListener('fetch', (e) => {
   e.respondWith(
     caches.open(CACHE).then(async (cache) => {
       const cached = await cache.match(key, { ignoreSearch: true });
-      const fresh = fetch(req).then((res) => {
+      // arka plan güncellemesi her seferinde sunucuya sorar (no-cache: değişmediyse 304, ucuz)
+      const fresh = fetch(req, { cache: 'no-cache' }).then((res) => {
         if (res && res.ok) cache.put(key, res.clone());
         return res;
       }).catch(() => null);

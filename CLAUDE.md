@@ -22,14 +22,15 @@ Bu dosya yeni Claude sohbetlerinde otomatik okunur. Her sürümden sonra güncel
 ## Dosyalar
 
 - `index.html`: tüm CSS ve JS tek dosyada, harici kütüphane yok.
-- `sw.js`: service worker. Önce cihazdaki kopyayı açar, arka planda internetten günceller. Önbellek adı `fon-portfoyu-` + `VERSION`. `tufe.json` için tersi: önce internet, yoksa cihazdaki kopya.
+- `sw.js`: service worker. Önce cihazdaki kopyayı açar, arka planda internetten günceller. Önbellek adı `fon-portfoyu-` + `VERSION`.
+  - 1.9.7: kurulumda dosyalar `cache:'reload'`, arka plan güncellemesi `cache:'no-cache'` ile alınır; kayıt `updateViaCache:'none'`, uygulama öne gelince `reg.update()`. Önceden GitHub Pages'in 10 dk HTTP önbelleği yüzünden yeni sürüm eski `index.html` ile kurulabiliyordu (kullanıcı yayından hemen sonra denediğinde sürüm değişmedi). `tufe.json` için tersi: önce internet, yoksa cihazdaki kopya.
 - `tufe.json`: TCMB TÜFE verisi (`{kaynak, guncelleme, son:'YYYY-AA', m:{'YYYY-AA':[yıllık%, aylık%]}}`). Elle düzenlenmez; GitHub Actions üretir.
 - `.github/workflows/tufe.yml` + `.github/scripts/tufe.py`: her gün 11:23 (TR) TCMB'nin Tüketici Fiyatları sayfasını okur, yeni ay varsa `tufe.json`'u `main`'e yazar. Tablo okunamazsa iş hata verir (GitHub e-posta atar).
 - `manifest.webmanifest`, `icons/` (simgeler yalnızca burada), `KURULUM.md`.
 
 ## Sürüm kuralı
 
-- Güncel sürüm: **1.9.6**
+- Güncel sürüm: **1.9.7**
 - Her güncellemede **iki yerde** sürüm artırılır: `sw.js` içinde `VERSION`, `index.html` içinde `APPV`.
 - Ayarlar sayfasının altında "sürüm X.Y.Z" yazar; kullanıcı bununla kontrol eder.
 
