@@ -30,7 +30,7 @@ Bu dosya yeni Claude sohbetlerinde otomatik okunur. Her sürümden sonra güncel
 
 ## Sürüm kuralı
 
-- Güncel sürüm: **1.9.15**
+- Güncel sürüm: **1.9.16**
 - Her güncellemede **iki yerde** sürüm artırılır: `sw.js` içinde `VERSION`, `index.html` içinde `APPV`.
 - Ayarlar sayfasının altında "sürüm X.Y.Z" yazar; kullanıcı bununla kontrol eder.
 
@@ -96,6 +96,7 @@ Bu dosya yeni Claude sohbetlerinde otomatik okunur. Her sürümden sonra güncel
   - Üst butonlar (1.9.13): Portföy'de göz (tutarları gizle) + tema + fon ekle; Özet'te yalnız göz; Ayarlar'da yok (tema Görünüm'de). Ayarlar'da Gizlilik bölümü yok; tutarları gizleme yalnız göz butonuyla.
   - Face ID kilidi 1.9.13'te kullanıcı isteğiyle tamamen kaldırıldı (kod, CSS, simge, Ayarlar satırı). Açılışta eski `fon-kilit` kaydı silinir.
 - **Cam takvim (1.9.14):** iOS'un yerel tarih penceresine animasyon/stil verilemediği için modal içindeki her `input[type=date]` `dpEnhance` ile gizli alana çevrilir (id ve YYYY-AA-GG değeri aynı, hesap kodu `g('p_d')` vb. değişmedi) ve yanına `.dpb` kutusu eklenir. Dokununca `.dp` takvimi (body'de, z-index 40) kutudan yaylanarak büyüyüp açılır, seçince/dışarı dokununca kutuya doğru küçülerek kapanır. Bulanık yarı saydam cam (`--dp-bg` .86), ince kenar parlaması, yumuşak gölge. `max` (bugün) sonrası günler kapalı. Değer değişince `input`/`change` olayı yayılır. Takvim açıkken dışarı dokunmak yalnız takvimi kapatır; panel kapanırken takvim de kapanır.
+  - 1.9.16 (kullanıcı daha yumuşak animasyon istedi): açılış `DP_SPRING` sönümlü yay eğrisiyle (`linear()`, ≈%0,5 taşma, 620 ms; desteklenmezse `cubic-bezier(.16,1,.3,1)`), `scale(.6)` + 10 px dikey kaymadan; saydamlık ayrı ve hızlı (220 ms); içerik 90 ms gecikmeyle hafifçe belirir. Kapanış 300 ms `scale(.72)`, saydamlık 60 ms sonra söner. Eski `filter:blur` kaldırıldı (bulanık camla birlikte Safari'de ağırdı) ve eski 1.025 sıçraması yok.
 - **`.wrap` çakışması (1.9.14):** `wrap` ana kabın (`#app`) sınıfı; alt metinlerde satır kaydırma için kullanılan `sub wrap` ana kabın boşluk ve PWA'da ekran boyu yükseklik kurallarını alıp "Fiyatları güncelle" ve "Yıllık özet" kartlarını ekran boyu uzatıyordu. Adı `sub wl` yapıldı. Yeni bir yardımcı sınıfa `wrap` adı verilmemeli.
 - **CSS yapısı:** sürüm sürüm eklenmiş katmanlardan oluşur; sonraki bloklar öncekileri ezer. En sondaki "v1.8.1 — Düzeltmeler" bloğu geçerli olanıdır. Değişiklik yaparken önceki kuralların özgüllüğüne dikkat et (örnek: `:root[data-theme="light"] .tabbar>.thumb.sw`).
 
