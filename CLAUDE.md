@@ -30,7 +30,7 @@ Bu dosya yeni Claude sohbetlerinde otomatik okunur. Her sürümden sonra güncel
 
 ## Sürüm kuralı
 
-- Güncel sürüm: **1.9.8**
+- Güncel sürüm: **1.9.10**
 - Her güncellemede **iki yerde** sürüm artırılır: `sw.js` içinde `VERSION`, `index.html` içinde `APPV`.
 - Ayarlar sayfasının altında "sürüm X.Y.Z" yazar; kullanıcı bununla kontrol eder.
 
@@ -148,9 +148,15 @@ Kullanıcı isterse dosyaları elle de yükleyebilir: GitHub → Add file → Up
   - Gölgelendirici: kapsül uzaklık alanı (SDF) ile kenara uzaklık d; kenar şeridi B=min(.34h,16), en dıştan çekilen mesafe M=min(.3h,13). Örnek noktası `p + n·M·s²` (s=1-d/B; M > B/2 olduğundan kenarda aynalanma). R/G/B .82/1/1.18 oranında ayrı örneklenir (renk ayrışması yalnız kenarda). Çubuğun içinde saydam kalan yer çubuk rengiyle doldurulur. Kenar şeridi hafif koyu; en dışta sol üstten gelen ince parlama.
   - Renkler `lqColors`: segmentte dış zemin kendi kartı. Sekme çubuğunda dış zemin çubuğun hemen üstündeki öğenin rengi, yalnız çubuğun yatay uzunluğunca; uçların dışı saydam, arkadaki gerçek içerik görünür. Çubuk rengi = cam dolgusu + arkasındaki öğe.
   - Mercek açıkken gösterge seçeneklerin üstüne çıkar (`.thumb.lqv{z-index:2}`), alttaki `::before` zemini kapanır, ince koyu kenar `::after` (`--lens-rim`) üstte kalır. `g` (merceğin açıklığı) ile kırılma ve parlama mercek küçülürken söner.
-  - WebGL yoksa ya da bağlam kaybolursa mercek eski düz cam olarak çalışır. Hareketi azalt açıksa mercek açılmaz. Gölgelendirici açılıştan 1,2 sn sonra boşta derlenir (ilk basışta takılma olmasın).
+  - WebGL yoksa ya da bağlam kaybolursa mercek eski düz cam olarak çalışır. Hareketi azalt açıksa mercek açılmaz. Gölgelendirici açılıştan 0,4 sn sonra boşta derlenir (ilk basışta takılma olmasın).
   - Gerçek düğme sorguları hep `:scope>button` olmalı.
 - **1.9.9 geri alındı (kullanıcı isteği):** 1.9.9'da kırılma ince kenar şeridine sınırlanmış (B=min(.16h,7), M=.42B), renk ayrışması yumuşatılmış ve uzak sekmeye geçişte jöle esnemesi (`jelly`, iki kenar ayrı yaylarla) eklenmişti. Kullanıcı 1.9.8'e dönmek istedi; kod 1.9.8'in aynısı, sürüm de 1.9.8 olarak yeniden yayınlandı. Yeniden istenirse 3b534fd işlemesine bakılabilir.
+- **1.9.10 ince ayarları (temel görünüm 1.9.8; kullanıcı mercek hissini ve kenar kırılmasını korumak istiyor):**
+  - Kırılma yalnız kenar şeridinde: B=min(.24h,11). Kaydırma `n·M·sin(π·d/B)`, M=.26B: kenarda (d=0) ve şeridin iç sınırında sıfır, arada eğri; eğim < 1. Böylece görüntü hiçbir yerde kopmaz ya da tekrarlanmaz (çiftlenme/kesilme yok), ortada kaydırma tam 0. 1.9.8'deki `s²` profili dışarıdan içeri çekiyordu: "Tümümü", "Özet" çiftlenmesi, "3A"nın "1Y"ye kayması.
+  - Renk ayrışması: kanallar .86/1.14, kenara doğru `mix(düz, ayrık, .85·s)`; kenar koyulaşması .06, parlama koyu .6 / açık .85.
+  - Aydınlık mod: gölgelendiricide parlamanın hemen içinde ince gri halka (`uLt`), `::after` kenar çizgisi .17, mercek açıkken `::before` yumuşak gölge (yalnız aydınlık modda).
+  - Jöle esnemesi (`jelly`, ilk kez 1.9.9'da yazıldı): iki kenar ayrı yaylarla gider; uzak geçişte belirgin uzama + yaylanma, yakında tok. Ölçülen: uzak 67→141 px, yakın 67→74 px, sekme çubuğu uçtan uca 76→115 px. Sürükleme başlarken iptal edilir; mercek tuvali 16'lık basamakla ayrılır.
+- **1.9.9 (geri alınmıştı):** kenar şeridi çok inceydi (B=7, M=.42B, `s²`); kullanıcı 1.9.8'e döndü, sonra aynı istekleri yineledi → 1.9.10.
 - **Denenip bırakılanlar (tekrar denenmesin):**
   - 1.9.3: yazı kopyası + SVG filtre, içeriden dışarı uzatma. Yanlış yön; bant oluşmuyordu.
   - 1.9.4–1.9.5: opak kopya + SVG `feDisplacementMap`. Safari'de içeriği bütünüyle ~4 nokta kaydırdı, gerçek yazı arkada "damga" gibi kaldı. Sebep doğrulanamadı (feImage ölçüsü ya da 128 nötr değerinin renk uzayı).
@@ -161,7 +167,7 @@ Kullanıcı isterse dosyaları elle de yükleyebilir: GitHub → Add file → Up
 
 - 1.8.1'in gerçek iPhone'da doğrulanması: hızlı dokunma, parmakla sürükleme, merceğin taşması.
 - 1.9.2'nin gerçek iPhone'da doğrulanması: segmentlerde parmakla sürükleme.
-- 1.9.8'in gerçek iPhone'da doğrulanması: WebGL cam mercek (kenarda bükülme, renk ayrışması, parlama) Safari'de sekme çubuğunda ve seçicilerde görünüyor mu, akıcı mı; yeni sürüm hemen yükleniyor mu (1.9.7 önbellek düzeltmesi).
+- 1.9.10'un gerçek iPhone'da doğrulanması: jöle esnemesi, aydınlık modda merceğin seçilmesi; WebGL cam mercek (kenarda bükülme, renk ayrışması, parlama) Safari'de sekme çubuğunda ve seçicilerde görünüyor mu, akıcı mı; yeni sürüm hemen yükleniyor mu (1.9.7 önbellek düzeltmesi).
 - 1.9.0'ın gerçek iPhone'da doğrulanması: Face ID kilidi (ana ekran uygulamasında WebAuthn), grafikte parmakla gezinme, TEFAS'tan kopyalanan gerçek metnin okunması.
 - TÜFE işinin ilk otomatik güncellemesi (3 Aralık 2026, Kasım verisi) Actions sekmesinden kontrol edilmeli.
 - Henüz istenmemiş olası geliştirmeler: hedef dağılım ve dengeleme, düzenli yatırım planı, Mac edinilirse yerel SwiftUI sürümü.
