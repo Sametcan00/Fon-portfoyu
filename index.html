@@ -559,6 +559,62 @@ button.tgl:active{transform:none}
 .dpd{height:40px;border:0;background:none;color:var(--ink);font:500 17px var(--font);border-radius:50%;margin:1px auto;width:40px;display:grid;place-items:center;transition:background .15s,transform .15s}
 .dpd.td{color:var(--ac);font-weight:700}.dpd.on{background:var(--ac);color:#fff;font-weight:700}.dpd:disabled{opacity:.28}.dpd:active{transform:scale(.88)}
 .acts .btn.dim{opacity:.5}
+/* 1.9.19: bildirimde "Geri al" düğmesi (yalnız görünürken dokunulabilir) */
+#t.act{display:flex;align-items:center;gap:12px;padding-right:8px}#t.act.show{pointer-events:auto}
+#t .tact{border:0;background:none;color:var(--ac);font:700 13px var(--font);padding:6px 10px;margin:-6px 0;border-radius:99px;touch-action:manipulation}
+/* ================= 1.9.19 — Saydam cam (Apple Music tarzı "clear glass") =================
+   Yalnız malzeme: dolgu çok saydam, bulanıklık hafif (10px) + yüksek doygunluk; sınır ince parlak kenar (üstte güçlü,
+   altta zayıf), kenarda çok hafif pembe/mavi kırılma ve yumuşak dış gölge. Boyut, konum, animasyon kuralı yok.
+   Sekme çubuğunun cam zemini hâlâ .tabbar::after katmanında (mercek kırılması bu katmanın rengini okur). */
+:root{
+  --cg-tb:rgba(255,255,255,.30);--cg-btn:rgba(255,255,255,.42);--cg-toast:rgba(255,255,255,.62);
+  --cg-sheen:linear-gradient(180deg,rgba(255,255,255,.55) 0%,rgba(255,255,255,.10) 48%,rgba(255,255,255,0) 62%,rgba(255,255,255,.22) 100%);
+  --cg-rim:rgba(255,255,255,.9);
+  --cg-hi:inset 0 1px 0 #fff,inset 0 -1px 0 rgba(255,255,255,.65),inset 0 0 0 .5px rgba(0,0,0,.07),inset 1.5px 0 2px -1px rgba(255,80,170,.16),inset -1.5px 0 2px -1px rgba(70,170,255,.18);
+  --cg-sh:0 8px 24px rgba(20,40,80,.13),0 1px 3px rgba(20,40,80,.08);
+  --cg-blur:blur(10px) saturate(180%) brightness(1.05);
+  --cg-ink:0 0 7px rgba(255,255,255,.85);--cg-ico:drop-shadow(0 0 3px rgba(255,255,255,.7));
+  --tb-thumb:rgba(120,120,128,.16);--tb-thumbsh:inset 0 1px 0 rgba(255,255,255,.75),inset 0 0 0 .5px rgba(0,0,0,.04);
+  --segth:#fff;--segsh:inset 0 1px 0 #fff,0 0 0 .5px rgba(0,0,0,.04),0 3px 8px rgba(0,0,0,.12),0 3px 1px rgba(0,0,0,.04);
+  --seg-rim:inset 0 1px 2px rgba(0,0,0,.05),inset 0 -1px 0 rgba(255,255,255,.7)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --cg-tb:rgba(16,16,18,.26);--cg-btn:rgba(255,255,255,.07);--cg-toast:rgba(28,28,30,.55);
+  --cg-sheen:linear-gradient(180deg,rgba(255,255,255,.13) 0%,rgba(255,255,255,.03) 45%,rgba(255,255,255,0) 60%,rgba(255,255,255,.05) 100%);
+  --cg-rim:rgba(255,255,255,.17);
+  --cg-hi:inset 0 1px 0 rgba(255,255,255,.42),inset 0 -1px 0 rgba(255,255,255,.12),inset 1px 0 0 rgba(255,255,255,.06),inset -1px 0 0 rgba(255,255,255,.06),inset 1.5px 0 2px -1px rgba(255,80,170,.17),inset -1.5px 0 2px -1px rgba(70,190,255,.19);
+  --cg-sh:0 8px 26px rgba(0,0,0,.42),0 1px 3px rgba(0,0,0,.3);
+  --cg-blur:blur(10px) saturate(180%);
+  --cg-ink:0 1px 6px rgba(0,0,0,.55);--cg-ico:drop-shadow(0 1px 3px rgba(0,0,0,.45));
+  --tb-thumb:rgba(255,255,255,.13);--tb-thumbsh:inset 0 1px 0 rgba(255,255,255,.22),inset 0 0 0 .5px rgba(255,255,255,.06);
+  --segth:rgba(255,255,255,.24);--segsh:inset 0 1px 0 rgba(255,255,255,.24),inset 0 0 0 .5px rgba(255,255,255,.07),0 3px 8px rgba(0,0,0,.3);
+  --seg-rim:inset 0 1px 2px rgba(0,0,0,.28),inset 0 -.5px 0 rgba(255,255,255,.10),inset 0 0 0 .5px rgba(255,255,255,.04)}}
+:root[data-theme="dark"]{
+  --cg-tb:rgba(16,16,18,.26);--cg-btn:rgba(255,255,255,.07);--cg-toast:rgba(28,28,30,.55);
+  --cg-sheen:linear-gradient(180deg,rgba(255,255,255,.13) 0%,rgba(255,255,255,.03) 45%,rgba(255,255,255,0) 60%,rgba(255,255,255,.05) 100%);
+  --cg-rim:rgba(255,255,255,.17);
+  --cg-hi:inset 0 1px 0 rgba(255,255,255,.42),inset 0 -1px 0 rgba(255,255,255,.12),inset 1px 0 0 rgba(255,255,255,.06),inset -1px 0 0 rgba(255,255,255,.06),inset 1.5px 0 2px -1px rgba(255,80,170,.17),inset -1.5px 0 2px -1px rgba(70,190,255,.19);
+  --cg-sh:0 8px 26px rgba(0,0,0,.42),0 1px 3px rgba(0,0,0,.3);
+  --cg-blur:blur(10px) saturate(180%);
+  --cg-ink:0 1px 6px rgba(0,0,0,.55);--cg-ico:drop-shadow(0 1px 3px rgba(0,0,0,.45));
+  --tb-thumb:rgba(255,255,255,.13);--tb-thumbsh:inset 0 1px 0 rgba(255,255,255,.22),inset 0 0 0 .5px rgba(255,255,255,.06);
+  --segth:rgba(255,255,255,.24);--segsh:inset 0 1px 0 rgba(255,255,255,.24),inset 0 0 0 .5px rgba(255,255,255,.07),0 3px 8px rgba(0,0,0,.3);
+  --seg-rim:inset 0 1px 2px rgba(0,0,0,.28),inset 0 -.5px 0 rgba(255,255,255,.10),inset 0 0 0 .5px rgba(255,255,255,.04)}
+/* Sekme çubuğu: gövdede yalnız dış gölge, cam zemin ::after katmanında */
+.tabbar{box-shadow:var(--cg-sh)}
+.tabbar::after{background-color:var(--cg-tb);background-image:var(--cg-sheen);border:.5px solid var(--cg-rim);box-shadow:var(--cg-hi);
+  -webkit-backdrop-filter:var(--cg-blur);backdrop-filter:var(--cg-blur)}
+.tabbar button{text-shadow:var(--cg-ink)}
+.tabbar button svg{filter:var(--cg-ico)}
+.tabbar>.thumb::before{box-shadow:var(--tb-thumbsh)}
+/* Dairesel butonlar ve geri butonu: dış gölge görünsün diye köşe kırpma (clip-path) yerine yalnız border-radius */
+#app .ib.glass,#app .cap.glass{background-color:var(--cg-btn);background-image:var(--cg-sheen);border:.5px solid var(--cg-rim);clip-path:none;
+  box-shadow:var(--cg-hi),var(--cg-sh);-webkit-backdrop-filter:var(--cg-blur);backdrop-filter:var(--cg-blur)}
+#app .ib.glass svg,#app .cap.glass svg,#app .cap.glass span{filter:var(--cg-ico)}
+/* Bildirim kapsülü: yazı okunacağı için biraz daha dolgulu */
+#t{clip-path:none;background-color:var(--cg-toast);background-image:var(--cg-sheen);border:.5px solid var(--cg-rim);box-shadow:var(--cg-hi),var(--cg-sh);
+  -webkit-backdrop-filter:blur(12px) saturate(180%);backdrop-filter:blur(12px) saturate(180%)}
+/* Segment çubukları: iz hafif gömük cam, seçili kapsül yarı saydam cam (koyu) / parlak beyaz (açık) */
+.seg{box-shadow:var(--seg-rim)}
 .dpf{display:flex;justify-content:flex-end;padding:6px 4px 0}.dptd{border:0;border-radius:99px;padding:7px 14px;background:var(--field);color:var(--ac);font:600 14px var(--font)}
 </style>
 </head>
@@ -568,7 +624,7 @@ button.tgl:active{transform:none}
 <nav class="tabbar glass" id="nav" aria-label="Sekmeler"></nav>
 <div id="m"></div><div id="t" class="glass" role="status" aria-live="polite"></div>
 <script>
-const APPV='1.9.18',KEY='fon-portfoyum-v2',TK='fon-tema',$=s=>document.querySelector(s);
+const APPV='1.9.19',KEY='fon-portfoyum-v2',TK='fon-tema',$=s=>document.querySelector(s);
 const NF=new Intl.NumberFormat('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2});
 // Gizlilik modu: ekrandaki tutarlar maskelenir (kayıtlara yazılan metinler her zaman gerçek tutarla: moneyR/sgnR)
 const PK='fon-gizli';let priv=false;try{priv=localStorage.getItem(PK)==='1'}catch(e){}
@@ -638,12 +694,24 @@ function refLbl(per){if(per==='total')return'';const rs=S.funds.filter(f=>Q(f)>0
   if(new Set(rs.map(r=>r.d+'|'+r.to)).size>1)return'Her fon kendi son fiyat tarihlerine göre';const r=rs[0];
   if(!r.d)return'Karşılaştırılacak önceki fiyat yok';return dTR(r.d)+' → '+dTR(r.to)+' fiyatlarına göre'+(rs.some(x=>x.partial)?' (1 haftalık fiyat verisi yok)':'')}
 const cur=()=>S.funds.find(f=>f.code===view.code);
-const toast=(m)=>{const t=$('#t');t.textContent=m;t.classList.remove('show');void t.offsetWidth;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),2800)};
+/* 1.9.19: a verilirse bildirimde "Geri al" düğmesi çıkar (data-act=a, data-id=id) ve bildirim daha uzun kalır */
+const toast=(m,a,id)=>{const t=$('#t');t.textContent=m;t.classList.toggle('act',!!a);if(a){const b=document.createElement('button');b.type='button';b.className='tact';b.dataset.act=a;if(id!=null)b.dataset.id=id;b.textContent='Geri al';t.append(b)}
+  t.classList.remove('show');void t.offsetWidth;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),a?5500:2800)};
 /* Kalıcı kayıt: her değişiklik anında bu iPhone'daki uygulama deposuna yazılır */
 let saveOk=true,persisted=false;
 function save(r=true){S.updatedAt=Date.now();try{localStorage.setItem(KEY,JSON.stringify(S));saveOk=true}catch(e){saveOk=false;toast('Kaydedilemedi: depolama alanı dolu ya da kapalı.')}if(r)render()}
 // iOS'tan bu uygulamanın verisini kendiliğinden silmemesini iste
 (async()=>{try{if(navigator.storage&&navigator.storage.persist){persisted=await navigator.storage.persisted()||await navigator.storage.persist()}}catch(e){}})();
+/* 1.9.19 — Son silinenler: silinen fon, fiyat kaydı ve yedek yüklenmeden önceki portföy bu cihazda 30 gün saklanır.
+   Silinen alım/satış/sepetler zaten fonun geçmişinde durur (undone), oradan bulunur. */
+const TRK='fon-silinenler',TR_DAYS=30;let TR=[];try{TR=JSON.parse(localStorage.getItem(TRK)||'[]');if(!Array.isArray(TR))TR=[]}catch(e){TR=[]}
+function trSave(){const lim=Date.now()-TR_DAYS*864e5;TR=TR.filter(x=>x&&x.id&&+x.at>lim).sort((a,b)=>b.at-a.at).slice(0,40);
+  const st=TR.filter(x=>x.kind==='state');if(st.length>3){const drop=new Set(st.slice(3));TR=TR.filter(x=>!drop.has(x))}
+  for(;;){try{localStorage.setItem(TRK,JSON.stringify(TR));return true}catch(e){if(!TR.length)return false;TR.pop()}}}
+// Kaydedilemezse (depolama dolu) null döner: çağıran silmeyi yapmaz
+function trAdd(o){const x={id:'t'+uid(),at:Date.now(),...o};TR.unshift(x);trSave();return TR.includes(x)?x.id:null}
+function trDel(id){TR=TR.filter(x=>x.id!==id);trSave()}
+const snap=()=>({funds:JSON.parse(JSON.stringify(S.funds)),updatedAt:S.updatedAt});
 const BK='fon-son-yedek';let lastBackup=0;try{lastBackup=+localStorage.getItem(BK)||0}catch(e){}
 function markBackup(){lastBackup=Date.now();try{localStorage.setItem(BK,String(lastBackup))}catch(e){}render()}
 const backupAge=()=>lastBackup?Math.floor((Date.now()-lastBackup)/864e5):null;
@@ -769,9 +837,10 @@ const hdr=(title)=>`<header class="hdr"><div><div class="eyebrow"><i class="dot 
 /* ================= 1.9 — yeni modüller ================= */
 I.eye='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>';
 I.eyeOff='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18"/><path d="M10.6 5.1A10.4 10.4 0 0 1 12 5c6.4 0 10 7 10 7a17.6 17.6 0 0 1-3.2 4.1M6.6 6.6C3.8 8.4 2 12 2 12s3.6 7 10 7a9.8 9.8 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>';
+I.trash='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg>';
 I.chev='<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>';
 
-const PARENT={detail:'home',tx:'overview',year:'overview'};
+const PARENT={detail:'home',tx:'overview',year:'overview',trash:'settings'};
 const AYLAR=['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
 const ayAd=ym=>{const [y,m]=ym.split('-');return AYLAR[+m-1]+' '+y};
 
@@ -978,12 +1047,59 @@ function txEditOk(id){const x=findTx(id);if(!x)return;const {f,h}=x,s=h.type==='
     Object.assign(h,{date:d,q,p,used:r.used,tax:r.r.tax,rev:r.r.rev,gain:r.r.pr-r.r.tax,amount:-r.r.net,detail:sellTxt(q,p,r.r)})}
   closeM();save();toast('İşlem düzenlendi. Fonun Geçmiş sekmesinden geri alabilirsiniz.')}
 function txDel(id){const x=findTx(id);if(!x)return;const {f,h}=x,s=h.type==='sell';
-  modal(`<h3>${s?'Satış':'Alım'} silinsin mi?</h3><p>${esc(f.code)} · ${dTR(h.date)} · ${esc(dtl(h.detail))}</p><p class="sub" style="white-space:normal">${s?'Satılan adetler portföye geri konur, bu satışın kâr/zararı ve stopajı hesaplardan çıkar.':'Bu alımın sepeti portföyden çıkarılır.'} Fonun Geçmiş sekmesinden geri alabilirsiniz.</p>
+  modal(`<h3>${s?'Satış':'Alım'} silinsin mi?</h3><p>${esc(f.code)} · ${dTR(h.date)} · ${esc(dtl(h.detail))}</p><p class="sub" style="white-space:normal">${s?'Satılan adetler portföye geri konur, bu satışın kâr/zararı ve stopajı hesaplardan çıkar.':'Bu alımın sepeti portföyden çıkarılır.'} Ayarlar › Son silinenler’den geri getirebilirsiniz.</p>
   <div class="btns"><button class="btn plain" data-act="close">Vazgeç</button><button class="btn red" data-act="txdelok" data-id="${esc(id)}">Evet, sil</button></div>`)}
 function txDelOk(id){const x=findTx(id);if(!x)return;const {f,h}=x,s=h.type==='sell',cn=txCan(f,h);if(!cn.ok){toast(cn.why);closeM();return}const old=keepOld(h);
   if(!s){const b=buyInfo(h);commit(f,'delete',today(),`${dTR(h.date)} tarihli alım silindi (${num(b.q||cn.lot.qty)} adet).`,-h.amount,f.lots.filter(l=>l!==cn.lot),0,{ref:h.id,old})}
   else{const i=sellInfo(h);commit(f,'delete',today(),`${dTR(h.date)} tarihli satış silindi; ${num(i.q)} adet portföye geri kondu.`,0,putBack(f.lots,cn.used),0,{ref:h.id,old})}
-  h.undone=true;closeM();save();toast('İşlem silindi.')}
+  h.undone=true;closeM();save();toast('İşlem silindi.','trtx',f.code+'|'+h.id)}
+
+/* --- 1.9.19: Geri getirme --- */
+/* Fonun en son değişikliğini geri alır (Geçmiş sekmesindeki "Geri al") */
+function undoLast(f){const h=f.hist.find(x=>!x.undone&&x.prev);if(!h)return null;f.lots=h.prev;h.undone=true;
+  if(h.ref!=null&&h.old){const t=f.hist.find(x=>String(x.id)===String(h.ref));if(t){['q','p','tax','rev','used'].forEach(k=>{if(!(k in h.old))delete t[k]});Object.assign(t,h.old)}}return h}
+// Sepet kaydı olmadan silinmiş sepet: silme kaydından önceki ve sonraki sepetlerin farkı (hâlâ portföyde değilse)
+function lostLot(f,e){const i=f.hist.indexOf(e);if(i<0||!e.prev)return null;const after=i>0?f.hist[i-1].prev:f.lots;if(!after)return null;
+  const l=e.prev.find(p=>!after.some(a=>String(a.id)===String(p.id)));return l&&!f.lots.some(a=>String(a.id)===String(l.id))?l:null}
+// Silinen (iptal edilmiş) alım ve satışlar + kayıtsız silinen sepetler, en son silinen önce
+function trTxList(){const a=[];S.funds.forEach(f=>f.hist.forEach(h=>{
+  if((h.type==='buy'||h.type==='sell')&&h.undone){const d=f.hist.find(y=>y.type==='delete'&&y.ref!=null&&String(y.ref)===String(h.id));a.push({k:'tx',f,h,at:d?+d.id||0:+h.id||0})}
+  else if(h.type==='delete'&&!h.undone&&h.ref==null){const l=lostLot(f,h);if(l)a.push({k:'lot',f,h,l,at:+h.id||0})}}));return a.sort((x,y)=>y.at-x.at)}
+const trBack=()=>{if(view.page==='trash')render()};
+/* Silinen alım/satışı geri getirir. En son değişiklik bu silme ise birebir geri alınır; değilse işlem aynı tarih, adet ve fiyatla yeniden uygulanır */
+function trTx(id){const x=findTx(id);if(!x){toast('Kayıt bulunamadı.');return}const {f,h}=x,s=h.type==='sell';
+  if(!h.undone){toast('Bu işlem zaten portföyde.');return}
+  const top=f.hist.find(y=>!y.undone&&y.prev);
+  if(top&&(top.type==='delete'&&top.ref!=null&&String(top.ref)===String(h.id))){undoLast(f);closeM();save();toast((s?'Satış':'Alım')+' geri getirildi.');return}
+  if(!s){const b=buyInfo(h);if(!(b.q>0&&b.p>0)){toast('Bu eski kaydın adet ve fiyatı okunamadı; geri getirilemiyor.');return}
+    const lid=h.lot!=null&&!f.lots.some(l=>String(l.id)===String(h.lot))?h.lot:uid(),old=keepOld(h);
+    commit(f,'restore',today(),`${dTR(h.date)} tarihli alım geri getirildi (${num(b.q)} adet).`,b.q*b.p,[...f.lots,{id:lid,date:h.date,qty:b.q,cost:b.p}],0,{ref:h.id,old});
+    Object.assign(h,{undone:false,q:b.q,p:b.p,lot:lid})}
+  else{const i=sellInfo(h);if(!(i.q>0&&i.p>0)){toast('Bu eski kaydın adet ve fiyatı okunamadı; geri getirilemiyor.');return}
+    if(laterSell(f,h)){toast('Bu satıştan sonraki bir tarihte satış var. FIFO sırası bozulmasın diye önce o satışı silin.');return}
+    const bd=byDate(f.lots,h.date),av=sumQ(bd.ok);if(i.q>av+1e-4){toast(`${dTR(h.date)} tarihinde portföyde ${num(av)} adet var; ${num(i.q)} adetlik satış geri getirilemiyor.`);return}
+    const old=keepOld(h),r=sellRun(bd.ok,i.q,i.p,rateOf(f,h));
+    commit(f,'restore',today(),`${dTR(h.date)} tarihli satış geri getirildi (${num(i.q)} adet).`,0,[...r.lots,...bd.later],0,{ref:h.id,old});
+    Object.assign(h,{undone:false,q:i.q,p:i.p,used:r.used,tax:r.r.tax,rev:r.r.rev,gain:r.r.pr-r.r.tax,amount:-r.r.net,detail:sellTxt(i.q,i.p,r.r)})}
+  closeM();save();toast((s?'Satış':'Alım')+' geri getirildi.')}
+function trLot(id){const [c,eid]=String(id).split('|'),f=S.funds.find(x=>x.code===c),e=f&&f.hist.find(x=>String(x.id)===eid);if(!e||e.undone){toast('Kayıt bulunamadı.');return}
+  if(f.hist.find(y=>!y.undone&&y.prev)===e){undoLast(f);save();toast('Sepet geri getirildi.');return}
+  const l=lostLot(f,e);if(!l){toast('Bu sepet zaten portföyde.');return}
+  commit(f,'restore',today(),`${dTR(l.date)} tarihli ${num(l.qty)} adetlik sepet geri getirildi.`,l.qty*l.cost,[...f.lots,{...l}],0);save();toast('Sepet geri getirildi.')}
+/* Son silinenler deposundaki fon / fiyat kaydı / önceki portföy */
+function trRestore(tid,sure){const x=TR.find(y=>y.id===tid);if(!x){toast('Bu kayıt artık yok.');return}
+  if(x.kind==='fund'){if(S.funds.some(f=>f.code===x.code)){toast(`${x.code} kodlu bir fon zaten var; geri getirmek için önce onu silin.`);return}
+    const n=norm({funds:[x.data]});if(!n||!n.funds.length){toast('Kayıt okunamadı.');return}
+    S.funds.splice(Math.min(+x.pos>=0?+x.pos:S.funds.length,S.funds.length),0,n.funds[0]);trDel(tid);save();toast(x.code+' geri getirildi.');return}
+  if(x.kind==='price'){const f=S.funds.find(y=>y.code===x.code);if(!f){toast(`${x.code} portföyde yok; önce fonu geri getirin.`);return}
+    const add=(Array.isArray(x.lost)?x.lost:[{d:x.d,p:x.p}]).filter(e=>e&&isDate(e.d)&&+e.p>0&&!f.log.some(l=>l.d===e.d)).map(e=>({d:e.d,p:+e.p}));trDel(tid);
+    if(add.length){f.log=sortLog([...f.log,...add]);f.price=f.log[f.log.length-1].p}save();
+    if(sheetOpen()&&$('#p_v')&&view.code===f.code)priceModal(f);
+    toast(add.length?'Fiyat kaydı geri getirildi.':'O tarihe yeni bir fiyat girilmiş; eski kayıt geri getirilmedi.');return}
+  if(x.kind==='state'){const n=norm(x.data);if(!n){toast('Kayıt okunamadı.');trDel(tid);trBack();return}
+    if(!sure){modal(`<h3>Önceki portföy geri yüklensin mi?</h3><p>${n.funds.length} fon: ${n.funds.map(f=>esc(f.code)).join(', ')||'—'}</p><p class="sub" style="white-space:normal">Şu anki portföyünüzün yerine geçer. Şu anki portföy de Son silinenler’e taşınır; istediğinizde geri dönebilirsiniz.</p><div class="btns"><button class="btn plain" data-act="close">Vazgeç</button><button class="btn red" data-act="trrestok" data-id="${esc(tid)}">Evet, geri yükle</button></div>`);return}
+    const keep=trAdd({kind:'state',data:snap(),why:'Geri yüklemeden önceki portföy'});if(!keep){closeM();toast('Depolama dolu: şu anki portföyün kopyası saklanamadı, işlem yapılmadı.');return}
+    trDel(tid);S=n;closeM();save(false);if(view.page==='home')render();else go('home');toast('Önceki portföy geri yüklendi.','trundo',keep)}}
 
 /* --- Yıllık özet --- */
 function yearsList(){const ys=new Set([today().slice(0,4)]);S.funds.forEach(f=>{f.hist.forEach(h=>{if((h.type==='buy'||h.type==='sell')&&!h.undone)ys.add(h.date.slice(0,4))})});return [...ys].sort().reverse()}
@@ -1035,7 +1151,7 @@ function detail(){
   let body='';
   if(t==='lots'){const L=sorted(f);body=`<div class="list glass"><div class="row"><div class="l sub">Ortalama maliyet</div><b>${num(A(f),6)} ₺</b></div>${Math.abs(rl)>.005?`<div class="row"><div class="l sub">Gerçekleşen kâr/zarar (stopaj sonrası)</div><b class="${rl>=0?'up':'dn'}">${sgn(rl)}</b></div>`:''}${(()=>{const x=realOf([f]);return x?`<div class="row"><div class="l sub">Enflasyona göre (reel) getiri${x.miss?' *':''}</div><b class="${x.real>=0?'up':'dn'}">${pc(x.real)}</b></div>`:''})()}${L.map(l=>{const pr=(f.price-l.cost)*l.qty,pp=l.cost>0?(f.price/l.cost-1)*100:0;return `<div class="row" data-k="l-${esc(l.id)}"><div class="l"><b>${dTR(l.date)}</b><div class="sub">${num(l.qty)} adet · ${num(l.cost,6)} ₺</div></div><div class="r"><b>${money(l.qty*f.price)}</b><div class="d ${pr>=0?'up':'dn'}">${pc(pp)} · ${sgn(pr)}</div></div><button class="rowbtn del" data-act="dellot" data-id="${esc(l.id)}" aria-label="Sepeti sil">Sil</button></div>`}).join('')||'<div class="empty">Bu fonda aktif sepet yok. “Alım ekle” ile başlayın.</div>'}</div>`}
   if(t==='cash')body=`<div class="glass card pad"><label class="lbl" for="c_v">Elime geçmesini istediğim net tutar (₺)</label><div class="two" style="grid-template-columns:1fr auto"><input id="c_v" class="inp" inputmode="decimal" placeholder="Örn: 10.000"><button class="btn pri" data-act="calc"><span>Hesapla</span></button></div><div id="cr"></div></div>`;
-  if(t==='hist'){const first=f.hist.find(h=>!h.undone&&h.prev);const N={buy:'Alım',sell:'Satış',edit:'Düzenleme',delete:'Silme'};body=`<div class="list glass">${f.hist.map(h=>`<div class="row" data-k="h-${esc(h.id)}${h.undone?'u':''}" style="${h.undone?'opacity:.5':''}"><div class="l"><span class="tag">${h.undone?'İptal edildi':N[h.type]||'İşlem'}</span> <span class="sub">${dTR(h.date)}</span><div class="sub" style="white-space:normal;margin-top:3px">${esc(dtl(h.detail))}</div></div><div class="r"><b class="${h.amount>=0?'up':'dn'}">${sgn(h.amount)}</b>${first&&first.id===h.id?`<div><button class="rowbtn" data-act="undo" style="margin-top:6px">Geri al</button></div>`:''}</div></div>`).join('')||'<div class="empty">Henüz işlem geçmişi yok.</div>'}</div>`}
+  if(t==='hist'){const first=f.hist.find(h=>!h.undone&&h.prev);const N={buy:'Alım',sell:'Satış',edit:'Düzenleme',delete:'Silme',restore:'Geri getirme'};body=`<div class="list glass">${f.hist.map(h=>`<div class="row" data-k="h-${esc(h.id)}${h.undone?'u':''}" style="${h.undone?'opacity:.5':''}"><div class="l"><span class="tag">${h.undone?'İptal edildi':N[h.type]||'İşlem'}</span> <span class="sub">${dTR(h.date)}</span><div class="sub" style="white-space:normal;margin-top:3px">${esc(dtl(h.detail))}</div></div><div class="r"><b class="${h.amount>=0?'up':'dn'}">${sgn(h.amount)}</b>${first&&first.id===h.id?`<div><button class="rowbtn" data-act="undo" style="margin-top:6px">Geri al</button></div>`:''}</div></div>`).join('')||'<div class="empty">Henüz işlem geçmişi yok.</div>'}</div>`}
   const last=f.log[f.log.length-1];
   return `${dnav('Portföy','<button class="cap glass" data-act="editfund"><span>Düzenle</span></button>')}
   <section class="dhead">${av(f,'lg')}<h2>${esc(f.name)}</h2><div class="lbl">${esc(f.code)} · ${esc(f.type)} · Stopaj ${rateTxt(f.tax)} · ${num(Q(f))} adet</div><div class="big md">${T('d-'+f.code+'-val',V(f),'big')}</div>${chipH(r,'toplam','d-'+f.code)}</section>
@@ -1064,10 +1180,29 @@ function overview(){
   <div class="sech"><h2>Dağılım</h2><span>${S.funds.length} fon</span></div>
   <div class="list glass">${S.funds.map(x=>{const w=tot>0?V(x)/tot*100:0,n=fifo(sorted(x),Q(x),x.price,x.tax).net;return `<button class="row" data-k="o-${esc(x.code)}" data-act="open" data-id="${esc(x.code)}">${av(x)}<div class="l"><div style="display:flex;justify-content:space-between;gap:8px"><b>${esc(x.code)}</b><b>%${w.toFixed(1).replace('.',',')}</b></div><div class="pbar" style="margin:7px 0 5px"><i data-bk="p-${esc(x.code)}" data-bw="${Math.min(100,w).toFixed(2)}" style="--c:${col(x.code)};width:0"></i></div><div class="sub" style="display:flex;justify-content:space-between;gap:8px"><span>Brüt ${money(V(x))}</span><span>Net ${money(n)}</span></div></div></button>`}).join('')||'<div class="empty">Henüz fon yok.</div>'}</div>`}
 
+/* --- 1.9.19: Son silinenler sayfası --- */
+function trashPage(){trSave();const T=trTxList(),F=TR.filter(x=>x.kind==='fund'),P=TR.filter(x=>x.kind==='price'),ST=TR.filter(x=>x.kind==='state');
+  const left=t=>{const d=Math.max(1,Math.ceil((+t+TR_DAYS*864e5-Date.now())/864e5));return d+' gün kaldı'},del=t=>new Date(+t).toLocaleDateString('tr-TR');
+  const btn=(a,id,t='Geri getir')=>`<button class="rowbtn" data-act="${a}" data-id="${esc(id)}">${t}</button>`;
+  const gav=c=>`<span class="av" style="--c:#8e8e93">${esc(String(c).slice(0,3))}</span>`;
+  const sec=(t,rows)=>rows.length?`<div class="grp"><div class="gl">${t}</div><div class="list glass">${rows.join('')}</div></div>`:'';
+  const tx=T.map(x=>{if(x.k==='lot')return `<div class="row" data-k="tr-l${esc(x.h.id)}">${av(x.f)}<div class="l"><b>Sepet · ${esc(x.f.code)}</b><div class="sub">${dTR(x.l.date)} · ${num(x.l.qty)} adet</div></div>${btn('trlot',x.f.code+'|'+x.h.id)}</div>`;
+    const s=x.h.type==='sell',i=s?sellInfo(x.h):buyInfo(x.h);
+    return `<div class="row" data-k="tr-t${esc(x.h.id)}">${av(x.f)}<div class="l"><b>${s?'Satış':'Alım'} · ${esc(x.f.code)}</b><div class="sub">${dTR(x.h.date)}${i.q?` · ${num(i.q)} adet`:''} · ${money(s?i.net:x.h.amount)}</div></div>${btn('trtx',x.f.code+'|'+x.h.id)}</div>`});
+  const fu=F.map(x=>{const d=x.data||{},nl=Array.isArray(d.lots)?d.lots.length:0,nh=Array.isArray(d.hist)?d.hist.filter(h=>h&&(h.type==='buy'||h.type==='sell')&&!h.undone).length:0;
+    return `<div class="row" data-k="tr-${esc(x.id)}">${gav(x.code)}<div class="l"><b>${esc(x.code)}</b><div class="sub">${left(x.at)} · ${nl} sepet · ${nh} işlem</div></div>${btn('trrest',x.id)}</div>`});
+  const pr=P.map(x=>`<div class="row" data-k="tr-${esc(x.id)}">${S.funds.some(f=>f.code===x.code)?av({code:x.code}):gav(x.code)}<div class="l"><b>${esc(x.code)} · ${dTR(x.d)}</b><div class="sub">${num(x.p,6)} ₺ · ${left(x.at)}</div></div>${btn('trrest',x.id)}</div>`);
+  const st=ST.map(x=>{const n=x.data&&Array.isArray(x.data.funds)?x.data.funds:[];return `<div class="row" data-k="tr-${esc(x.id)}"><span class="ico" style="--c:#8e8e93">${I.pie}</span><div class="l"><b>${esc(x.why||'Önceki portföy')}</b><div class="sub">${del(x.at)} · ${n.length} fon${n.length?': '+n.slice(0,4).map(f=>esc(f&&f.code||'')).join(', ')+(n.length>4?'…':''):''} · ${left(x.at)}</div></div>${btn('trrest',x.id,'Geri yükle')}</div>`});
+  const body=sec('Alım, satış ve sepetler',tx)+sec('Fonlar',fu)+sec('Fiyat kayıtları',pr)+sec('Önceki portföyler',st);
+  return `${dnav('Ayarlar')}<header class="hdr"><div><h1>Son silinenler</h1></div></header>
+  ${body||'<div class="list glass"><div class="empty">Silinen bir şey yok.</div></div>'}
+  <p class="hint" style="text-align:center;margin:2px 8px">Silinen alım ve satışlar fonun geçmişinde kaldığı için süresiz geri getirilebilir. Silinen fonlar, fiyat kayıtları ve yedekten önceki portföyler bu iPhone’da ${TR_DAYS} gün saklanır.</p>`}
+
 function settings(){
   return `${hdr('Ayarlar')}
   <div class="grp"><div class="gl">Görünüm</div><div class="glass card pad"><div class="lbl">Tema</div>${segH('theme',[['system','Sistem'],['light','Açık'],['dark','Koyu']],themePref)}<div class="hint" style="margin:0">“Sistem”, cihazınızın açık/koyu ayarını izler. Seçiminiz bu cihazda saklanır.</div></div></div>
   <div class="grp"><div class="gl">Veri</div><div class="list glass"><div class="row"><div class="l"><b>Kayıt yeri</b><div class="sub">Bu iPhone’da, uygulamanın içinde</div></div><i class="dot ${saveOk?'on':''}"></i></div><div class="row"><div class="l"><b>Kalıcı depolama</b><div class="sub">${persisted?'Açık: iOS bu veriyi kendiliğinden silmez':'Standart'}</div></div></div><div class="row"><div class="l"><b>Son yedek</b></div><span class="sub">${lastBackup?new Date(lastBackup).toLocaleDateString('tr-TR'):'Hiç alınmadı'}</span></div><div class="row"><div class="l"><b>Fon sayısı</b></div><span class="sub">${S.funds.length}</span></div><div class="row"><div class="l"><b>Enflasyon verisi</b><div class="sub" style="white-space:normal">${TUFE&&TUFE.son?`TCMB · son açıklanan ay ${ayAd(TUFE.son)}`:'Henüz indirilmedi'} · her gün otomatik kontrol edilir</div></div></div></div></div>
+  <div class="grp"><div class="list glass"><button class="row" data-act="trashpage"><span class="ico" style="--c:#ff3b30">${I.trash}</span><div class="l"><b>Son silinenler</b><div class="sub">${(()=>{const n=TR.length+trTxList().length;return n?n+' öğe · geri getirilebilir':'Silinen her şeyi buradan geri getirin'})()}</div></div>${I.chev}</button></div></div>
   <div class="grp"><div class="gl">Yedek dosyası</div><div class="glass card pad"><div class="fbtns"><button class="btn pri" data-act="exportfile"><span>Dışa aktar</span></button><button class="btn plain" data-act="importfile"><span>Dosyadan yükle</span></button></div><input type="file" id="b_f" class="hidefile" accept="application/json,.json,text/plain"><div class="hint" style="margin:0">“Dışa aktar” paylaşım menüsünü açar: “Dosyalar’a Kaydet” ile iCloud Drive’a kaydedin. Uygulamayı silerseniz veriler de silinir; yedek dosyası verilerinizi geri getirir.</div></div></div>
   <div class="grp"><div class="gl">Yedek kodu</div><div class="glass card pad"><div class="f" style="margin:0"><div class="lh"><label for="b_j">Yedek kodu (JSON)</label><button type="button" class="lnk" data-act="bcopy">Kopyala</button></div><textarea id="b_j" rows="5" style="font-size:12px" class="${priv?'privta':''}">${esc(JSON.stringify(S))}</textarea></div><div class="hint" style="margin:0">Claude’daki eski sürümün Ayarlar sayfasından kopyaladığınız yedek kodunu buraya yapıştırıp geri yükleyebilirsiniz.</div><p class="err" id="b_e" style="margin:0;min-height:0"></p><button class="btn plain" data-act="brest"><span>Yapıştırılan yedeği geri yükle</span></button></div></div>
   <div class="hint" style="text-align:center;margin:4px 0 0">Fon Portföyüm · sürüm ${APPV}</div>`}
@@ -1148,7 +1283,7 @@ function render(){
   if(!same)lastPage=pg;
   app.classList.remove('pg-fwd','pg-back','pg-fade','en-push','en-pop','en-tab-fwd','en-tab-bwd');if((pageAnim||enterMode)&&!RM()){app.classList.add('moving');clearTimeout(mvT);mvT=setTimeout(()=>app.classList.remove('moving'),640)}if(pageAnim&&!RM()){void app.offsetWidth;app.classList.add(pageAnim)}pageAnim='';
   app.classList.toggle('enter',enterMode&&!RM());enterMode=false;
-  app.innerHTML=pg==='detail'?detail():pg==='tx'?txPage():pg==='year'?yearPage():pg==='overview'?overview():pg==='settings'?settings():home();
+  app.innerHTML=pg==='detail'?detail():pg==='tx'?txPage():pg==='year'?yearPage():pg==='overview'?overview():pg==='settings'?settings():pg==='trash'?trashPage():home();
   tabAnim='';
   if(prevK)app.querySelectorAll('[data-k]').forEach(e=>{if(!prevK.has(e.dataset.k))e.classList.add('row-new')});
   [...app.children].forEach((c,i)=>c.style.setProperty('--i',i));app.querySelectorAll('.list').forEach(l=>[...l.children].forEach((r,i)=>r.style.setProperty('--i',i)));
@@ -1210,12 +1345,24 @@ function act(a,id){
     case 'priceok':{const p=pn(g('p_v')),d=g('p_d')||today();if(!(p>0)){$('#p_e').textContent='Geçerli bir fiyat girin.';return}if(!isDate(d)||d>today()){$('#p_e').textContent='İleri tarihli fiyat girilemez.';return}
       const prev=f.log.filter(e=>e.d<d).pop();f.log=sortLog([...f.log.filter(e=>e.d!==d),{d,p}]);f.price=f.log[f.log.length-1].p;if(!f.chk||d>f.chk)f.chk=d;closeM();save();
       toast(prev&&Math.abs(prev.p-p)<1e-12?'Fiyat önceki fiyatla aynı; yeni fiyat günü sayılmadı.':'Fiyat kaydedildi.');break}
-    case 'dellog':{if(f.log.length<2)return;f.log=sortLog(f.log.filter(e=>e.d!==id));f.price=f.log[f.log.length-1].p;save();priceModal(f);toast('Fiyat kaydı silindi.');break}
-    case 'dellot':{const l=f.lots.find(x=>String(x.id)===id);if(!l)return;modal(`<h3>Sepeti sil</h3><p>${dTR(l.date)} tarihli, ${num(l.qty)} adetlik sepet silinsin mi? Geçmiş sekmesinden geri alabilirsiniz.</p><div class="btns"><button class="btn plain" data-act="close">Vazgeç</button><button class="btn red" data-act="dellotok" data-id="${esc(id)}">Evet, sil</button></div>`);break}
+    case 'dellog':{const e=f.log.find(x=>x.d===id);if(!e||f.log.length<2)return;
+      modal(`<h3>Fiyat kaydı silinsin mi?</h3><p>${esc(f.code)} · ${dTR(e.d)} · ${num(e.p,6)} ₺</p><p class="sub" style="white-space:normal">Ayarlar › Son silinenler’den ${TR_DAYS} gün içinde geri getirebilirsiniz.</p><div class="btns"><button class="btn plain" data-act="price">Vazgeç</button><button class="btn red" data-act="dellogok" data-id="${esc(e.d)}">Evet, sil</button></div>`);break}
+    case 'dellogok':{const e=f.log.find(x=>x.d===id);if(!e||f.log.length<2){priceModal(f);break}const nl=sortLog(f.log.filter(x=>x.d!==id)),lost=f.log.filter(x=>!nl.some(y=>y.d===x.d));
+      const tid=trAdd({kind:'price',code:f.code,d:e.d,p:e.p,lost});if(!tid){priceModal(f);toast('Depolama dolu: silinen kaydın kopyası saklanamadı, kayıt silinmedi.');break}
+      f.log=nl;f.price=f.log[f.log.length-1].p;save();priceModal(f);toast('Fiyat kaydı silindi.','trundo',tid);break}
+    case 'dellot':{const l=f.lots.find(x=>String(x.id)===id);if(!l)return;modal(`<h3>Sepeti sil</h3><p>${dTR(l.date)} tarihli, ${num(l.qty)} adetlik sepet silinsin mi?</p><p class="sub" style="white-space:normal">Ayarlar › Son silinenler’den ya da Geçmiş sekmesinden geri getirebilirsiniz.</p><div class="btns"><button class="btn plain" data-act="close">Vazgeç</button><button class="btn red" data-act="dellotok" data-id="${esc(id)}">Evet, sil</button></div>`);break}
     case 'dellotok':{const l=f.lots.find(x=>String(x.id)===id);closeM();if(!l)return;const el=[...document.querySelectorAll('#app [data-k]')].find(e=>e.dataset.k==='l-'+l.id);
       collapse(el).then(()=>{if(!f.lots.includes(l))return;const bh=f.hist.find(h=>h.type==='buy'&&!h.undone&&lotOf(f,h)===l),ok=bh&&txCan(f,bh).ok;
-        commit(f,'delete',today(),`${dTR(l.date)} tarihli ${num(l.qty)} adetlik sepet silindi.`,-l.qty*l.cost,f.lots.filter(x=>x!==l),0,ok?{ref:bh.id,old:keepOld(bh)}:{});if(ok)bh.undone=true;save()});break}
-    case 'undo':{const h=f.hist.find(x=>!x.undone&&x.prev);if(h){f.lots=h.prev;h.undone=true;if(h.ref!=null&&h.old){const t=f.hist.find(x=>String(x.id)===String(h.ref));if(t){['q','p','tax','rev','used'].forEach(k=>{if(!(k in h.old))delete t[k]});Object.assign(t,h.old)}}save();toast('İşlem geri alındı.')}break}
+        const dh=commit(f,'delete',today(),`${dTR(l.date)} tarihli ${num(l.qty)} adetlik sepet silindi.`,-l.qty*l.cost,f.lots.filter(x=>x!==l),0,ok?{ref:bh.id,old:keepOld(bh)}:{});if(ok)bh.undone=true;save();
+        toast('Sepet silindi.',ok?'trtx':'trlot',f.code+'|'+(ok?bh.id:dh.id))});break}
+    case 'undo':{const h=f.hist.find(x=>!x.undone&&x.prev);if(!h)break;const W={buy:'Bu alım iptal edilir ve sepeti portföyden çıkar.',sell:'Bu satış iptal edilir; satılan adetler portföye geri konur.',delete:'Silinen kayıt geri gelir.',edit:'Kayıt düzenlemeden önceki haline döner.',restore:'Geri getirilen kayıt yeniden kaldırılır.'};
+      modal(`<h3>Son değişiklik geri alınsın mı?</h3><p>${esc(dtl(h.detail))}</p><p class="sub" style="white-space:normal">${W[h.type]||''}${h.type==='buy'||h.type==='sell'?' Ayarlar › Son silinenler’den geri getirebilirsiniz.':''}</p><div class="btns"><button class="btn plain" data-act="close">Vazgeç</button><button class="btn red" data-act="undook">Evet, geri al</button></div>`);break}
+    case 'undook':{const h=f&&undoLast(f);closeM();if(h){save();const r=h.type==='buy'||h.type==='sell'?h.id:h.type==='restore'&&h.ref!=null?h.ref:null;if(r!=null)toast('İşlem geri alındı.','trtx',f.code+'|'+r);else toast('İşlem geri alındı.')}break}
+    case 'trashpage':go('trash');break;
+    case 'trtx':trTx(id);break;
+    case 'trlot':trLot(id);break;
+    case 'trrest':trRestore(id,false);break;
+    case 'trrestok':case 'trundo':trRestore(id,true);break;
     case 'priv':priv=!priv;try{localStorage.setItem(PK,priv?'1':'0')}catch(e){}Object.keys(TW).forEach(k=>delete TW[k]);render();toast(priv?'Tutarlar gizlendi.':'Tutarlar gösteriliyor.');break;
     case 'rng':view.rng=id;render();break;
     case 'hm':view.hm=id;render();break;
@@ -1245,8 +1392,10 @@ function act(a,id){
     case 'newok':{const c=g('n_c').trim().toUpperCase(),n=g('n_n').trim(),p=pn(g('n_p')),x=pn(g('n_x'));if(!c||!n||!(p>0)){$('#n_e').textContent='Kod, ad ve geçerli bir fiyat girin.';return}if(!(x>=0&&x<100)){$('#n_e').textContent='Stopaj oranı 0 ile 100 arasında olmalı.';return}if(S.funds.some(y=>y.code===c)){$('#n_e').textContent='Bu fon kodu zaten var.';return}S.funds.push({...mk(c,n,g('n_t').trim()||'Yatırım Fonu',p,x/100),taxSet:true});view.page='home';closeM();save();toast(c+' eklendi.');break}
     case 'editfund':modal(`<h3>Fonu düzenle</h3>${txt('e_c','Fon kodu',f.code,'readonly')}${txt('e_n','Fon adı',f.name)}<div class="two">${txt('e_t','Fon türü',f.type)}${fld('e_x','Stopaj oranı (%)',num(f.tax*100,2))}</div><p class="hint">Stopaj oranı satış önizlemesini, nakit hesabını ve özeti etkiler. Geçmiş satış kayıtları değişmez.</p><p class="err" id="e_e"></p><div class="btns"><button class="btn red" data-act="delfund">Fonu sil</button><button class="btn plain" data-act="close">Vazgeç</button><button class="btn pri" data-act="editok">Kaydet</button></div>`);break;
     case 'editok':{const n=g('e_n').trim(),x=pn(g('e_x'));if(!n){$('#e_e').textContent='Fon adı boş olamaz.';return}if(!(x>=0&&x<100)){$('#e_e').textContent='Stopaj oranı 0 ile 100 arasında olmalı.';return}f.name=n;f.type=g('e_t').trim()||'Yatırım Fonu';f.tax=x/100;f.taxSet=true;closeM();save();toast('Fon bilgileri güncellendi.');break}
-    case 'delfund':modal(`<h3>${esc(f.code)} silinsin mi?</h3><p>Fon, ${f.lots.length} sepeti ve tüm işlem geçmişiyle birlikte kalıcı olarak silinecek. Bu işlem geri alınamaz; önce Ayarlar’dan yedek almak isteyebilirsiniz.</p><div class="btns"><button class="btn plain" data-act="close">Vazgeç</button><button class="btn red" data-act="delfundok">Evet, kalıcı olarak sil</button></div>`);break;
-    case 'delfundok':{const c=f.code;S.funds=S.funds.filter(x=>x!==f);closeM();save(false);go('home');toast(c+' silindi.');break}
+    case 'delfund':modal(`<h3>${esc(f.code)} silinsin mi?</h3><p>Fon, ${f.lots.length} sepeti, fiyat geçmişi ve tüm işlem geçmişiyle birlikte silinecek.</p><p class="sub" style="white-space:normal">Ayarlar › Son silinenler’den ${TR_DAYS} gün içinde geri getirebilirsiniz.</p><div class="btns"><button class="btn plain" data-act="close">Vazgeç</button><button class="btn red" data-act="delfundok">Evet, sil</button></div>`);break;
+    case 'delfundok':{if(!f)break;const c=f.code,tid=trAdd({kind:'fund',code:c,pos:S.funds.indexOf(f),data:JSON.parse(JSON.stringify(f))});
+      if(!tid){closeM();toast('Depolama dolu: silinen fonun kopyası saklanamadı, fon silinmedi.');break}
+      S.funds=S.funds.filter(x=>x!==f);closeM();save(false);go('home');toast(c+' silindi.','trundo',tid);break}
     case 'overview':go('overview');break;
     case 'backup':go('settings');break;
     case 'exportfile':exportFile();break;
@@ -1257,8 +1406,9 @@ function act(a,id){
       else n=norm(o);
       if(!n||!n.funds.length)throw 0;
       pend=n;const lots=n.funds.reduce((a,x)=>a+x.lots.length,0);
-      modal(`<h3>Yedek geri yüklensin mi?</h3><p>Yedekte ${n.funds.length} fon ve ${lots} sepet var: ${n.funds.map(x=>esc(x.code)).join(', ')}.</p><p class="sub" style="white-space:normal">Şu anki portföyünüzün yerine geçecek. Mevcut verileri saklamak istiyorsanız önce vazgeçip yedek kodunu kopyalayın.</p><div class="btns"><button class="btn plain" data-act="close">Vazgeç</button><button class="btn red" data-act="brestok">Evet, değiştir</button></div>`)}catch(e){$('#b_e').textContent='Yedek kodu okunamadı. Geçerli bir JSON yapıştırın.'}break}
-    case 'brestok':if(pend){S=pend;pend=null;closeM();save(false);if(view.page==='home')render();else go('home');toast('Yedek geri yüklendi.')}break;
+      modal(`<h3>Yedek geri yüklensin mi?</h3><p>Yedekte ${n.funds.length} fon ve ${lots} sepet var: ${n.funds.map(x=>esc(x.code)).join(', ')}.</p><p class="sub" style="white-space:normal">Şu anki portföyünüzün yerine geçecek. Şu anki portföy Ayarlar › Son silinenler’e taşınır; ${TR_DAYS} gün içinde geri dönebilirsiniz.</p><div class="btns"><button class="btn plain" data-act="close">Vazgeç</button><button class="btn red" data-act="brestok">Evet, değiştir</button></div>`)}catch(e){$('#b_e').textContent='Yedek kodu okunamadı. Geçerli bir JSON yapıştırın.'}break}
+    case 'brestok':if(pend){const tid=trAdd({kind:'state',data:snap(),why:'Yedek yüklenmeden önceki portföy'});if(!tid){closeM();toast('Depolama dolu: şu anki portföyün kopyası saklanamadı, yedek yüklenmedi. Önce Dışa aktar ile yedek alın.');break}
+      S=pend;pend=null;closeM();save(false);if(view.page==='home')render();else go('home');toast('Yedek geri yüklendi.','trundo',tid)}break;
   }
 }
 document.addEventListener('click',e=>{lastXY={x:e.clientX,y:e.clientY};if(e.target.closest('#m')&&!sheetOpen())return;const t=e.target.closest('[data-act]');if(t){act(t.dataset.act,t.dataset.id);return}if(e.target.id==='m'||e.target.classList.contains('scrim'))closeM()});
