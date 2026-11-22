@@ -30,13 +30,13 @@ Bu dosya yeni Claude sohbetlerinde otomatik okunur. Her sürümden sonra güncel
 
 ## Sürüm kuralı
 
-- Güncel sürüm: **1.9.12**
+- Güncel sürüm: **1.9.13**
 - Her güncellemede **iki yerde** sürüm artırılır: `sw.js` içinde `VERSION`, `index.html` içinde `APPV`.
 - Ayarlar sayfasının altında "sürüm X.Y.Z" yazar; kullanıcı bununla kontrol eder.
 
 ## Veri
 
-- `localStorage` anahtarları: `fon-portfoyum-v2` (veriler), `fon-tema` (tema), `fon-son-yedek` (son yedek tarihi), `fon-gizli` (gizlilik modu), `fon-kilit` (Face ID geçiş anahtarı kimliği), `fon-tufe` (TÜFE verisinin cihazdaki kopyası).
+- `localStorage` anahtarları: `fon-portfoyum-v2` (veriler), `fon-tema` (tema), `fon-son-yedek` (son yedek tarihi), `fon-gizli` (gizlilik modu), `fon-tufe` (TÜFE verisinin cihazdaki kopyası).
 - 1.9 veri alanları (norm() korur): fonda `chk` (fiyatın son kontrol tarihi). İşlem kayıtlarında `q` (adet), `p` (fiyat), `lot` (alımın sepet kimliği), `used` (satışta kullanılan sepet parçaları), `tax`, `rev`. Geçmişten düzenleme/silme kayıtlarında `ref` + `old` (geri almak için). Eski kayıtlarda bu alanlar yoktur; `buyInfo`/`sellInfo` metinden, `usedOf` satış öncesi/sonrası sepet farkından bulur.
 - Fiyat geçmişi fon başına en çok 4000 kayıt (1.8.1'e kadar 400'dü).
 - `navigator.storage.persist()` ile kalıcı depolama istenir.
@@ -93,7 +93,8 @@ Bu dosya yeni Claude sohbetlerinde otomatik okunur. Her sürümden sonra güncel
   - Alt sayfalar `PARENT` ile tanımlı (`tx` ve `year` → Özet, `detail` → Portföy); soldan kaydırınca üst sayfaya dönülür.
   - İşlem geçmişi: alım/satış düzenleme ve silme. Kısmen satılmış alım ya da sepet bilgisi bulunamayan eski satış kilitlidir, nedeni yazılır. Her değişiklik fonun Geçmiş sekmesine düşer ve "Geri al" ile geri alınır.
   - Gizlilik modu (göz düğmesi): tutarlar `••••`. Kayda yazılan metinler her zaman `moneyR`/`sgnR` ile gerçek tutarla yazılır.
-  - Face ID kilidi (WebAuthn geçiş anahtarı): açılışta ve 60 sn'den uzun arka planda kalınca. Bir gizlilik perdesidir, veri şifrelenmez. 2 başarısız denemeden sonra "Face ID çalışmıyor mu?" ile kaldırılabilir.
+  - Üst butonlar (1.9.13): Portföy'de göz (tutarları gizle) + tema + fon ekle; Özet'te yalnız göz; Ayarlar'da yok (tema Görünüm'de). Ayarlar'da Gizlilik bölümü yok; tutarları gizleme yalnız göz butonuyla.
+  - Face ID kilidi 1.9.13'te kullanıcı isteğiyle tamamen kaldırıldı (kod, CSS, simge, Ayarlar satırı). Açılışta eski `fon-kilit` kaydı silinir.
 - **CSS yapısı:** sürüm sürüm eklenmiş katmanlardan oluşur; sonraki bloklar öncekileri ezer. En sondaki "v1.8.1 — Düzeltmeler" bloğu geçerli olanıdır. Değişiklik yaparken önceki kuralların özgüllüğüne dikkat et (örnek: `:root[data-theme="light"] .tabbar>.thumb.sw`).
 
 ## Çözülen sorunlar (tekrar etmesin)
@@ -132,7 +133,7 @@ Kullanıcı isterse dosyaları elle de yükleyebilir: GitHub → Add file → Up
 - Geçersiz takvim tarihinin kaydedilmesi (`isDate`).
 - Eski satış silme/düzenlemede FIFO sırasının bozulması ve sonradan alınan sepetin satılabilmesi.
 - Kapanan alt panelde çift dokunuşla işlemin iki kez yapılması (`#m.closing` dokunmaya kapalı).
-- Gizlilikte Geçmiş sekmesinde tutar sızması (`dtl`); sepet silinince alım kaydının kalması; grafikte "Tümü" getirisinin ilk günün kârını düşmesi; fon grafiğinde çift nokta; toplu girişte yapıştırma kalıntıları; Face ID anahtarının kilit kaldırılınca açık görünmesi; "Ocak–Ocak"; `tufe.json` sunucu hatasında önbelleğe dönülmemesi.
+- Gizlilikte Geçmiş sekmesinde tutar sızması (`dtl`); sepet silinince alım kaydının kalması; grafikte "Tümü" getirisinin ilk günün kârını düşmesi; fon grafiğinde çift nokta; toplu girişte yapıştırma kalıntıları; "Ocak–Ocak"; `tufe.json` sunucu hatasında önbelleğe dönülmemesi.
 - `tufe.yml`: Pages yayın isteği artık hata verirse iş kırmızı biter (sessizce geçilmez); `yayinla` seçeneğiyle elle denenebilir.
 
 ## 1.9.2 düzeltmeleri
@@ -177,6 +178,6 @@ Kullanıcı isterse dosyaları elle de yükleyebilir: GitHub → Add file → Up
 - 1.8.1'in gerçek iPhone'da doğrulanması: hızlı dokunma, parmakla sürükleme, merceğin taşması.
 - 1.9.2'nin gerçek iPhone'da doğrulanması: segmentlerde parmakla sürükleme.
 - 1.9.12'nin gerçek iPhone'da doğrulanması: sekme çubuğunda rastgele dikey kayma/kesilme bitti mi; jöle esnemesi, aydınlık modda merceğin seçilmesi; WebGL cam mercek (kenarda bükülme, renk ayrışması, parlama) Safari'de sekme çubuğunda ve seçicilerde görünüyor mu, akıcı mı; yeni sürüm hemen yükleniyor mu (1.9.7 önbellek düzeltmesi).
-- 1.9.0'ın gerçek iPhone'da doğrulanması: Face ID kilidi (ana ekran uygulamasında WebAuthn), grafikte parmakla gezinme, TEFAS'tan kopyalanan gerçek metnin okunması.
+- 1.9.0'ın gerçek iPhone'da doğrulanması: grafikte parmakla gezinme, TEFAS'tan kopyalanan gerçek metnin okunması.
 - TÜFE işinin ilk otomatik güncellemesi (3 Aralık 2026, Kasım verisi) Actions sekmesinden kontrol edilmeli.
 - Henüz istenmemiş olası geliştirmeler: hedef dağılım ve dengeleme, düzenli yatırım planı, Mac edinilirse yerel SwiftUI sürümü.

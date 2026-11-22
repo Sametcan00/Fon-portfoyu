@@ -492,16 +492,9 @@ button.tgl:active{transform:none}
 .paste{margin-top:4px;background:var(--sbg)!important}
 .paste textarea{width:100%;border:0;background:var(--fill);border-radius:12px;padding:10px 12px;font-size:15px;resize:vertical}
 /* Face ID kilit ekranı */
-#lock{position:fixed;inset:0;z-index:60;display:none;place-items:center;background:var(--bg);padding:24px}
-#lock.on{display:grid}
-#lock .lk{display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;max-width:320px}
-#lock .lk>svg{width:54px;height:54px;color:var(--ac)}
-#lock h2{margin:4px 0 0;font:700 24px var(--disp)}#lock p{margin:0;color:var(--mut)}
-#lock .btn{min-width:220px;margin-top:10px}
 #t{z-index:70}
 /* Gizlilik modunda yedek kodu bulanık; dokununca görünür */
 .privta{filter:blur(5px)}.privta:focus{filter:none}
-#lock.cover .lk{visibility:hidden}
 /* Segment seçiciler de sekme çubuğu gibi parmakla sürüklenir: yatay hareket sayfaya gitmez (dikey kaydırma çalışır),
    sürüklerken gösterge parmağı gecikmesiz izler (yalnız genişlik yumuşak değişir) */
 .seg,.seg *{touch-action:pan-y;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
@@ -539,7 +532,7 @@ button.tgl:active{transform:none}
 <nav class="tabbar glass" id="nav" aria-label="Sekmeler"></nav>
 <div id="m"></div><div id="t" class="glass" role="status" aria-live="polite"></div>
 <script>
-const APPV='1.9.12',KEY='fon-portfoyum-v2',TK='fon-tema',$=s=>document.querySelector(s);
+const APPV='1.9.13',KEY='fon-portfoyum-v2',TK='fon-tema',$=s=>document.querySelector(s);
 const NF=new Intl.NumberFormat('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2});
 // Gizlilik modu: ekrandaki tutarlar maskelenir (kayıtlara yazılan metinler her zaman gerçek tutarla: moneyR/sgnR)
 const PK='fon-gizli';let priv=false;try{priv=localStorage.getItem(PK)==='1'}catch(e){}
@@ -661,13 +654,14 @@ const fld=(id,l,v='',x='')=>`<div class="f"><div class="lh"><label for="${id}">$
 const txt=(id,l,v='',a='')=>`<div class="f"><div class="lh"><label for="${id}">${l}</label></div><input id="${id}" autocomplete="off" value="${esc(v)}" ${a}></div>`;
 const g=id=>{const e=$('#'+id);return e?e.value:''},setv=(id,v)=>{const e=$('#'+id);if(e)e.value=v};
 const segH=(act,items,on)=>`<div class="seg" data-seg="${act}" role="tablist"><i class="thumb" aria-hidden="true"></i>${items.map(([k,t])=>`<button role="tab" aria-selected="${on===k}" data-act="${act}" data-id="${k}" class="${on===k?'on':''}">${t}</button>`).join('')}</div>`;
-const hdr=(title)=>`<header class="hdr"><div><div class="eyebrow"><i class="dot ${saveOk?'on':''}"></i>${saveOk?'Bu iPhone’da kayıtlı':'Kayıt başarısız'}</div><h1>${title}</h1></div><div class="hbtns"><button class="ib glass" data-act="priv" aria-label="${priv?'Tutarları göster':'Tutarları gizle'}" aria-pressed="${priv}">${priv?I.eyeOff:I.eye}</button><button class="ib glass" data-act="themetoggle" aria-label="${isDark()?'Açık moda geç':'Koyu moda geç'}">${isDark()?I.sun:I.moon}</button>${title==='Portföy'?`<button class="ib glass" data-act="newfund" aria-label="Fon ekle">${I.plus}</button>`:''}</div></header>`;
+const hdr=(title)=>`<header class="hdr"><div><div class="eyebrow"><i class="dot ${saveOk?'on':''}"></i>${saveOk?'Bu iPhone’da kayıtlı':'Kayıt başarısız'}</div><h1>${title}</h1></div>${title==='Ayarlar'?'':`<div class="hbtns"><button class="ib glass" data-act="priv" aria-label="${priv?'Tutarları göster':'Tutarları gizle'}" aria-pressed="${priv}">${priv?I.eyeOff:I.eye}</button>${title==='Portföy'?`<button class="ib glass" data-act="themetoggle" aria-label="${isDark()?'Açık moda geç':'Koyu moda geç'}">${isDark()?I.sun:I.moon}</button><button class="ib glass" data-act="newfund" aria-label="Fon ekle">${I.plus}</button>`:''}</div>`}</header>`;
+/* 1.9.13: üst butonlar sayfaya göre — Portföy: göz + tema + ekle; Özet: yalnız göz; Ayarlar: yok (tema Görünüm'de) */
 
 /* ================= 1.9 — yeni modüller ================= */
 I.eye='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>';
 I.eyeOff='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18"/><path d="M10.6 5.1A10.4 10.4 0 0 1 12 5c6.4 0 10 7 10 7a17.6 17.6 0 0 1-3.2 4.1M6.6 6.6C3.8 8.4 2 12 2 12s3.6 7 10 7a9.8 9.8 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>';
 I.chev='<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>';
-I.lock='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="10.5" width="15" height="10" rx="2.5"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/></svg>';
+
 const PARENT={detail:'home',tx:'overview',year:'overview'};
 const AYLAR=['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
 const ayAd=ym=>{const [y,m]=ym.split('-');return AYLAR[+m-1]+' '+y};
@@ -781,33 +775,8 @@ function heatH(){const held=S.funds.filter(f=>V(f)>0);if(!held.length)return'';c
     return `<button class="tile ${p>0.0001?'up':p<-0.0001?'dn':'eq'}${k>.4?' st':''}" data-act="open" data-id="${esc(t.f.code)}" style="left:${(t.x/3.6).toFixed(3)}%;top:${(t.y/2.1).toFixed(3)}%;width:${(t.w/3.6).toFixed(3)}%;height:${(t.h/2.1).toFixed(3)}%;--a:${a}"><b>${esc(t.f.code)}</b>${sm?'':`<span>${pc(p)}</span>`}</button>`}).join('')}</div>
   ${segH('hm',[['daily','Günlük'],['weekly','Haftalık'],['total','Toplam']],per)}</section>`}
 
-/* --- Face ID kilidi (WebAuthn geçiş anahtarı). Bir gizlilik perdesidir: veriler cihazda şifrelenmez --- */
-const LKK='fon-kilit';let lockId=null;try{lockId=localStorage.getItem(LKK)}catch(e){}
-const b64e=buf=>btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
-const b64d=s=>{s=s.replace(/-/g,'+').replace(/_/g,'/');s+='='.repeat((4-s.length%4)%4);return Uint8Array.from(atob(s),c=>c.charCodeAt(0))};
-let canLock=false,locked=false,hidAt=0,lockFails=0;
-(async()=>{try{canLock=!!(window.PublicKeyCredential&&navigator.credentials&&isSecureContext&&await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable())}catch(e){canLock=false}if(view.page==='settings'&&!sheetOpen())render()})();
-async function lockOn(){try{const c=await navigator.credentials.create({publicKey:{rp:{name:'Fon Portföyüm'},user:{id:crypto.getRandomValues(new Uint8Array(16)),name:'portfoy',displayName:'Fon Portföyüm'},
-    challenge:crypto.getRandomValues(new Uint8Array(32)),pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],
-    authenticatorSelection:{authenticatorAttachment:'platform',userVerification:'required',residentKey:'preferred'},timeout:60000,attestation:'none'}});
-  if(!c)throw 0;const id=b64e(c.rawId);localStorage.setItem(LKK,id);lockId=id;toast('Face ID kilidi açıldı.');render()}catch(e){toast(e&&e.name==='NotAllowedError'?'Face ID kurulumu iptal edildi.':'Face ID kilidi kurulamadı.')}}
-async function verify(){const r=await navigator.credentials.get({publicKey:{challenge:crypto.getRandomValues(new Uint8Array(32)),allowCredentials:[{type:'public-key',id:b64d(lockId),transports:['internal','hybrid']}],userVerification:'required',timeout:60000}});if(!r)throw 0;return true}
-function lockClear(){lockId=null;try{localStorage.removeItem(LKK)}catch(e){}render();toast('Face ID kilidi kapatıldı.')}
-// Kapatmak için Face ID istenir; geçiş anahtarı silinmişse (uygulama zaten açık olduğundan) onayla kapatılabilir
-async function lockOff(){try{await verify();lockClear()}catch(e){modal(`<h3>Face ID doğrulanamadı</h3><p class="sub" style="white-space:normal">Doğrulamayı iptal ettiyseniz tekrar deneyebilirsiniz. Geçiş anahtarı iPhone’un Parolalar uygulamasından silindiyse kilidi buradan kapatabilirsiniz; verileriniz silinmez.</p><div class="btns"><button class="btn plain" data-act="close">Vazgeç</button><button class="btn red" data-act="lockoffok">Kilidi kapat</button></div>`)}}
-function showLock(){if(!lockId)return;locked=true;let el=$('#lock');if(!el){el=document.createElement('div');el.id='lock';document.body.appendChild(el)}
-  el.innerHTML=`<div class="lk">${I.lock}<h2>Portföy kilitli</h2><p>Görmek için Face ID ile doğrulayın.</p><button class="btn pri" data-lk="open"><span>Face ID ile aç</span></button>${lockFails>=2?`<button class="lnk" data-lk="reset">Face ID çalışmıyor mu?</button>`:''}</div>`;el.className='on'}
-function hideLock(){locked=false;const el=$('#lock');if(el){el.className='';el.innerHTML=''}}
-async function unlock(){try{await verify();lockFails=0;hideLock()}catch(e){lockFails++;showLock();toast('Doğrulanamadı. Tekrar deneyin.')}}
-document.addEventListener('click',e=>{const b=e.target.closest('[data-lk]');if(!b)return;e.stopPropagation();const k=b.dataset.lk;
-  if(k==='open')unlock();
-  else if(k==='reset'){$('#lock .lk').innerHTML=`${I.lock}<h2>Kilidi kaldır?</h2><p>Geçiş anahtarı silinmiş ya da Face ID çalışmıyorsa kilidi kaldırıp uygulamayı açabilirsiniz. Verileriniz silinmez. Kilidi Ayarlar’dan yeniden açabilirsiniz.</p><button class="btn red" data-lk="resetok"><span>Kilidi kaldır ve aç</span></button><button class="lnk" data-lk="back">Vazgeç</button>`}
-  else if(k==='resetok'){lockId=null;try{localStorage.removeItem(LKK)}catch(_){}lockFails=0;hideLock();render();toast('Kilit kaldırıldı.')}
-  else if(k==='back')showLock()},true);
-// Arka plana gidince içerik hemen örtülür (uygulama değiştiricide görünmesin); 60 sn'den uzun kalınca tekrar doğrulama istenir
-document.addEventListener('visibilitychange',()=>{if(!lockId)return;if(document.visibilityState==='hidden'){if(!locked){hidAt=Date.now();showLock();$('#lock').classList.add('cover')}}
-  else if(hidAt&&Date.now()-hidAt<60000&&$('#lock')&&$('#lock').classList.contains('cover')){hidAt=0;hideLock()}else{hidAt=0;if(locked)showLock()}});
-if(lockId)showLock();
+/* 1.9.13: Face ID kilidi kullanıcı isteğiyle kaldırıldı; önceki sürümden kalan kilit kaydı silinir (kilit ekranında takılı kalınmasın) */
+try{localStorage.removeItem('fon-kilit')}catch(e){}
 
 /* --- Toplu fiyat girişi ve TEFAS'tan kopyalanan metni okuma --- */
 const DRE=/^(\d{1,2})[.\/](\d{1,2})[.\/](\d{4})$/,PRE=/^\d{1,3}(\.\d{3})+,\d+$|^\d+,\d+$|^\d+\.\d{4,}$/;
@@ -976,10 +945,6 @@ function overview(){
 function settings(){
   return `${hdr('Ayarlar')}
   <div class="grp"><div class="gl">Görünüm</div><div class="glass card pad"><div class="lbl">Tema</div>${segH('theme',[['system','Sistem'],['light','Açık'],['dark','Koyu']],themePref)}<div class="hint" style="margin:0">“Sistem”, cihazınızın açık/koyu ayarını izler. Seçiminiz bu cihazda saklanır.</div></div></div>
-  <div class="grp"><div class="gl">Gizlilik</div><div class="list glass">
-    <div class="row"><div class="l"><b>Tutarları gizle</b><div class="sub" style="white-space:normal">Tutarlar •••• görünür; yüzdeler görünmeye devam eder. Üstteki göz düğmesiyle de açılıp kapanır.</div></div><button class="tgl ${priv?'on':''}" role="switch" aria-checked="${priv}" aria-label="Tutarları gizle" data-act="priv"><i></i></button></div>
-    <div class="row"><div class="l"><b>Face ID ile kilitle</b><div class="sub" style="white-space:normal">${canLock?'Uygulama açılırken ve 1 dakikadan uzun arka planda kaldıktan sonra Face ID ister. Bir gizlilik perdesidir; veriler cihazda şifrelenmez.':'Bu cihazda ya da tarayıcıda Face ID / Touch ID ile doğrulama kullanılamıyor.'}</div></div>${canLock||lockId?`<button class="tgl ${lockId?'on':''}" role="switch" aria-checked="${!!lockId}" aria-label="Face ID ile kilitle" data-act="lock"><i></i></button>`:''}</div>
-  </div></div>
   <div class="grp"><div class="gl">Veri</div><div class="list glass"><div class="row"><div class="l"><b>Kayıt yeri</b><div class="sub">Bu iPhone’da, uygulamanın içinde</div></div><i class="dot ${saveOk?'on':''}"></i></div><div class="row"><div class="l"><b>Kalıcı depolama</b><div class="sub">${persisted?'Açık: iOS bu veriyi kendiliğinden silmez':'Standart'}</div></div></div><div class="row"><div class="l"><b>Son yedek</b></div><span class="sub">${lastBackup?new Date(lastBackup).toLocaleDateString('tr-TR'):'Hiç alınmadı'}</span></div><div class="row"><div class="l"><b>Fon sayısı</b></div><span class="sub">${S.funds.length}</span></div><div class="row"><div class="l"><b>Enflasyon verisi</b><div class="sub" style="white-space:normal">${TUFE&&TUFE.son?`TCMB · son açıklanan ay ${ayAd(TUFE.son)}`:'Henüz indirilmedi'} · her gün otomatik kontrol edilir</div></div></div></div></div>
   <div class="grp"><div class="gl">Yedek dosyası</div><div class="glass card pad"><div class="fbtns"><button class="btn pri" data-act="exportfile"><span>Dışa aktar</span></button><button class="btn plain" data-act="importfile"><span>Dosyadan yükle</span></button></div><input type="file" id="b_f" class="hidefile" accept="application/json,.json,text/plain"><div class="hint" style="margin:0">“Dışa aktar” paylaşım menüsünü açar: “Dosyalar’a Kaydet” ile iCloud Drive’a kaydedin. Uygulamayı silerseniz veriler de silinir; yedek dosyası verilerinizi geri getirir.</div></div></div>
   <div class="grp"><div class="gl">Yedek kodu</div><div class="glass card pad"><div class="f" style="margin:0"><div class="lh"><label for="b_j">Yedek kodu (JSON)</label><button type="button" class="lnk" data-act="bcopy">Kopyala</button></div><textarea id="b_j" rows="5" style="font-size:12px" class="${priv?'privta':''}">${esc(JSON.stringify(S))}</textarea></div><div class="hint" style="margin:0">Claude’daki eski sürümün Ayarlar sayfasından kopyaladığınız yedek kodunu buraya yapıştırıp geri yükleyebilirsiniz.</div><p class="err" id="b_e" style="margin:0;min-height:0"></p><button class="btn plain" data-act="brest"><span>Yapıştırılan yedeği geri yükle</span></button></div></div>
@@ -1126,8 +1091,6 @@ function act(a,id){
         commit(f,'delete',today(),`${dTR(l.date)} tarihli ${num(l.qty)} adetlik sepet silindi.`,-l.qty*l.cost,f.lots.filter(x=>x!==l),0,ok?{ref:bh.id,old:keepOld(bh)}:{});if(ok)bh.undone=true;save()});break}
     case 'undo':{const h=f.hist.find(x=>!x.undone&&x.prev);if(h){f.lots=h.prev;h.undone=true;if(h.ref!=null&&h.old){const t=f.hist.find(x=>String(x.id)===String(h.ref));if(t){['q','p','tax','rev','used'].forEach(k=>{if(!(k in h.old))delete t[k]});Object.assign(t,h.old)}}save();toast('İşlem geri alındı.')}break}
     case 'priv':priv=!priv;try{localStorage.setItem(PK,priv?'1':'0')}catch(e){}Object.keys(TW).forEach(k=>delete TW[k]);render();toast(priv?'Tutarlar gizlendi.':'Tutarlar gösteriliyor.');break;
-    case 'lock':if(lockId)lockOff();else lockOn();break;
-    case 'lockoffok':closeM();lockClear();break;
     case 'rng':view.rng=id;render();break;
     case 'hm':view.hm=id;render();break;
     case 'bulk':bulkModal();break;
@@ -1179,7 +1142,7 @@ document.addEventListener('change',e=>{if(e.target.id!=='b_f'||!e.target.files||
   r.onload=()=>{setv('b_j',String(r.result||''));act('brest')};r.onerror=()=>toast('Dosya okunamadı.');r.readAsText(e.target.files[0])});
 // Detay sayfasında ekranın sol kenarından sağa çekince sayfa parmağı izler; yeterince çekilirse geri döner
 let sw=null;
-document.addEventListener('touchstart',e=>{const t=e.touches[0];sw=PARENT[view.page]&&!sheetOpen()&&!locked&&t.clientX<28?{x:t.clientX,y:t.clientY,dx:0,on:false,t:performance.now()}:null},{passive:true});
+document.addEventListener('touchstart',e=>{const t=e.touches[0];sw=PARENT[view.page]&&!sheetOpen()&&t.clientX<28?{x:t.clientX,y:t.clientY,dx:0,on:false,t:performance.now()}:null},{passive:true});
 document.addEventListener('touchmove',e=>{if(!sw)return;const t=e.touches[0],dx=t.clientX-sw.x,dy=t.clientY-sw.y;
   if(!sw.on){if(Math.abs(dy)>Math.abs(dx)&&Math.abs(dy)>8){sw=null;return}if(dx<8)return;sw.on=true}
   sw.dx=Math.max(0,dx);const a=$('#app');a.style.transition='none';a.style.transform=`translateX(${sw.dx}px)`;a.style.opacity=String(1-Math.min(.45,sw.dx/innerWidth*.8))},{passive:true});
