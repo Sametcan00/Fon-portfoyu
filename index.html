@@ -532,7 +532,7 @@ button.tgl:active{transform:none}
 <nav class="tabbar glass" id="nav" aria-label="Sekmeler"></nav>
 <div id="m"></div><div id="t" class="glass" role="status" aria-live="polite"></div>
 <script>
-const APPV='1.9.9',KEY='fon-portfoyum-v2',TK='fon-tema',$=s=>document.querySelector(s);
+const APPV='1.9.8',KEY='fon-portfoyum-v2',TK='fon-tema',$=s=>document.querySelector(s);
 const NF=new Intl.NumberFormat('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2});
 // Gizlilik modu: ekrandaki tutarlar maskelenir (kayıtlara yazılan metinler her zaman gerçek tutarla: moneyR/sgnR)
 const PK='fon-gizli';let priv=false;try{priv=localStorage.getItem(PK)==='1'}catch(e){}
@@ -1016,28 +1016,12 @@ function tween(el,a,b,f){const t0=performance.now(),d=700,fmt=FMT[f],html=f==='b
   const step=n=>{if(!el.isConnected)return;const t=Math.min(1,(n-t0)/d),e=1-Math.pow(1-t,4);put(t<1?a+(b-a)*e:b);if(t<1)requestAnimationFrame(step)};requestAnimationFrame(step)}
 function collapse(el){if(!el||RM()||!el.animate)return Promise.resolve();const h=el.offsetHeight;el.style.overflow='hidden';
   return el.animate([{height:h+'px',opacity:1,transform:'none'},{height:'0px',opacity:0,paddingTop:'0px',paddingBottom:'0px',transform:'translateX(-24px)'}],{duration:320,easing:'cubic-bezier(.4,0,.2,1)',fill:'forwards'}).finished.catch(()=>{})}
-/* 1.9.9 — Jöle esnemesi: gösterge giderken öndeki kenar önden gider, arkadaki kenar geride kalır → hızına göre yatayda
-   uzar; hedefte öndeki kenar hafif taşıp yaylanarak oturur. Uzak sekmede belirgin, yanındakinde çok az. Kapsül ölçeklenmez
-   (yamuk görünmesin), yalnız iki kenarı ayrı yaylarla hareket eder. Animasyon süresini döndürür. */
-function jelly(th,a,b){
-  const dist=Math.abs(b.x-a.x),f=Math.min(1,dist/240),D=Math.round(380+300*f),lag=.008+.085*Math.pow(f,1.4),N=40;
-  const spr=(t,z,k)=>{if(t<=0)return 0;const kd=k*Math.sqrt(1-z*z);return 1-Math.exp(-z*k*t)*(Math.cos(kd*t)+z*k/kd*Math.sin(kd*t))};
-  const right=b.x>a.x,aL=a.x,aR=a.x+a.w,bL=b.x,bR=b.x+b.w,fr=[];
-  for(let i=0;i<=N;i++){const t=i/N,pl=spr(t,.55+.25*(1-f),10.5),pt=spr((t-lag)/(1-lag),.8,10.5);
-    const pL=right?pt:pl,pR=right?pl:pt;let L=aL+(bL-aL)*pL,R=aR+(bR-aR)*pR;if(R-L<Math.min(a.w,b.w)*.8){const m=(L+R)/2,h=Math.min(a.w,b.w)*.4;L=m-h;R=m+h}
-    fr.push({transform:`translateX(${L.toFixed(2)}px)`,width:`${(R-L).toFixed(2)}px`})}
-  fr[N]={transform:`translateX(${b.x}px)`,width:`${b.w}px`};
-  if(!th.animate)return 420;
-  th.style.transition='none';if(th._jl)th._jl.cancel();
-  const an=th.animate(fr,{duration:D,easing:'linear'});th._jl=an;
-  const done=()=>{if(th._jl===an){th._jl=null;th.style.transition=''}};an.onfinish=done;an.oncancel=done;
-  return Math.max(420,D)}
 function afterRender(){
   const rm=RM();
   document.querySelectorAll('.seg,#nav').forEach(s=>{const on=s.querySelector(':scope>button.on'),th=s.querySelector(':scope>.thumb');if(!on||!th)return;
     const key=s.id||s.dataset.seg,x=on.offsetLeft,w=on.offsetWidth,p=SEGX[key];
     const q=p||{x,w};th.style.transition='none';th.style.width=q.w+'px';th.style.transform=`translateX(${q.x}px)`;void th.offsetWidth;th.style.transition='';
-    if(rm||q.x===x&&q.w===w){th.style.transition='none';th.style.width=w+'px';th.style.transform=`translateX(${x}px)`;void th.offsetWidth;th.style.transition=''}else{th.style.width=w+'px';th.style.transform=`translateX(${x}px)`;lens(th,jelly(th,q,{x,w}))}SEGX[key]={x,w}});
+    if(rm||q.x===x&&q.w===w){th.style.transition='none';th.style.width=w+'px';th.style.transform=`translateX(${x}px)`;void th.offsetWidth;th.style.transition=''}else{th.style.width=w+'px';th.style.transform=`translateX(${x}px)`;lens(th,420)}SEGX[key]={x,w}});
   const bars=[...document.querySelectorAll('#app [data-bw]')];
   bars.forEach(el=>{el.style.width=(rm?+el.dataset.bw:(BARW[el.dataset.bk]??0))+'%'});
   if(bars.length){void bars[0].offsetWidth;bars.forEach(el=>{el.style.width=el.dataset.bw+'%';BARW[el.dataset.bk]=+el.dataset.bw})}
@@ -1187,7 +1171,7 @@ M.addEventListener('touchend',()=>{if(!dg)return;const {s,dy,on,t}=dg;dg=null;if
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&!sheetOpen())render()});
 fixGap();render();loadTufe();
 /* WebGL mercek hazırlığı (gölgelendirici derleme) açılıştan sonra boşta yapılır: ilk basışta takılma olmasın */
-setTimeout(()=>{if(!RM())lqGL()},400);
+setTimeout(()=>{if(!RM())lqGL()},1200);
 // Çevrimdışı çalışma: uygulama dosyaları cihazda saklanır
 /* sw.js her açılışta önbelleksiz kontrol edilir; uygulama arka plandan dönünce de yeni sürüm aranır */
 if('serviceWorker' in navigator&&location.protocol!=='file:')addEventListener('load',()=>navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')r.update().catch(()=>{})})}).catch(()=>{}));
@@ -1199,7 +1183,7 @@ if('serviceWorker' in navigator&&location.protocol!=='file:')addEventListener('l
   const place=(th,x,w)=>{th.style.width=w+'px';th.style.transform=`translateX(${x}px)`};
   const start=(cx,cy)=>{d={x0:cx,y0:cy,moved:false,x:0,w:0,t:null}};
   const move=cx=>{if(!d)return false;const{th,b}=parts();if(!th||!b.length)return false;
-    if(!d.moved){if(Math.abs(cx-d.x0)<6)return false;d.moved=true;if(th._jl)th._jl.cancel();nav.classList.add('drag');th._hold=true;th.classList.add('sw');clearTimeout(th._t)}
+    if(!d.moved){if(Math.abs(cx-d.x0)<6)return false;d.moved=true;nav.classList.add('drag');th._hold=true;th.classList.add('sw');clearTimeout(th._t)}
     const r=nav.getBoundingClientRect(),w=b[0].offsetWidth,lo=b[0].offsetLeft,hi=b[b.length-1].offsetLeft;
     const x=Math.max(lo-10,Math.min(hi+10,cx-r.left-w/2));d.x=Math.max(lo,Math.min(hi,x));d.w=w;place(th,x,w);
     let best=b[0],bd=1e9;b.forEach(k=>{const dd=Math.abs(k.offsetLeft+k.offsetWidth/2-(x+w/2));if(dd<bd){bd=dd;best=k}});
@@ -1234,7 +1218,7 @@ if('serviceWorker' in navigator&&location.protocol!=='file:')addEventListener('l
   const move=(cx,cy)=>{if(!d)return false;const s=d.s,{th,b}=parts(s);if(!s.isConnected||!th||!b.length){d=null;return false}
     d.cx=cx;d.cy=cy;
     if(!d.moved){const dx=Math.abs(cx-d.x0),dy=Math.abs(cy-d.y0);if(dy>8&&dy>dx){d=null;return false}if(dx<6)return false;
-      d.moved=true;if(th._jl)th._jl.cancel();s.classList.add('drag');th._hold=true;th.classList.add('sw');clearTimeout(th._t)}
+      d.moved=true;s.classList.add('drag');th._hold=true;th.classList.add('sw');clearTimeout(th._t)}
     const r=s.getBoundingClientRect(),c=cx-r.left;
     let best=b[0],bd=1e9;b.forEach(k=>{const dd=Math.abs(k.offsetLeft+k.offsetWidth/2-c);if(dd<bd){bd=dd;best=k}});
     const w=best.offsetWidth,lo=b[0].offsetLeft,hi=b[b.length-1].offsetLeft+b[b.length-1].offsetWidth-w;
@@ -1296,12 +1280,11 @@ void main(){vec2 p=uO+vec2(v.x,1.-v.y)*uC;float sd=sdCap(p,uL),aa=1./uD;float in
  float d=max(-sd,0.);vec2 n=nCap(p,uL);float s=clamp(1.-d/uB,0.,1.);
  /* kalın cam kenarı: kenara yaklaştıkça dışarıdan örnek alınır; kuvvet kenarda dikleşir (aynalanma) */
  vec2 o=n*uM*s*s*uG;
- vec4 cr=tx(p+o*.86),cg=tx(p+o),cb=tx(p+o*1.14);
- /* renk ayrışması yalnız kenar şeridinde ve yumuşak: ayrık kanallar ile düz görüntü kenara doğru karıştırılır */
- vec4 cs=vec4(cr.r,cg.g,cb.b,max(cr.a,max(cg.a,cb.a)));vec4 c=mix(cg,cs,.75*s);
+ vec4 cr=tx(p+o*.82),cg=tx(p+o),cb=tx(p+o*1.18);
+ vec4 c=vec4(cr.r,cg.g,cb.b,max(cr.a,max(cg.a,cb.a)));
  float ib=clamp(.5-sdRnd(p,uR,uRr)/aa,0.,1.);c+=uBc*(1.-c.a)*ib;
  /* camın kalınlığı: kenar şeridi hafif koyu, en dışta ince ışık parlaması (sol üstten) */
- c.rgb*=1.-.06*s*s*uG;
+ c.rgb*=1.-.10*s*s*uG;
  float li=.45+.55*max(dot(n,normalize(vec2(-.45,-.9))),0.)+.25*max(dot(n,normalize(vec2(.45,.9))),0.);
  float sp=(smoothstep(2.2,0.,d)*.75+smoothstep(7.,0.,d)*.12)*li*uSp*uG;
  c.rgb+=vec3(sp)*(1.-c.rgb*.5);c.a=c.a+sp*(1.-c.a);
@@ -1382,19 +1365,17 @@ function lqSync(th,on,btns){const p=th.parentElement;let L=th._lq;
   const sig=btns.map(b=>b.className).join('|')+pr.width+'x'+pr.height+dpr;
   if(L.sig!==sig){L.sig=lqScene(L,p,btns,pr,dpr)?sig:'~'}
   /* mercek tuvali: merceğin tam açık ölçüsü + kenar payı, göstergeye göre konumlu */
-  const cwC=Math.ceil((tr.width+2*ex+2*LQ_CP)/16)*16,chC=tr.height+2*ey+2*LQ_CP,cv=LQ.cv;
+  const cwC=tr.width+2*ex+2*LQ_CP,chC=tr.height+2*ey+2*LQ_CP,cv=LQ.cv;
   if(Math.abs(L.cw-cwC)>.5||Math.abs(L.ch-chC)>.5||cv.width!==Math.round(cwC*dpr)){L.cw=cwC;L.ch=chC;cv.width=Math.round(cwC*dpr);cv.height=Math.round(chC*dpr);
     Object.assign(cv.style,{left:-(ex+LQ_CP)+'px',top:-(ey+LQ_CP)+'px',width:cwC+'px',height:chC+'px'})}
   const ox=tr.left-pr.left-ex-LQ_CP,oy=tr.top-pr.top-ey-LQ_CP,lx=tr.left-pr.left+iL,ly=tr.top-pr.top+iT,lw=tr.width-iL-iR,lh=tr.height-iT-iB;
   /* kırılma ölçüleri merceğin yüksekliğine göre: kenar şeridi b, en dıştan çekilen mesafe M (M > b/2 → kenarda aynalanma) */
-  /* 1.9.9: kırılma yalnız camın en dıştaki ince kavisli şeridinde (B ≈ 7 nokta). İçerisi birebir: ne büyütme ne kayma.
-     M < B/2 → aynalanma/çift görünme yok; yazılar yerinde kalır, kenar üstlerinden geçerken anlık bükülür */
-  const B=Math.min(lh*.16,7),M=B*.42,U=LQ.u,bc=L.C.barA;
+  const B=Math.min(lh*.34,16),M=Math.min(lh*.3,13),U=LQ.u,bc=L.C.barA;
   gl.viewport(0,0,cv.width,cv.height);gl.clear(gl.COLOR_BUFFER_BIT);
   gl.uniform2f(U.uS,pr.width+2*LQ_SP,pr.height+2*LQ_SP);gl.uniform1f(U.uP,LQ_SP);gl.uniform2f(U.uO,ox,oy);gl.uniform2f(U.uC,cwC,chC);
   gl.uniform4f(U.uL,lx,ly,lw,lh);gl.uniform1f(U.uM,M);gl.uniform1f(U.uB,B);gl.uniform1f(U.uD,dpr);gl.uniform1f(U.uG,g);
   gl.uniform4f(U.uR,0,0,pr.width,pr.height);gl.uniform1f(U.uRr,Math.min(parseFloat(L.C.rad)||99,pr.height/2));gl.uniform4f(U.uBc,bc[0]/255,bc[1]/255,bc[2]/255,1);
-  gl.uniform1f(U.uSp,isDark()?.6:.85);
+  gl.uniform1f(U.uSp,isDark()?.75:.9);
   gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
   return true}
 /* Gösterge cam mercek modu: ms>0 → o süre sonra koyu kapsüle döner; ms=0 → parmak kalkana kadar */
