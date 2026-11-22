@@ -535,7 +535,7 @@ button.tgl:active{transform:none}
 <nav class="tabbar glass" id="nav" aria-label="Sekmeler"></nav>
 <div id="m"></div><div id="t" class="glass" role="status" aria-live="polite"></div>
 <script>
-const APPV='1.9.10',KEY='fon-portfoyum-v2',TK='fon-tema',$=s=>document.querySelector(s);
+const APPV='1.9.11',KEY='fon-portfoyum-v2',TK='fon-tema',$=s=>document.querySelector(s);
 const NF=new Intl.NumberFormat('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2});
 // Gizlilik modu: ekrandaki tutarlar maskelenir (kayıtlara yazılan metinler her zaman gerçek tutarla: moneyR/sgnR)
 const PK='fon-gizli';let priv=false;try{priv=localStorage.getItem(PK)==='1'}catch(e){}
@@ -1022,11 +1022,15 @@ function collapse(el){if(!el||RM()||!el.animate)return Promise.resolve();const h
 /* 1.9.9 — Jöle esnemesi: gösterge giderken öndeki kenar önden gider, arkadaki kenar geride kalır → hızına göre yatayda
    uzar; hedefte öndeki kenar hafif taşıp yaylanarak oturur. Uzak sekmede belirgin, yanındakinde çok az. Kapsül ölçeklenmez
    (yamuk görünmesin), yalnız iki kenarı ayrı yaylarla hareket eder. Animasyon süresini döndürür. */
-function jelly(th,a,b){
-  const dist=Math.abs(b.x-a.x),f=Math.min(1,dist/240),D=Math.round(380+300*f),lag=.008+.085*Math.pow(f,1.4),N=40;
+/* Esneme şiddeti çubuğa göre (1 = grafik aralığı 1H/1A/3A/1Y/Tümü, referans). Listede olmayan çubukta seçenek genişliğinden
+   orantılı hesaplanır (geniş seçenek → kısa yol başına daha az esneme). Her çubuğa buradan ayrı değer verilebilir. */
+const JELLY_K={rng:1,nav:.38,period:.62,hm:.62,tab:.6,theme:.62,txt:.62};
+function jellyK(key,w){return JELLY_K[key]??Math.max(.35,Math.min(1,67/Math.max(1,w)))}
+function jelly(th,a,b,k=1){
+  const dist=Math.abs(b.x-a.x),f=Math.min(1,dist/240),D=Math.round(380+300*f),lag=(.008+.085*Math.pow(f,1.4))*k,N=40;
   const spr=(t,z,k)=>{if(t<=0)return 0;const kd=k*Math.sqrt(1-z*z);return 1-Math.exp(-z*k*t)*(Math.cos(kd*t)+z*k/kd*Math.sin(kd*t))};
   const right=b.x>a.x,aL=a.x,aR=a.x+a.w,bL=b.x,bR=b.x+b.w,fr=[];
-  for(let i=0;i<=N;i++){const t=i/N,pl=spr(t,.55+.25*(1-f),10.5),pt=spr((t-lag)/(1-lag),.8,10.5);
+  for(let i=0;i<=N;i++){const t=i/N,pl=spr(t,.8-.25*f*k,10.5),pt=spr((t-lag)/(1-lag),.8,10.5);
     const pL=right?pt:pl,pR=right?pl:pt;let L=aL+(bL-aL)*pL,R=aR+(bR-aR)*pR;if(R-L<Math.min(a.w,b.w)*.8){const m=(L+R)/2,h=Math.min(a.w,b.w)*.4;L=m-h;R=m+h}
     fr.push({transform:`translateX(${L.toFixed(2)}px)`,width:`${(R-L).toFixed(2)}px`})}
   fr[N]={transform:`translateX(${b.x}px)`,width:`${b.w}px`};
@@ -1040,7 +1044,7 @@ function afterRender(){
   document.querySelectorAll('.seg,#nav').forEach(s=>{const on=s.querySelector(':scope>button.on'),th=s.querySelector(':scope>.thumb');if(!on||!th)return;
     const key=s.id||s.dataset.seg,x=on.offsetLeft,w=on.offsetWidth,p=SEGX[key];
     const q=p||{x,w};th.style.transition='none';th.style.width=q.w+'px';th.style.transform=`translateX(${q.x}px)`;void th.offsetWidth;th.style.transition='';
-    if(rm||q.x===x&&q.w===w){th.style.transition='none';th.style.width=w+'px';th.style.transform=`translateX(${x}px)`;void th.offsetWidth;th.style.transition=''}else{th.style.width=w+'px';th.style.transform=`translateX(${x}px)`;lens(th,jelly(th,q,{x,w}))}SEGX[key]={x,w}});
+    if(rm||q.x===x&&q.w===w){th.style.transition='none';th.style.width=w+'px';th.style.transform=`translateX(${x}px)`;void th.offsetWidth;th.style.transition=''}else{th.style.width=w+'px';th.style.transform=`translateX(${x}px)`;lens(th,jelly(th,q,{x,w},jellyK(key,w)))}SEGX[key]={x,w}});
   const bars=[...document.querySelectorAll('#app [data-bw]')];
   bars.forEach(el=>{el.style.width=(rm?+el.dataset.bw:(BARW[el.dataset.bk]??0))+'%'});
   if(bars.length){void bars[0].offsetWidth;bars.forEach(el=>{el.style.width=el.dataset.bw+'%';BARW[el.dataset.bk]=+el.dataset.bw})}
@@ -1297,21 +1301,27 @@ float sdRnd(vec2 p,vec4 r,float rr){vec2 h=hs(r),c=r.xy+h;vec2 q=abs(p-c)-(h-rr)
 vec4 tx(vec2 q){return texture2D(T,(q+uP)/uS);}
 void main(){vec2 p=uO+vec2(v.x,1.-v.y)*uC;float sd=sdCap(p,uL),aa=1./uD;float ins=clamp(.5-sd/aa,0.,1.);if(ins<=0.){gl_FragColor=vec4(0.);return;}
  float d=max(-sd,0.);vec2 n=nCap(p,uL);float s=clamp(1.-d/uB,0.,1.);
- /* kalın cam kenarı: kenara yaklaştıkça dışarıdan örnek alınır; kuvvet kenarda dikleşir (aynalanma) */
- /* 1.9.10: kaydırma kenarda (d=0) ve şeridin iç sınırında (d=B) sıfır, arada sin eğrisi: görüntü hiçbir yerde kopmaz
-    ya da tekrarlanmaz (çiftlenme/kesilme yok); eğim < 1 olduğundan aynalanma yok. Orta kısımda kaydırma tam 0 */
- float wv=d<uB?sin(3.14159*d/uB):0.;vec2 o=n*uM*wv*uG;
- vec4 cr=tx(p+o*.86),cg=tx(p+o),cb=tx(p+o*1.14);
- /* renk ayrışması yalnız kenar şeridinde ve yumuşak: ayrık kanallar ile düz görüntü kenara doğru karıştırılır */
- vec4 cs=vec4(cr.r,cg.g,cb.b,max(cr.a,max(cg.a,cb.a)));vec4 c=mix(cg,cs,.85*s);
+ /* 1.9.11: tuval yalnız kenar şeridini çizer. Şeridin içinde (d > B) tamamen saydam: altta duran GERÇEK yazı ve simgeler
+    görünür, kopya yok, kayma imkânsız. Şeridin iç yarısında kopyadan gerçeğe yumuşak geçiş. */
+ float sh=smoothstep(uB,uB*.55,d);if(sh<=0.){gl_FragColor=vec4(0.);return;}
+ /* kaydırma kenarda (d=0) ve şeridin iç sınırında (d=B) sıfır, arada sin eğrisi; eğim < 1 → aynalanma/çiftlenme yok */
+ float wv=sin(3.14159*min(d,uB)/uB);vec2 o=n*uM*wv*uG;
+ /* ince prizma rengi: kanallar normal yönünde sabit küçük bir farkla da ayrılır (kenara doğru artar) → kenardan
+    geçen yazı/simgenin ve izin kenarında sade bir gökkuşağı */
+ vec2 cd=n*1.15*s*uG;
+ vec4 cr=tx(p+o*.86+cd),cg=tx(p+o),cb=tx(p+o*1.14-cd);
+ vec4 cs=vec4(cr.r,cg.g,cb.b,max(cr.a,max(cg.a,cb.a)));vec4 c=mix(cg,cs,.9*s);
  float ib=clamp(.5-sdRnd(p,uR,uRr)/aa,0.,1.);c+=uBc*(1.-c.a)*ib;
- /* camın kalınlığı: kenar şeridi hafif koyu, en dışta ince ışık parlaması (sol üstten) */
  c.rgb*=1.-.06*s*s*uG;
  /* aydınlık mod: parlamanın hemen içinde ince gri halka, beyaz zeminde cam kenarı seçilsin */
  c.rgb*=1.-uLt*.13*smoothstep(4.5,2.,d)*smoothstep(.6,2.,d)*uG;
+ /* kenar parlaması: sol üstten ışık; renk açıya göre çok hafif gökkuşağı tonuna kayar (düz beyaz değil) */
  float li=.45+.55*max(dot(n,normalize(vec2(-.45,-.9))),0.)+.25*max(dot(n,normalize(vec2(.45,.9))),0.);
  float sp=(smoothstep(2.2,0.,d)*.75+smoothstep(7.,0.,d)*.12)*li*uSp*uG;
- c.rgb+=vec3(sp)*(1.-c.rgb*.5);c.a=c.a+sp*(1.-c.a);
+ float an=atan(n.y,n.x)/6.2832;vec3 rb=.5+.5*cos(6.2832*(an*2.+vec3(0.,.33,.67)));
+ vec3 sc=mix(vec3(1.),rb,.38);
+ c.rgb+=sc*sp*(1.-c.rgb*.5);c.a=c.a+sp*(1.-c.a);
+ c*=sh;
  gl_FragColor=c*ins;}`));
     gl.linkProgram(pg);if(!gl.getProgramParameter(pg,gl.LINK_STATUS))throw gl.getProgramInfoLog(pg);gl.useProgram(pg);
     const b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
