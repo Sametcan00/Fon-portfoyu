@@ -626,7 +626,7 @@ button.tgl:active{transform:none}
 <nav class="tabbar glass" id="nav" aria-label="Sekmeler"></nav>
 <div id="m"></div><div id="t" class="glass" role="status" aria-live="polite"></div>
 <script>
-const APPV='1.9.20',KEY='fon-portfoyum-v2',TK='fon-tema',$=s=>document.querySelector(s);
+const APPV='1.9.21',KEY='fon-portfoyum-v2',TK='fon-tema',$=s=>document.querySelector(s);
 const NF=new Intl.NumberFormat('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2});
 // Gizlilik modu: ekrandaki tutarlar maskelenir (kayıtlara yazılan metinler her zaman gerçek tutarla: moneyR/sgnR)
 const PK='fon-gizli';let priv=false;try{priv=localStorage.getItem(PK)==='1'}catch(e){}
@@ -700,7 +700,10 @@ function sellRun(lots,q,p,rate){const L=sortL(lots),r=fifo(L,q,p,rate);let rem=q
   for(const l of L){if(rem<=0){nl.push(l);continue}const t=Math.min(l.qty,rem);rem-=t;used.push({id:l.id,date:l.date,qty:+t.toFixed(6),cost:l.cost});const left=+(l.qty-t).toFixed(6);if(left>1e-6)nl.push({...l,qty:left})}
   return{r,lots:nl,used}}
 // Gizlilik modunda kayıt açıklamalarındaki kâr/zarar ve stopaj tutarları gizlenir
-const dtl=t=>priv?String(t).replace(/(Kâr\/zarar|Stopaj): [+−-]?[\d.,]+ ₺/g,'$1: '+MASK+' ₺'):t;
+/* 1.9.21: gizlilikte adetler de gizlenir (adet × fiyat ile tutar hesaplanabiliyordu). qn yalnız ekrana yazılan adetler içindir;
+   kayda yazılan metinler (buyTxt, sellTxt, commit açıklamaları) her zaman gerçek adetle num ile yazılır */
+const qn=(v,d=3)=>priv?MASK:num(v,d);
+const dtl=t=>priv?String(t).replace(/(Kâr\/zarar|Stopaj): [+−-]?[\d.,]+ ₺/g,'$1: '+MASK+' ₺').replace(/\d[\d.,]*(\s*adet)/g,MASK+'$1'):t;
 const buyTxt=(q,p)=>`${num(q)} adet × ${num(p,6)} ₺ eklendi.`;
 const sellTxt=(q,p,r)=>`${num(q)} adet × ${num(p,6)} ₺ FIFO ile satıldı. Kâr/zarar: ${sgnR(r.pr)} · Stopaj: ${moneyR(r.tax)}`;
 // Dönem getirisi: dönem başından önce alınan sepetler referans fiyata, dönem içinde alınanlar kendi maliyetine göre hesaplanır
@@ -1040,7 +1043,7 @@ function txPage(){const all=txAll(),ff=view.txf||'all',ft=view.txt||'all';
   const L=all.filter(x=>(ff==='all'||x.f.code===ff)&&(ft==='all'||x.h.type===ft));let tb=0,ts=0;L.forEach(({h})=>{if(h.type==='buy')tb+=h.amount;else ts+=sellInfo(h).net});
   let lastM='',body='';L.forEach(({f,h})=>{const m=h.date.slice(0,7);if(m!==lastM){body+=`${lastM?'</div>':''}<div class="mhd">${ayAd(m)}</div><div class="list glass">`;lastM=m}
     const s=h.type==='sell',info=s?sellInfo(h):buyInfo(h);
-    body+=`<button class="row" data-k="tx-${esc(h.id)}" data-act="txopen" data-id="${esc(f.code)}|${esc(h.id)}">${av(f)}<div class="l"><b>${s?'Satış':'Alım'} · ${esc(f.code)}</b><div class="sub">${dTR(h.date)}${info.q?` · ${num(info.q)} adet × ${num(info.p,6)} ₺`:''}</div></div><div class="r"><b class="${s?'up':''}">${s?'+':'−'}${money(s?info.net:h.amount)}</b>${s?`<div class="d ${info.gain>=0?'up':'dn'}">K/Z ${sgn(info.gain)}</div>`:''}</div></button>`});
+    body+=`<button class="row" data-k="tx-${esc(h.id)}" data-act="txopen" data-id="${esc(f.code)}|${esc(h.id)}">${av(f)}<div class="l"><b>${s?'Satış':'Alım'} · ${esc(f.code)}</b><div class="sub">${dTR(h.date)}${info.q?` · ${qn(info.q)} adet × ${num(info.p,6)} ₺`:''}</div></div><div class="r"><b class="${s?'up':''}">${s?'+':'−'}${money(s?info.net:h.amount)}</b>${s?`<div class="d ${info.gain>=0?'up':'dn'}">K/Z ${sgn(info.gain)}</div>`:''}</div></button>`});
   if(lastM)body+='</div>';
   return `${dnav('Özet')}<header class="hdr"><div><h1>İşlem geçmişi</h1></div></header>
   ${chipsH('txf',[['all','Tüm fonlar'],...S.funds.map(f=>[f.code,esc(f.code)])],view.txf||'all')}
@@ -1052,8 +1055,8 @@ const splitId=id=>{const s=String(id),k=s.lastIndexOf('|');return[s.slice(0,k),s
 function findTx(id){const [c,hid]=splitId(id),f=S.funds.find(x=>x.code===c),h=f&&f.hist.find(x=>String(x.id)===hid);return h?{f,h}:null}
 function txModal(id){const x=findTx(id);if(!x)return;const {f,h}=x,s=h.type==='sell',cn=txCan(f,h);
   const info=s?sellInfo(h):buyInfo(h);
-  const pv=s?`<div class="pv"><div><span>Adet × fiyat</span><b>${info.q?num(info.q)+' × '+num(info.p,6)+' ₺':'—'}</b></div><div><span>Brüt tutar</span><b>${money(info.rev)}</b></div><div><span>Kâr/zarar (stopaj öncesi)</span><b class="${info.pr>=0?'up':'dn'}">${sgn(info.pr)}</b></div><div><span>Stopaj</span><b class="dn">−${money(info.tax)}</b></div><div class="tot"><span>Net ele geçen</span><b>${money(info.net)}</b></div></div>`
-    :`<div class="pv"><div><span>Adet × fiyat</span><b>${info.q?num(info.q)+' × '+num(info.p,6)+' ₺':'—'}</b></div><div class="tot"><span>Tutar</span><b>${money(h.amount)}</b></div></div>`;
+  const pv=s?`<div class="pv"><div><span>Adet × fiyat</span><b>${info.q?qn(info.q)+' × '+num(info.p,6)+' ₺':'—'}</b></div><div><span>Brüt tutar</span><b>${money(info.rev)}</b></div><div><span>Kâr/zarar (stopaj öncesi)</span><b class="${info.pr>=0?'up':'dn'}">${sgn(info.pr)}</b></div><div><span>Stopaj</span><b class="dn">−${money(info.tax)}</b></div><div class="tot"><span>Net ele geçen</span><b>${money(info.net)}</b></div></div>`
+    :`<div class="pv"><div><span>Adet × fiyat</span><b>${info.q?qn(info.q)+' × '+num(info.p,6)+' ₺':'—'}</b></div><div class="tot"><span>Tutar</span><b>${money(h.amount)}</b></div></div>`;
   modal(`<h3>${s?'Satış':'Alım'} · ${esc(f.code)} · ${dTR(h.date)}</h3>${pv}
   ${cn.ok?'':`<p class="hint" style="margin:12px 2px 0">${esc(cn.why)}</p>`}
   <div class="btns">${cn.ok?`<button class="btn red" data-act="txdel" data-id="${esc(id)}"><span>Sil</span></button><button class="btn pri" data-act="txedit" data-id="${esc(id)}"><span>Düzenle</span></button>`:`<button class="btn plain" data-act="close"><span>Kapat</span></button>`}</div>`)}
@@ -1061,10 +1064,10 @@ function txEdit(id){const x=findTx(id);if(!x)return;const {f,h}=x,s=h.type==='se
   const base0=s?putBack(f.lots,cn.used):null,rt=s?rateOf(f,h):0,avOn=d=>sumQ(byDate(base0,d).ok),avail=s?avOn(h.date):0;
   modal(`<h3>${s?'Satışı':'Alımı'} düzenle · ${esc(f.code)}</h3>
   <div class="f"><div class="lh"><label for="x_d">İşlem tarihi</label></div><input id="x_d" type="date" max="${today()}" value="${h.date}"></div>
-  <div class="two">${fld('x_q','Adet',info.q?dec(+info.q.toFixed(6)):'',s?`<span class="sub" id="x_av" style="font-size:12px">en çok ${num(avail)}</span>`:'')}${fld('x_p','Birim fiyat (₺)',info.p?dec(info.p):'')}</div>
+  <div class="two">${fld('x_q','Adet',info.q?dec(+info.q.toFixed(6)):'',s?`<span class="sub" id="x_av" style="font-size:12px">en çok ${qn(avail)}</span>`:'')}${fld('x_p','Birim fiyat (₺)',info.p?dec(info.p):'')}</div>
   <div id="x_pv"></div><p class="err" id="x_e"></p>
   <div class="btns"><button class="btn plain" data-act="close">Vazgeç</button><button class="btn pri" data-act="txeditok" data-id="${esc(id)}">Kaydet</button></div>`);
-  if(s){const upd=()=>{const q=pn(g('x_q')),p=pn(g('x_p')),d=isDate(g('x_d'))?g('x_d'):h.date,av=avOn(d),el=$('#x_pv');$('#x_av').textContent='en çok '+num(av);if(!(q>0&&p>0)||q>av+1e-4){el.innerHTML='';return}const r=sellRun(byDate(base0,d).ok,q,p,rt).r;
+  if(s){const upd=()=>{const q=pn(g('x_q')),p=pn(g('x_p')),d=isDate(g('x_d'))?g('x_d'):h.date,av=avOn(d),el=$('#x_pv');$('#x_av').textContent='en çok '+qn(av);if(!(q>0&&p>0)||q>av+1e-4){el.innerHTML='';return}const r=sellRun(byDate(base0,d).ok,q,p,rt).r;
     el.innerHTML=`<div class="pv"><div><span>FIFO kâr / zarar</span><b class="${r.pr>=0?'up':'dn'}">${sgn(r.pr)}</b></div><div><span>Stopaj (${rateTxt(rt)}, satıştaki oran)</span><b class="dn">−${money(r.tax)}</b></div><div class="tot"><span>Net ele geçen</span><b>${money(r.net)}</b></div></div>`};$('#m').oninput=upd;upd()}}
 function txEditOk(id){const x=findTx(id);if(!x)return;const {f,h}=x,s=h.type==='sell',cn=txCan(f,h),e=$('#x_e');if(!cn.ok){e.textContent=cn.why;return}
   const q=pn(g('x_q')),p=pn(g('x_p')),d=g('x_d');if(!(q>0&&p>0)){e.textContent='Geçerli bir adet ve birim fiyat girin.';return}if(!isDate(d)||d>today()){e.textContent='İleri tarihli işlem girilemez.';return}
@@ -1073,7 +1076,7 @@ function txEditOk(id){const x=findTx(id);if(!x)return;const {f,h}=x,s=h.type==='
   if(!s){const cl=buyClash(f,{id:cn.lot.id,date:d});if(cl){e.textContent=clashMsg(cl,true);return}
     const nl=f.lots.map(l=>l===cn.lot?{...l,date:d,qty:q,cost:p}:l);commit(f,'edit',today(),`${dTR(old.date)} tarihli alım düzenlendi → ${dTR(d)}, ${num(q)} adet × ${num(p,6)} ₺.`,0,nl,0,{ref:h.id,old});
     Object.assign(h,{date:d,q,p,amount:q*p,detail:buyTxt(q,p),lot:cn.lot.id})}
-  else{const bd=byDate(putBack(f.lots,cn.used),d),avail=sumQ(bd.ok);if(q>avail+1e-4){e.textContent=`${dTR(d)} tarihinde en çok ${num(avail)} adet satılabilir.`;return}
+  else{const bd=byDate(putBack(f.lots,cn.used),d),avail=sumQ(bd.ok);if(q>avail+1e-4){e.textContent=`${dTR(d)} tarihinde en çok ${qn(avail)} adet satılabilir.`;return}
     const r=sellRun(bd.ok,q,p,rateOf(f,h)),cl=sellClash(f,d,r.used,h);if(cl){e.textContent=clashMsg(cl,false);return}
     commit(f,'edit',today(),`${dTR(old.date)} tarihli satış düzenlendi → ${dTR(d)}, ${num(q)} adet × ${num(p,6)} ₺.`,0,[...r.lots,...bd.later],0,{ref:h.id,old});
     Object.assign(h,{date:d,q,p,used:r.used,tax:r.r.tax,rev:r.r.rev,gain:r.r.pr-r.r.tax,amount:-r.r.net,detail:sellTxt(q,p,r.r)})}
@@ -1112,7 +1115,7 @@ function trTx(id){const x=findTx(id);if(!x){toast('Kayıt bulunamadı.');return}
     Object.assign(h,{undone:false,q:b.q,p:b.p,lot:lid})}
   else{const i=sellInfo(h);if(!(i.q>0&&i.p>0)){toast('Bu eski kaydın adet ve fiyatı okunamadı; geri getirilemiyor.');return}
     if(laterSell(f,h)){toast('Bu satıştan sonraki bir tarihte satış var. FIFO sırası bozulmasın diye önce o satışı silin.');return}
-    const bd=byDate(f.lots,h.date),av=sumQ(bd.ok);if(i.q>av+1e-4){toast(`${dTR(h.date)} tarihinde portföyde ${num(av)} adet var; ${num(i.q)} adetlik satış geri getirilemiyor.`);return}
+    const bd=byDate(f.lots,h.date),av=sumQ(bd.ok);if(i.q>av+1e-4){toast(`${dTR(h.date)} tarihinde portföyde ${qn(av)} adet var; ${qn(i.q)} adetlik satış geri getirilemiyor.`);return}
     const old=keepOld(h),r=sellRun(bd.ok,i.q,i.p,rateOf(f,h));
     commit(f,'restore',today(),`${dTR(h.date)} tarihli satış geri getirildi (${num(i.q)} adet).`,0,[...r.lots,...bd.later],0,{ref:h.id,old});
     Object.assign(h,{undone:false,q:i.q,p:i.p,used:r.used,tax:r.r.tax,rev:r.r.rev,gain:r.r.pr-r.r.tax,amount:-r.r.net,detail:sellTxt(i.q,i.p,r.r)})}
@@ -1184,12 +1187,12 @@ function home(){
 function detail(){
   const f=cur();if(!f){view.page='home';return home()}const t=view.tab,r=ret(f,'total'),rl=R(f);
   let body='';
-  if(t==='lots'){const L=sorted(f);body=`<div class="list glass"><div class="row"><div class="l sub">Ortalama maliyet</div><b>${num(A(f),6)} ₺</b></div>${Math.abs(rl)>.005?`<div class="row"><div class="l sub">Gerçekleşen kâr/zarar (stopaj sonrası)</div><b class="${rl>=0?'up':'dn'}">${sgn(rl)}</b></div>`:''}${(()=>{const x=realOf([f]);return x?`<div class="row"><div class="l sub">Enflasyona göre (reel) getiri${x.miss?' *':''}</div><b class="${x.real>=0?'up':'dn'}">${pc(x.real)}</b></div>`:''})()}${L.map(l=>{const pr=(f.price-l.cost)*l.qty,pp=l.cost>0?(f.price/l.cost-1)*100:0;return `<div class="row" data-k="l-${esc(l.id)}"><div class="l"><b>${dTR(l.date)}</b><div class="sub">${num(l.qty)} adet · ${num(l.cost,6)} ₺</div></div><div class="r"><b>${money(l.qty*f.price)}</b><div class="d ${pr>=0?'up':'dn'}">${pc(pp)} · ${sgn(pr)}</div></div><button class="rowbtn del" data-act="dellot" data-id="${esc(l.id)}" aria-label="Sepeti sil">Sil</button></div>`}).join('')||'<div class="empty">Bu fonda aktif sepet yok. “Alım ekle” ile başlayın.</div>'}</div>`}
+  if(t==='lots'){const L=sorted(f);body=`<div class="list glass"><div class="row"><div class="l sub">Ortalama maliyet</div><b>${num(A(f),6)} ₺</b></div>${Math.abs(rl)>.005?`<div class="row"><div class="l sub">Gerçekleşen kâr/zarar (stopaj sonrası)</div><b class="${rl>=0?'up':'dn'}">${sgn(rl)}</b></div>`:''}${(()=>{const x=realOf([f]);return x?`<div class="row"><div class="l sub">Enflasyona göre (reel) getiri${x.miss?' *':''}</div><b class="${x.real>=0?'up':'dn'}">${pc(x.real)}</b></div>`:''})()}${L.map(l=>{const pr=(f.price-l.cost)*l.qty,pp=l.cost>0?(f.price/l.cost-1)*100:0;return `<div class="row" data-k="l-${esc(l.id)}"><div class="l"><b>${dTR(l.date)}</b><div class="sub">${qn(l.qty)} adet · ${num(l.cost,6)} ₺</div></div><div class="r"><b>${money(l.qty*f.price)}</b><div class="d ${pr>=0?'up':'dn'}">${pc(pp)} · ${sgn(pr)}</div></div><button class="rowbtn del" data-act="dellot" data-id="${esc(l.id)}" aria-label="Sepeti sil">Sil</button></div>`}).join('')||'<div class="empty">Bu fonda aktif sepet yok. “Alım ekle” ile başlayın.</div>'}</div>`}
   if(t==='cash')body=`<div class="glass card pad"><label class="lbl" for="c_v">Elime geçmesini istediğim net tutar (₺)</label><div class="two" style="grid-template-columns:1fr auto"><input id="c_v" class="inp" inputmode="decimal" placeholder="Örn: 10.000"><button class="btn pri" data-act="calc"><span>Hesapla</span></button></div><div id="cr"></div></div>`;
   if(t==='hist'){const first=f.hist.find(h=>!h.undone&&h.prev);const N={buy:'Alım',sell:'Satış',edit:'Düzenleme',delete:'Silme',restore:'Geri getirme'};body=`<div class="list glass">${f.hist.map(h=>`<div class="row" data-k="h-${esc(h.id)}${h.undone?'u':''}" style="${h.undone?'opacity:.5':''}"><div class="l"><span class="tag">${h.undone?'İptal edildi':N[h.type]||'İşlem'}</span> <span class="sub">${dTR(h.date)}</span><div class="sub" style="white-space:normal;margin-top:3px">${esc(dtl(h.detail))}</div></div><div class="r"><b class="${h.amount>=0?'up':'dn'}">${sgn(h.amount)}</b>${first&&first.id===h.id?`<div><button class="rowbtn" data-act="undo" style="margin-top:6px">Geri al</button></div>`:''}</div></div>`).join('')||'<div class="empty">Henüz işlem geçmişi yok.</div>'}</div>`}
   const last=f.log[f.log.length-1];
   return `${dnav('Portföy','<button class="cap glass" data-act="editfund"><span>Düzenle</span></button>')}
-  <section class="dhead">${av(f,'lg')}<h2>${esc(f.name)}</h2><div class="lbl">${esc(f.code)} · ${esc(f.type)} · Stopaj ${rateTxt(f.tax)} · ${num(Q(f))} adet</div><div class="big md">${T('d-'+f.code+'-val',V(f),'big')}</div>${chipH(r,'toplam','d-'+f.code)}</section>
+  <section class="dhead">${av(f,'lg')}<h2>${esc(f.name)}</h2><div class="lbl">${esc(f.code)} · ${esc(f.type)} · Stopaj ${rateTxt(f.tax)} · ${qn(Q(f))} adet</div><div class="big md">${T('d-'+f.code+'-val',V(f),'big')}</div>${chipH(r,'toplam','d-'+f.code)}</section>
   <div class="stats glass">${[['daily','Günlük'],['weekly','Haftalık'],['total','Toplam']].map(([k0,n])=>{const x=ret(f,k0);const k='s-'+f.code+'-'+k0;return `<div><div class="lbl">${n}</div><b class="${x.v>=0?'up':'dn'}">${T(k+'-v',x.v,'sgn')}</b><div class="d ${x.v>=0?'up':'dn'}">${T(k+'-p',x.p,'pc')}</div></div>`}).join('')}</div>
   <div class="list glass"><div class="row"><div class="l"><div class="lbl">Birim fiyat${last?' · '+dTR(last.d):''}</div><b>${num(f.price,6)} ₺</b>${staleDays(f)?`<div class="d dn">${staleDays(f)} gündür güncellenmedi</div>`:''}</div><button class="rowbtn" data-act="price">Fiyatı güncelle</button></div></div>
   ${fundChart(f)}
@@ -1221,9 +1224,9 @@ function trashPage(){trSave();const T=trTxList(),F=TR.filter(x=>x.kind==='fund')
   const btn=(a,id,t='Geri getir')=>`<button class="rowbtn" data-act="${a}" data-id="${esc(id)}">${t}</button>`;
   const gav=c=>`<span class="av" style="--c:#8e8e93">${esc(String(c).slice(0,3))}</span>`;
   const sec=(t,rows)=>rows.length?`<div class="grp"><div class="gl">${t}</div><div class="list glass">${rows.join('')}</div></div>`:'';
-  const tx=T.map(x=>{if(x.k==='lot')return `<div class="row" data-k="tr-l${esc(x.h.id)}">${av(x.f)}<div class="l"><b>Sepet · ${esc(x.f.code)}</b><div class="sub">${dTR(x.l.date)} · ${num(x.l.qty)} adet</div></div>${btn('trlot',x.f.code+'|'+x.h.id)}</div>`;
+  const tx=T.map(x=>{if(x.k==='lot')return `<div class="row" data-k="tr-l${esc(x.h.id)}">${av(x.f)}<div class="l"><b>Sepet · ${esc(x.f.code)}</b><div class="sub">${dTR(x.l.date)} · ${qn(x.l.qty)} adet</div></div>${btn('trlot',x.f.code+'|'+x.h.id)}</div>`;
     const s=x.h.type==='sell',i=s?sellInfo(x.h):buyInfo(x.h);
-    return `<div class="row" data-k="tr-t${esc(x.h.id)}">${av(x.f)}<div class="l"><b>${s?'Satış':'Alım'} · ${esc(x.f.code)}</b><div class="sub">${dTR(x.h.date)}${i.q?` · ${num(i.q)} adet`:''} · ${money(s?i.net:x.h.amount)}</div></div>${btn('trtx',x.f.code+'|'+x.h.id)}</div>`});
+    return `<div class="row" data-k="tr-t${esc(x.h.id)}">${av(x.f)}<div class="l"><b>${s?'Satış':'Alım'} · ${esc(x.f.code)}</b><div class="sub">${dTR(x.h.date)}${i.q?` · ${qn(i.q)} adet`:''} · ${money(s?i.net:x.h.amount)}</div></div>${btn('trtx',x.f.code+'|'+x.h.id)}</div>`});
   const fu=F.map(x=>{const d=x.data||{},nl=Array.isArray(d.lots)?d.lots.length:0,nh=Array.isArray(d.hist)?d.hist.filter(h=>h&&(h.type==='buy'||h.type==='sell')&&!h.undone).length:0;
     return `<div class="row" data-k="tr-${esc(x.id)}">${gav(x.code)}<div class="l"><b>${esc(x.code)}</b><div class="sub">${left(x.at)} · ${nl} sepet · ${nh} işlem</div></div>${btn('trrest',x.id)}</div>`});
   const pr=P.map(x=>`<div class="row" data-k="tr-${esc(x.id)}">${S.funds.some(f=>f.code===x.code)?av({code:x.code}):gav(x.code)}<div class="l"><b>${esc(x.code)} · ${esc(dTR(x.d))}</b><div class="sub">${num(x.p,6)} ₺ · ${left(x.at)}</div></div>${btn('trrest',x.id)}</div>`);
@@ -1337,7 +1340,7 @@ function openTx(kind,pre){
   modal(`<h3>${sell?'Satış (FIFO)':'Alım ekle'} · ${esc(f.code)}</h3>
   <div class="f"><div class="lh"><label for="t_d">İşlem tarihi</label></div><input id="t_d" type="date" max="${today()}" value="${today()}"></div>
   ${sell?'':fld('t_a','Toplam tutar (₺)')}
-  <div class="two">${fld('t_q','Adet',pre||'',sell?`<button type="button" class="lnk" data-act="all">Tümü (${num(Q(f))})</button>`:'')}${fld('t_p','Birim fiyat (₺)',dec(f.price))}</div>
+  <div class="two">${fld('t_q','Adet',pre||'',sell?`<button type="button" class="lnk" data-act="all">Tümü${priv?'':` (${num(Q(f))})`}</button>`:'')}${fld('t_p','Birim fiyat (₺)',dec(f.price))}</div>
   <div id="t_pv"></div><p class="err" id="t_e"></p>
   <div class="btns"><button class="btn plain" data-act="close">Vazgeç</button><button class="btn ${sell?'red':'pri'}" data-act="${kind}ok">${sell?'Satışı onayla':'Portföye ekle'}</button></div>`);
   const upd=()=>{if(!sell)return;const q=pn(g('t_q')),p=pn(g('t_p')),el=$('#t_pv');if(!(q>0&&p>0)){el.innerHTML='';return}const r=fifo(sorted(f),q,p,f.tax);el.innerHTML=`<div class="pv"><div><span>Brüt tutar</span><b>${money(r.rev)}</b></div><div><span>FIFO kâr / zarar</span><b class="${r.pr>=0?'up':'dn'}">${sgn(r.pr)}</b></div><div><span>Stopaj (${rateTxt(f.tax)})</span><b class="dn">−${money(r.tax)}</b></div><div class="tot"><span>Net ele geçecek</span><b>${money(r.net)}</b></div></div>`};
@@ -1358,8 +1361,8 @@ function txOk(kind){
   if(!isDate(d)||d>today()){e.textContent='İleri tarihli işlem girilemez.';return}
   if(kind==='buy'){const lid=uid(),cl=buyClash(f,{id:lid,date:d});if(cl){e.textContent=clashMsg(cl,true);return}
     commit(f,'buy',d,buyTxt(q,p),q*p,[...f.lots,{id:lid,date:d,qty:q,cost:p}],0,{q,p,lot:lid});toast('Alım kaydedildi.')}
-  else{const bd=byDate(f.lots,d),av=sumQ(bd.ok);if(q>Q(f)+1e-4){e.textContent=`Portföydeki toplam adetten (${num(Q(f))}) fazla satamazsınız.`;return}
-    if(q>av+1e-4){e.textContent=`${dTR(d)} tarihinde portföyde ${num(av)} adet vardı; daha sonra alınan sepetler bu tarihte satılamaz.`;return}
+  else{const bd=byDate(f.lots,d),av=sumQ(bd.ok);if(q>Q(f)+1e-4){e.textContent=`Portföydeki toplam adetten (${qn(Q(f))}) fazla satamazsınız.`;return}
+    if(q>av+1e-4){e.textContent=`${dTR(d)} tarihinde portföyde ${qn(av)} adet vardı; daha sonra alınan sepetler bu tarihte satılamaz.`;return}
     const x=sellRun(bd.ok,q,p,f.tax),cl=sellClash(f,d,x.used);if(cl){e.textContent=clashMsg(cl,false);return}
     commit(f,'sell',d,sellTxt(q,p,x.r),-x.r.net,[...x.lots,...bd.later],x.r.pr-x.r.tax,{q,p,used:x.used,tax:x.r.tax,rev:x.r.rev});toast('Satış kaydedildi.')}
   closeM();save()}
@@ -1387,7 +1390,7 @@ function act(a,id){
     case 'dellogok':{const e=f.log.find(x=>x.d===id);if(!e||f.log.length<2){priceModal(f);break}const nl=sortLog(f.log.filter(x=>x.d!==id)),lost=f.log.filter(x=>!nl.some(y=>y.d===x.d));
       const tid=trAdd({kind:'price',code:f.code,d:e.d,p:e.p,lost});if(!tid){priceModal(f);toast('Depolama dolu: silinen kaydın kopyası saklanamadı, kayıt silinmedi.');break}
       f.log=nl;f.price=f.log[f.log.length-1].p;save();priceModal(f);toast('Fiyat kaydı silindi.','trundo',tid);break}
-    case 'dellot':{const l=f.lots.find(x=>String(x.id)===id);if(!l)return;modal(`<h3>Sepeti sil</h3><p>${dTR(l.date)} tarihli, ${num(l.qty)} adetlik sepet silinsin mi?</p><p class="sub" style="white-space:normal">Ayarlar › Son silinenler’den ya da Geçmiş sekmesinden geri getirebilirsiniz.</p><div class="btns"><button class="btn plain" data-act="close">Vazgeç</button><button class="btn red" data-act="dellotok" data-id="${esc(id)}">Evet, sil</button></div>`);break}
+    case 'dellot':{const l=f.lots.find(x=>String(x.id)===id);if(!l)return;modal(`<h3>Sepeti sil</h3><p>${dTR(l.date)} tarihli, ${qn(l.qty)} adetlik sepet silinsin mi?</p><p class="sub" style="white-space:normal">Ayarlar › Son silinenler’den ya da Geçmiş sekmesinden geri getirebilirsiniz.</p><div class="btns"><button class="btn plain" data-act="close">Vazgeç</button><button class="btn red" data-act="dellotok" data-id="${esc(id)}">Evet, sil</button></div>`);break}
     case 'dellotok':{const l=f.lots.find(x=>String(x.id)===id);closeM();if(!l)return;const el=[...document.querySelectorAll('#app [data-k]')].find(e=>e.dataset.k==='l-'+l.id);
       collapse(el).then(()=>{if(!f.lots.includes(l))return;const bh=f.hist.find(h=>h.type==='buy'&&!h.undone&&lotOf(f,h)===l),ok=bh&&txCan(f,bh).ok;
         const dh=commit(f,'delete',today(),`${dTR(l.date)} tarihli ${num(l.qty)} adetlik sepet silindi.`,-l.qty*l.cost,f.lots.filter(x=>x!==l),0,ok?{ref:bh.id,old:keepOld(bh)}:{});if(ok)bh.undone=true;save();
@@ -1423,7 +1426,7 @@ function act(a,id){
       const L=sorted(f),sim=n=>fifo(L,Math.min(n,q),f.price,f.tax);let n,ex=false;
       {let lo=1,hi=Math.ceil(q);if(sim(hi).net<T){ex=true;n=hi}else{while(lo<hi){const mid=(lo+hi)>>1;sim(mid).net>=T?hi=mid:lo=mid+1}n=lo}}
       const nq=Math.min(n,q),r=sim(nq);
-      el.innerHTML=`<div class="pv"><div><span>Satılması gereken adet</span><b>${num(nq,3)}</b></div><div><span>Brüt satış tutarı</span><b>${money(r.rev)}</b></div><div><span>Tahmini stopaj (${rateTxt(f.tax)})</span><b class="dn">−${money(r.tax)}</b></div><div class="tot"><span>Tahmini net</span><b>${money(r.net)}</b></div></div>${ex?`<p class="err">Hedef tutar portföyünüzü aşıyor; en fazla ${num(q)} adet satılabilir.</p>`:`<button class="btn red" style="margin-top:10px;width:100%" data-act="sellpre" data-id="${dec(+nq.toFixed(6))}">Bu adetle satış ekranını aç</button>`}`;break}
+      el.innerHTML=`<div class="pv"><div><span>Satılması gereken adet</span><b>${qn(nq,3)}</b></div><div><span>Brüt satış tutarı</span><b>${money(r.rev)}</b></div><div><span>Tahmini stopaj (${rateTxt(f.tax)})</span><b class="dn">−${money(r.tax)}</b></div><div class="tot"><span>Tahmini net</span><b>${money(r.net)}</b></div></div>${ex?`<p class="err">Hedef tutar portföyünüzü aşıyor; en fazla ${qn(q)} adet satılabilir.</p>`:`<button class="btn red" style="margin-top:10px;width:100%" data-act="sellpre" data-id="${dec(+nq.toFixed(6))}">Bu adetle satış ekranını aç</button>`}`;break}
     case 'sellpre':openTx('sell',id);break;
     case 'newfund':modal(`<h3>Yeni fon</h3><div class="f"><div class="lh"><label for="n_c">Fon kodu</label></div><input id="n_c" autocapitalize="characters" autocomplete="off" placeholder="Örn: TLY"></div>${txt('n_n','Fon adı')}<div class="two">${txt('n_t','Fon türü','Para Piyasası')}${fld('n_p','Birim fiyat (₺)')}</div>${fld('n_x','Stopaj oranı (%)','17,5')}<p class="hint">Varsayılan %17,5. Farklı oran uygulanan bir fonunuz varsa buradan değiştirebilirsiniz.</p><p class="err" id="n_e"></p><div class="btns"><button class="btn plain" data-act="close">Vazgeç</button><button class="btn pri" data-act="newok">Portföye ekle</button></div>`);break;
     case 'newok':{const c=g('n_c').trim().toUpperCase(),n=g('n_n').trim(),p=pn(g('n_p')),x=pn(g('n_x'));if(!c||!n||!(p>0)){$('#n_e').textContent='Kod, ad ve geçerli bir fiyat girin.';return}if(/[\s|]/.test(c)||c.length>12){$('#n_e').textContent='Fon kodu boşluk ve | içeremez, en çok 12 karakter olabilir.';return}if(!(x>=0&&x<100)){$('#n_e').textContent='Stopaj oranı 0 ile 100 arasında olmalı.';return}if(S.funds.some(y=>y.code===c)){$('#n_e').textContent='Bu fon kodu zaten var.';return}S.funds.push({...mk(c,n,g('n_t').trim()||'Yatırım Fonu',p,x/100),taxSet:true});view.page='home';closeM();save();toast(c+' eklendi.');break}

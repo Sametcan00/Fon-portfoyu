@@ -31,7 +31,7 @@ Bu dosya yeni Claude sohbetlerinde otomatik okunur. Her sürümden sonra güncel
 
 ## Sürüm kuralı
 
-- Güncel sürüm: **1.9.20**
+- Güncel sürüm: **1.9.21**
 - Her güncellemede **iki yerde** sürüm artırılır: `sw.js` içinde `VERSION`, `index.html` içinde `APPV`.
 - Ayarlar sayfasının altında "sürüm X.Y.Z" yazar; kullanıcı bununla kontrol eder.
 
@@ -102,6 +102,7 @@ Bu dosya yeni Claude sohbetlerinde otomatik okunur. Her sürümden sonra güncel
   - Alt sayfalar `PARENT` ile tanımlı (`tx` ve `year` → Özet, `detail` → Portföy); soldan kaydırınca üst sayfaya dönülür.
   - İşlem geçmişi: alım/satış düzenleme ve silme. Kısmen satılmış alım ya da sepet bilgisi bulunamayan eski satış kilitlidir, nedeni yazılır. Her değişiklik fonun Geçmiş sekmesine düşer ve "Geri al" ile geri alınır.
   - Gizlilik modu (göz düğmesi): tutarlar `••••`. Kayda yazılan metinler her zaman `moneyR`/`sgnR` ile gerçek tutarla yazılır.
+    - 1.9.21 (kullanıcı isteği): adetler de gizlenir (`qn`: ekrandaki adet; `dtl` kayıt metnindeki "N adet/adetlik"). Kayda yazılan metinler `num` ile gerçek adetle kalır (buyTxt, sellTxt, commit açıklamaları — bunlarda `qn` kullanılmamalı). Satış panelinde "Tümü" adetsiz yazılır ama gerçek adeti doldurur. Giriş kutularındaki değerler (düzenleme formu) gerçek kalır. Birim fiyatlar (piyasa verisi) görünür.
   - Üst butonlar (1.9.13): Portföy'de göz (tutarları gizle) + tema + fon ekle; Özet'te yalnız göz; Ayarlar'da yok (tema Görünüm'de). Ayarlar'da Gizlilik bölümü yok; tutarları gizleme yalnız göz butonuyla.
   - Face ID kilidi 1.9.13'te kullanıcı isteğiyle tamamen kaldırıldı (kod, CSS, simge, Ayarlar satırı). Açılışta eski `fon-kilit` kaydı silinir.
 - **Cam takvim (1.9.14):** iOS'un yerel tarih penceresine animasyon/stil verilemediği için modal içindeki her `input[type=date]` `dpEnhance` ile gizli alana çevrilir (id ve YYYY-AA-GG değeri aynı, hesap kodu `g('p_d')` vb. değişmedi) ve yanına `.dpb` kutusu eklenir. Dokununca `.dp` takvimi (body'de, z-index 40) kutudan yaylanarak büyüyüp açılır, seçince/dışarı dokununca kutuya doğru küçülerek kapanır. Bulanık yarı saydam cam (`--dp-bg` .86), ince kenar parlaması, yumuşak gölge. `max` (bugün) sonrası günler kapalı. Değer değişince `input`/`change` olayı yayılır. Takvim açıkken dışarı dokunmak yalnız takvimi kapatır; panel kapanırken takvim de kapanır.
@@ -135,6 +136,8 @@ Bu dosya yeni Claude sohbetlerinde otomatik okunur. Her sürümden sonra güncel
 - Safari'de iç içe `backdrop-filter` bozuk görünür. Merceğe bulanıklık verilmemeli.
 - Uygulama silinirse veriler de silinir. Kullanıcı düzenli "Dışa aktar" yapmalı.
 - Testler gerçek iOS'ta değil, Chromium'da (Playwright iPhone taklidi). Gerçek cihaz davranışı kullanıcının videolarıyla doğrulanır.
+  - 1.9.21'den beri WebKit (Safari'nin motoru, JavaScriptCore) testi de yapılabiliyor: `apt-get install -y webkit2gtk-driver xvfb`, sonra `xvfb-run -a WebKitWebDriver --port=4444` ve WebDriver HTTP API'si ile `MiniBrowser` (`/usr/lib/x86_64-linux-gnu/webkit2gtk-4.1/MiniBrowser`, `--automation`). Dokunma olayı yok; mantık, CSP, WebGL, service worker ve çizim denenir. `playwright install` çalıştırılmamalı.
+  - Ortamın ağ izinlerine `sametcan00.github.io` eklendi (1.9.21): yayından sonra canlı `sw.js`'deki VERSION curl ile kontrol edilebilir.
 
 ## Güncelleme yayınlama
 
@@ -193,8 +196,7 @@ Kullanıcı isterse dosyaları elle de yükleyebilir: GitHub → Add file → Up
 
 ## Açık konular
 
-- 1.9.20'nin gerçek iPhone'da doğrulanması: CSP Safari'de hiçbir şeyi engellemiyor mu (mercek, TÜFE, yedek paylaşma/indirme, ana ekran simgesi).
-- Bilinen, değiştirilmeyen: gizlilik modu yalnız tutarları gizler; adet ve birim fiyat görünür (adet × fiyat ile tutar hesaplanabilir). Ürün kararı; 1.9.20 raporunda kullanıcıya bildirildi, istenirse adetler de gizlenebilir.
+- 1.9.20–1.9.21'in gerçek iPhone'da doğrulanması: CSP WebKitGTK 2.52'de hiçbir şeyi engellemedi (mercek, TÜFE, service worker, dışa aktarma); gerçek iOS Safari'de ve ana ekran uygulamasında (paylaşım menüsü, simge) kullanıcı denemeli.
 - Bilinen sınır: `localStorage` kaynağa (origin) bağlıdır; `sametcan00.github.io` altındaki diğer GitHub Pages projeleri aynı kaynağı paylaşır ve bu veriyi okuyabilir. Yalnız kendi depolarınız bu kaynağa sayfa koyabilir; özel alan adı ayrı kaynak sağlar.
 
 - 1.8.1'in gerçek iPhone'da doğrulanması: hızlı dokunma, parmakla sürükleme, merceğin taşması.
