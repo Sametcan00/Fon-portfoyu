@@ -30,7 +30,7 @@ Bu dosya yeni Claude sohbetlerinde otomatik okunur. Her sürümden sonra güncel
 
 ## Sürüm kuralı
 
-- Güncel sürüm: **1.9.7**
+- Güncel sürüm: **1.9.8**
 - Her güncellemede **iki yerde** sürüm artırılır: `sw.js` içinde `VERSION`, `index.html` içinde `APPV`.
 - Ayarlar sayfasının altında "sürüm X.Y.Z" yazar; kullanıcı bununla kontrol eder.
 
@@ -112,7 +112,7 @@ Bu dosya yeni Claude sohbetlerinde otomatik okunur. Her sürümden sonra güncel
 
 ## Bilinen sınırlar
 
-- Apple'ın gerçek Liquid Glass kırılması (camın arkasındaki sayfayı bükme) Safari'de yapılamıyor (`backdrop-filter:url()` yok). 1.9.3'ten itibaren merceğin altı opak bir kopyayla (çubuk zemini + seçenekler) yeniden çiziliyor ve SVG filtreyle bükülüyor; arkadaki gerçek sayfa içeriği (kart, yazı) bükülmüyor, yerine düz renk kullanılıyor.
+- Apple'ın gerçek Liquid Glass kırılması (camın arkasındaki sayfayı bükme) Safari'de yapılamıyor (`backdrop-filter:url()` yok). 1.9.8'den itibaren merceğin altındaki sahne (çubuk zemini + seçenekler) tuvale çizilip WebGL ile bükülüyor; arkadaki gerçek sayfa içeriği (kart, yazı) bükülmüyor, yerine düz renk kullanılıyor.
 - Safari'de iç içe `backdrop-filter` bozuk görünür. Merceğe bulanıklık verilmemeli.
 - Uygulama silinirse veriler de silinir. Kullanıcı düzenli "Dışa aktar" yapmalı.
 - Testler gerçek iOS'ta değil, Chromium'da (Playwright iPhone taklidi). Gerçek cihaz davranışı kullanıcının videolarıyla doğrulanır.
@@ -139,40 +139,28 @@ Kullanıcı isterse dosyaları elle de yükleyebilir: GitHub → Add file → Up
 
 - **Segment seçicilerde parmakla sürükleme:** Sepetler/Nakit hesabı/Geçmiş, tema, Günlük/Haftalık/Toplam, grafik aralığı, ısı haritası, işlem türü. Sekme çubuğundaki gibi mercek parmağı izler, bırakınca en yakın seçeneğe geçer. `.seg{touch-action:pan-y}`: yatay sürükleme sayfayı kaydırmaz, dikey kaydırma çalışır. Alt sayfada sol kenardan (x<28) başlayan hareket geri kaydırmaya bırakılır. Engelleyen `touchmove`/`touchend` dinleyicileri yalnızca `.seg` öğelerine bağlanır (MutationObserver ile).
 
-## 1.9.3–1.9.6: Sıvı cam kırılması
+## 1.9.3–1.9.8: Cam mercek (kırılma)
 
-- Referans: kullanıcının başka bir uygulamasındaki iOS 27 Liquid Glass sekme çubuğu (ekran kaydı). Efekt sekme çubuğunda ve tüm segment seçicilerde.
-- **Videodaki efekt (1.9.4'te doğru anlaşıldı):** merceğin kenarı, merceğin DIŞINDAKİ görüntüyü içeri çeker ve sıkıştırır. Mercek çubuktan üstte ve altta biraz taştığı için çubuğun kenar çizgisi içeri kayar. Sonuç: merceğin içinde üstte ve altta koyu kalın bantlar (dışarıdaki siyah sayfa), bantların kenar boyunca kıvrılan uçlarında gökkuşağı. Kenara gelen simge/yazı sıkışıp kıvrılır, kenarın hemen dışındaki görüntü kenarda bir kez daha görünür. Mercek içi çubuktan biraz açık; merkez temiz.
-  - 1.9.3'teki ilk deneme yanlıştı: içeriden dışarı uzatıyordu, kopyada çubuk zemini yoktu, bant oluşmuyordu. Kullanıcı "videodaki ile ilgisi yok" dedi.
-  - Ölçüler (videodan, 3x piksel): bant ~8 nokta kalın ve içi ~0 parlaklık; mercek içi ~50, çubuk ~40; mercek çubuktan ~4-5 nokta taşar.
-- **Yöntem:** Safari arka planı bükemez (`backdrop-filter:url()` yok). Merceğin içine opak bir kopya konur: `.lq` (dış zemin rengi) > `.lqi` > `.lqb` (çubuğun/izin zemini, köşe yuvarlaklığı, kenar çizgisi) + kopya düğmeler (`data-act`/`role` silinmiş). Kopyaya `filter:url(#lqf…/#lqs…)` uygulanır:
-  - SVG `feDisplacementMap`; R/G/B kanalları ayrı miktarda (.8/1/1.22) bükülüp `feComposite arithmetic` ile toplanır (içerik opak olduğu için birebir renk, kenarda gökkuşağı).
-  - Mercek açıkken gösterge seçeneklerin üstüne çıkar (`.thumb.lqv{z-index:2}`); gerçek düğmeleri maskelemek gerekmez.
-- **Renkler (`lqColors`):**
-  - Segment: dış zemin kendi kartı/sayfası (üst öğelerin zeminleri üst üste).
-  - Sekme çubuğu: dış zemin sayfa rengi (bantlar videodaki gibi belirgin olsun); çubuğun içi, arkasında o an duran öğenin (`elementsFromPoint`) üstündeki cam rengi.
-  - Çubuk rengi camın etkisiyle hafif açılır (koyu %9, açık %40 beyaz).
-- **Bükme haritası (`lqMap`):** kapsül kenarına yaklaştıkça dışarıdan örnek alınır (128 = bükülme yok, kuvvet (1-d/b)^1.5). Sekme çubuğunda M=.11h, b=.22h; segmentte M=.17h, b=.3h. `.lq` kutusu merceğin 14 px (`LQ_PAD`) dışına taşar ki dışarıdan örnek alınabilsin; görünür kısım `clip-path` ile kırpılır.
-  - Filtreler boyuta göre önbellekli. `lqWarm` boşta önceden üretir. Harita yüklenmezse `feFlood` nötr zemin kaymayı önler (test edildi).
-- **Ölçüler:** sekme çubuğu merceği 112×72 (`::before`/`::after` -10px dikey, -18px yatay). Segment merceği -6px dikey, -5px yatay. İnce cam kenarı `.thumb::after` (`--lens-rim`) kopyanın üstünde.
-- **Çizim döngüsü:** `lqSync` her karede (`.under` döngüsünden) kopyayı merceğin `::before` ölçüsüne göre hizalar. Bırakınca mercek küçülürken büyütme yumuşakça söner.
-- **Dikkat:**
-  - Kopyada geçiş/animasyon yok (Safari'de ayrı katmana alınıp filtreden kaçmasın).
-  - Gösterge bir `<i>` olduğu için kopyada `font-style:normal` şart (yoksa yazılar italik çıkar).
-  - Kopyalar göstergenin içinde olduğu için gerçek düğme sorguları hep `:scope>button` olmalı.
-- **1.9.5 (telefon kaydından):** 1.9.4 Safari'de bozuktu: yazı mercekte aşağı kayıyor, her yer renkli, sekme çubuğunun ucunda kapkara hilal çıkıyordu. Sebep (büyük olasılık): Safari `feImage` görüntüsünü verilen ölçüyle değil kendi piksel boyutuyla çiziyor; 2x üretilen harita 2 kat büyük çiziliyordu. Çözüm: harita 1x ve filtre alanının (mercek + `LQ_PAD`) tamamını kaplıyor, `x=0,y=0`. Böylece ölçü dikkate alınsa da alınmasa da aynı sonuç.
-  - Çubuğun altındaki "BGP … 0,00 ₺" fon satırı sayfa içeriği; çubuk camın arkasında görünür. Dış zemin rengi artık yalnız çubuğun/izin yatay uzunluğunca (`.lqo`, uçları yumuşak maske); koyu temada uçların dışı saydam, gerçek içerik görünür. Açık temada yarı saydam yer kırılınca griye döndüğü için mercek içi tamamen opak (sayfa zemini).
-  - Mercek açıkken alttaki eski `::before` zemini/gölgesi kapalı (`.thumb.lqv::before`), uçta çizgi/gölge yapıyordu.
-- **1.9.6: SVG bükme filtresi tamamen kaldırıldı.** 1.9.5'te de Safari'de mercekteki kopya ~4 nokta aşağı kaymış, renkli ve gerçek yazı arkada "damga" gibi kalıyordu (kullanıcı ekran görüntüsü). Muhtemel sebep: Safari haritanın 128 = "bükme yok" değerini farklı renk uzayında okuyup her yeri kaydırıyor. Doğrulanamadı; filtre Safari'de güvenilmez sayıldı.
-  - Yerine düz CSS (Safari ve Chrome'da aynı çizilir): kopya yazı/simgeler hiç kaydırılmaz; çubuk/iz zemini `.lqb` `scaleY` ile sıkıştırılıp kenarları `LQ_PUSH` (sekme çubuğu 4, segment 2.5) kadar içeri kaydırılır → bantlar; `.lqe` bant kenarlarına renk şeritleri çizer, maske ile yalnız uçlarda görünür. Kenara gelen yazının kıvrılması artık yok.
-  - Bu yüzden yukarıdaki `lqMap`/`lqFilter`/`lqWarm` ve "Bükme haritası" maddeleri geçmiş bilgisidir, kodda yoktur. Safari'de SVG `feDisplacementMap` tekrar denenmemeli.
-- Yalnız Chromium'da test edildi (ortamda WebKit yok). Safari'de `filter:url()` + `feImage` davranışı kullanıcının cihazında doğrulanmalı. Kullanıcı 1.9.3'te efekti telefonda yalnız sekme çubuğunda gördüğünü söyledi; 1.9.4'te segmentlerde de bantlar her zaman görünür.
+- **İstek (kullanıcının kendi tarifi, 1.9.8):** seçili öğe normalde düz yarı saydam gri kapsül; basılı tutup sürükleyince biraz büyüyüp şeffaf, kalın kenarlı cam damlasına dönüşür. Kenarlarına gelen yazılar kalın camın arkasındaymış gibi bükülür (optik kırılma), tam o kenarlarda hafif RGB ayrışması, çevresinde ince ışık parlaması; bırakınca düz gri kapsüle küçülür. Düz CSS bulanıklığıyla değil gerçek kırılmayla. Sekme çubuğunda ve tüm sürüklenebilen seçicilerde.
+  - Referans videolar: kullanıcının başka uygulamalarındaki iOS 27 Liquid Glass sekme çubuğu ve hız seçicisi (0.5x…2x). Cam, kenarında dışarıdaki görüntüyü içeri çeker; kenara yakın yerde aynalanma ve gökkuşağı; merkez temiz; mercek izden biraz taşar, izin kenarı içeri kayar.
+- **Yöntem (1.9.8): WebGL gölgelendirici.** Tek bir WebGL tuvali (`LQ.cv`, `canvas.lqc`) o an açık olan merceğin göstergesine taşınır.
+  - `lqScene`: merceğin altındaki sahne gizli 2D tuvale (`LQ.sc`) kabın koordinatlarında `LQ_SP`=48 payla çizilir. İçeriği: dış zemin, iz/çubuk (yuvarlak köşe, kenar çizgisi), yazılar (`fillText`, gerçek yazı kutusuna ortalı) ve simgeler. Simgeler SVG'den bir kez siyah yüklenir, çizerken o anki renge boyanır (`source-in`). Renk ya da boyut animasyonu yüzünden her karede yeni resim yüklenmemeli. Sahne yalnız düğme sınıfları/ölçü değişince yeniden çizilir (`L.sig`).
+  - Gölgelendirici: kapsül uzaklık alanı (SDF) ile kenara uzaklık d; kenar şeridi B=min(.34h,16), en dıştan çekilen mesafe M=min(.3h,13). Örnek noktası `p + n·M·s²` (s=1-d/B; M > B/2 olduğundan kenarda aynalanma). R/G/B .82/1/1.18 oranında ayrı örneklenir (renk ayrışması yalnız kenarda). Çubuğun içinde saydam kalan yer çubuk rengiyle doldurulur. Kenar şeridi hafif koyu; en dışta sol üstten gelen ince parlama.
+  - Renkler `lqColors`: segmentte dış zemin kendi kartı. Sekme çubuğunda dış zemin çubuğun hemen üstündeki öğenin rengi, yalnız çubuğun yatay uzunluğunca; uçların dışı saydam, arkadaki gerçek içerik görünür. Çubuk rengi = cam dolgusu + arkasındaki öğe.
+  - Mercek açıkken gösterge seçeneklerin üstüne çıkar (`.thumb.lqv{z-index:2}`), alttaki `::before` zemini kapanır, ince koyu kenar `::after` (`--lens-rim`) üstte kalır. `g` (merceğin açıklığı) ile kırılma ve parlama mercek küçülürken söner.
+  - WebGL yoksa ya da bağlam kaybolursa mercek eski düz cam olarak çalışır. Hareketi azalt açıksa mercek açılmaz. Gölgelendirici açılıştan 1,2 sn sonra boşta derlenir (ilk basışta takılma olmasın).
+  - Gerçek düğme sorguları hep `:scope>button` olmalı.
+- **Denenip bırakılanlar (tekrar denenmesin):**
+  - 1.9.3: yazı kopyası + SVG filtre, içeriden dışarı uzatma. Yanlış yön; bant oluşmuyordu.
+  - 1.9.4–1.9.5: opak kopya + SVG `feDisplacementMap`. Safari'de içeriği bütünüyle ~4 nokta kaydırdı, gerçek yazı arkada "damga" gibi kaldı. Sebep doğrulanamadı (feImage ölçüsü ya da 128 nötr değerinin renk uzayı).
+  - 1.9.6: düz CSS (iz zemini `scaleY`, renk şeritleri). Yazı bükülmüyordu; kullanıcı gerçek kırılma istedi.
+- Yalnız Chromium'da test edildi (ortamda WebKit yok). WebGL gölgelendirici iki tarayıcıda aynı matematikle çalışır, ama gerçek iPhone'da görünüm ve akıcılık kullanıcının kaydıyla doğrulanmalı.
 
 ## Açık konular
 
 - 1.8.1'in gerçek iPhone'da doğrulanması: hızlı dokunma, parmakla sürükleme, merceğin taşması.
 - 1.9.2'nin gerçek iPhone'da doğrulanması: segmentlerde parmakla sürükleme.
-- 1.9.6'nın gerçek iPhone'da doğrulanması: sıvı cam kırılması (bantlar, uçlardaki gökkuşağı) Safari'de sekme çubuğunda ve segmentlerde görünüyor mu, akıcı mı.
+- 1.9.8'in gerçek iPhone'da doğrulanması: WebGL cam mercek (kenarda bükülme, renk ayrışması, parlama) Safari'de sekme çubuğunda ve seçicilerde görünüyor mu, akıcı mı; yeni sürüm hemen yükleniyor mu (1.9.7 önbellek düzeltmesi).
 - 1.9.0'ın gerçek iPhone'da doğrulanması: Face ID kilidi (ana ekran uygulamasında WebAuthn), grafikte parmakla gezinme, TEFAS'tan kopyalanan gerçek metnin okunması.
 - TÜFE işinin ilk otomatik güncellemesi (3 Aralık 2026, Kasım verisi) Actions sekmesinden kontrol edilmeli.
 - Henüz istenmemiş olası geliştirmeler: hedef dağılım ve dengeleme, düzenli yatırım planı, Mac edinilirse yerel SwiftUI sürümü.

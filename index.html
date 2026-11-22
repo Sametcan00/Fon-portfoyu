@@ -506,24 +506,11 @@ button.tgl:active{transform:none}
    sürüklerken gösterge parmağı gecikmesiz izler (yalnız genişlik yumuşak değişir) */
 .seg,.seg *{touch-action:pan-y;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .seg.drag>.thumb,.seg.drag>.thumb.sw{transition:width .2s var(--spring)}
-/* 1.9.3 — Sıvı cam kırılması (videodaki iOS 27 Liquid Glass): merceğin kenarı DIŞARIDAKİ görüntüyü içeri çeker.
-   Mercek çubuktan/izden biraz taştığı için kenarın çizgisi üstte ve altta içeri kayar → bantlar; bantların ve kenara gelen
-   simgelerin kıvrıldığı uçlarda gökkuşağı renk kırılması. Merceğin içi çubuğun zemini + seçeneklerin kopyasıyla opak
-   doldurulur (.lq) ve SVG filtresiyle bükülür; mercek açıkken gösterge seçeneklerin üstüne çıkar (.lqv). */
-.thumb>.lq{position:absolute;overflow:hidden;pointer-events:none;visibility:hidden;font-style:normal}
-.seg>.thumb>.lq{top:-20px;bottom:-20px;left:-19px;right:-19px}
-.tabbar>.thumb>.lq{top:-24px;bottom:-24px;left:-32px;right:-32px}
-.thumb>.lq.vis{visibility:visible}
-.lq>.lqi{position:absolute;left:0;top:0}
-.lqi>.lqb{position:absolute;left:0;top:0;box-sizing:border-box;transform-origin:50% 50%}
-/* bant kenarındaki gökkuşağı: üstte ve altta ince renk şeritleri, merceğin uçlarına doğru güçlenir */
-.lq>.lqe{position:absolute;left:14px;right:14px;pointer-events:none;background:linear-gradient(180deg,rgba(70,180,255,.6) 0 1.5px,rgba(255,210,70,.55) 1.5px 3px,rgba(255,70,130,.8) 3px 4px,transparent 4px calc(100% - 4px),rgba(70,180,255,.8) calc(100% - 4px) calc(100% - 3px),rgba(120,255,170,.5) calc(100% - 3px) calc(100% - 1.5px),rgba(255,70,130,.55) calc(100% - 1.5px));-webkit-mask-image:linear-gradient(90deg,#000 4%,transparent 30%,transparent 70%,#000 96%);mask-image:linear-gradient(90deg,#000 4%,transparent 30%,transparent 70%,#000 96%)}
-/* dış zemin yalnız çubuğun/izin üstünde ve altında (bantlar buradan); uçların dışı saydam, arkadaki gerçek içerik görünür */
-.lqi>.lqo{position:absolute;left:0;top:-80px;bottom:-80px;-webkit-mask-image:linear-gradient(90deg,transparent,#000 16px,#000 calc(100% - 16px),transparent);mask-image:linear-gradient(90deg,transparent,#000 16px,#000 calc(100% - 16px),transparent)}
-.lqi>button{position:absolute!important;margin:0!important;box-sizing:border-box;z-index:auto!important;pointer-events:none;transform-origin:50% 50%}
-/* Filtrelenen kopyada geçiş/animasyon yok (Safari'de ayrı katmana alınıp filtreden kaçmasın) */
-.lqi,.lqi *{transition:none!important;animation:none!important}
-.tabbar>.thumb.sw .lqi>button.on,.seg>.thumb.sw .lqi>button.on{color:var(--ink)}
+/* 1.9.8 — Gerçek cam mercek (WebGL): mercek açıkken göstergenin içinde bir <canvas> (.lqc) durur. Merceğin altındaki
+   sahne (iz/çubuk zemini, kenarı, yazılar, simgeler) gizli bir tuvale çizilir; WebGL gölgelendirici her pikselde kapsülün
+   kenarına olan uzaklığa göre dışarıdaki görüntüyü içeri çeker (kalın cam kenarı, kenara yakın yerde aynalanma), R/G/B
+   kanallarını farklı büker (renk ayrışması yalnız kenarda) ve kenara ince ışık parlaması ekler. */
+.thumb>canvas.lqc{position:absolute;pointer-events:none;display:block}
 .seg>.thumb.lqv,.tabbar>.thumb.lqv{z-index:2}
 /* kopya açıkken alttaki eski mercek zemini/kenarı görünmesin (uçta kopyanın saydam kaldığı yerde çizgi yapıyordu) */
 .seg>.thumb.lqv::before,.tabbar>.thumb.lqv::before{background:none;box-shadow:none}
@@ -545,7 +532,7 @@ button.tgl:active{transform:none}
 <nav class="tabbar glass" id="nav" aria-label="Sekmeler"></nav>
 <div id="m"></div><div id="t" class="glass" role="status" aria-live="polite"></div>
 <script>
-const APPV='1.9.7',KEY='fon-portfoyum-v2',TK='fon-tema',$=s=>document.querySelector(s);
+const APPV='1.9.8',KEY='fon-portfoyum-v2',TK='fon-tema',$=s=>document.querySelector(s);
 const NF=new Intl.NumberFormat('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2});
 // Gizlilik modu: ekrandaki tutarlar maskelenir (kayıtlara yazılan metinler her zaman gerçek tutarla: moneyR/sgnR)
 const PK='fon-gizli';let priv=false;try{priv=localStorage.getItem(PK)==='1'}catch(e){}
@@ -1183,6 +1170,8 @@ M.addEventListener('touchend',()=>{if(!dg)return;const {s,dy,on,t}=dg;dg=null;if
 // Uygulama arka plandan dönünce tarih değişmiş olabilir: ekranı tazele
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&!sheetOpen())render()});
 fixGap();render();loadTufe();
+/* WebGL mercek hazırlığı (gölgelendirici derleme) açılıştan sonra boşta yapılır: ilk basışta takılma olmasın */
+setTimeout(()=>{if(!RM())lqGL()},1200);
 // Çevrimdışı çalışma: uygulama dosyaları cihazda saklanır
 /* sw.js her açılışta önbelleksiz kontrol edilir; uygulama arka plandan dönünce de yeni sürüm aranır */
 if('serviceWorker' in navigator&&location.protocol!=='file:')addEventListener('load',()=>navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')r.update().catch(()=>{})})}).catch(()=>{}));
@@ -1267,14 +1256,81 @@ if('serviceWorker' in navigator&&location.protocol!=='file:')addEventListener('l
   if(any)raf=requestAnimationFrame(tick)};
   new MutationObserver(()=>{if(!raf)raf=requestAnimationFrame(tick)}).observe(document.body,{subtree:true,attributes:true,attributeFilter:['class','style']});
 })();
-/* 1.9.3–1.9.6 — Sıvı cam (videodaki iOS 27 Liquid Glass): mercek çubuktan/izden biraz taşar ve kenarı dışarıdaki görüntüyü
-   içeri çeker → merceğin içinde üstte ve altta koyu bantlar, bantların kenarında uçlara doğru güçlenen gökkuşağı.
-   Safari camın arkasını bükemez; SVG bükme filtresi (feDisplacementMap) de Safari'de içeriği kaydırdığı için (1.9.4–1.9.5,
-   yazı aşağı kayıp "damga" gibi kalıyordu) kullanılmıyor. Her şey düz CSS: merceğin içi opak bir kopyayla (dış zemin +
-   çubuk/iz zemini + seçenekler) yeniden çizilir; çubuk zemini dikeyde sıkıştırılarak kenarları içeri kaydırılır (bantlar),
-   bant kenarlarına renk şeritleri çizilir. Yazı ve simgeler yerinde ve net kalır. Her karede merceğe hizalanır. */
-const LQ_EX={seg:[5,6],tabbar:[18,10]},LQ_PAD=14;   /* merceğin göstergeden taşma payı (yatay, dikey; CSS ::before ile aynı) + kutu payı */
-const LQ_PUSH={seg:2.5,tabbar:4};                    /* çubuk kenarının mercek içinde içeri kayma miktarı (videoda ~4 nokta) */
+/* 1.9.8 — Gerçek cam mercek (WebGL). SVG feDisplacementMap Safari'de içeriği kaydırdığı için (1.9.4–1.9.5) kullanılmıyor;
+   WebGL gölgelendirici Safari ve Chrome'da aynı matematikle çizer. Tek bir WebGL tuvali o an açık olan merceğe taşınır. */
+const LQ_EX={seg:[5,6],tabbar:[18,10]};   /* merceğin göstergeden taşma payı (yatay, dikey; CSS ::before ile aynı) */
+const LQ_SP=48,LQ_CP=2;                   /* sahne tuvalinin kabın dışına taşma payı; mercek tuvalinin kenar payı (kenar yumuşatma) */
+const LQ={gl:null,cv:null,sc:null,tex:null,u:{},owner:null,failed:false,img:{}};
+function lqGL(){if(LQ.gl||LQ.failed)return LQ.gl;
+  try{const cv=document.createElement('canvas');cv.className='lqc';cv.setAttribute('aria-hidden','true');
+    const gl=cv.getContext('webgl',{alpha:true,premultipliedAlpha:true,antialias:false,depth:false,stencil:false,preserveDrawingBuffer:false});
+    if(!gl)throw 0;
+    const sh=(t,src)=>{const o=gl.createShader(t);gl.shaderSource(o,src);gl.compileShader(o);if(!gl.getShaderParameter(o,gl.COMPILE_STATUS))throw gl.getShaderInfoLog(o);return o};
+    const pg=gl.createProgram();
+    gl.attachShader(pg,sh(gl.VERTEX_SHADER,'attribute vec2 a;varying vec2 v;void main(){v=a*.5+.5;gl_Position=vec4(a,0.,1.);}'));
+    gl.attachShader(pg,sh(gl.FRAGMENT_SHADER,`precision highp float;varying vec2 v;
+uniform sampler2D T;uniform vec2 uS;uniform float uP;uniform vec2 uO;uniform vec2 uC;uniform vec4 uL;uniform float uM;uniform float uB;
+uniform float uD;uniform float uG;uniform vec4 uR;uniform float uRr;uniform vec4 uBc;uniform float uSp;
+vec2 hs(vec4 r){return r.zw*.5;}
+float sdCap(vec2 p,vec4 r){vec2 h=hs(r),c=r.xy+h;float rr=min(h.x,h.y);vec2 q=abs(p-c)-(h-rr);return length(max(q,0.))+min(max(q.x,q.y),0.)-rr;}
+vec2 nCap(vec2 p,vec4 r){vec2 h=hs(r),c=r.xy+h;float rr=min(h.x,h.y);vec2 d=p-c,k=clamp(d,-(h-rr),h-rr),e=d-k;float l=length(e);return l>1e-4?e/l:vec2(0.,d.y<0.?-1.:1.);}
+float sdRnd(vec2 p,vec4 r,float rr){vec2 h=hs(r),c=r.xy+h;vec2 q=abs(p-c)-(h-rr);return length(max(q,0.))+min(max(q.x,q.y),0.)-rr;}
+vec4 tx(vec2 q){return texture2D(T,(q+uP)/uS);}
+void main(){vec2 p=uO+vec2(v.x,1.-v.y)*uC;float sd=sdCap(p,uL),aa=1./uD;float ins=clamp(.5-sd/aa,0.,1.);if(ins<=0.){gl_FragColor=vec4(0.);return;}
+ float d=max(-sd,0.);vec2 n=nCap(p,uL);float s=clamp(1.-d/uB,0.,1.);
+ /* kalın cam kenarı: kenara yaklaştıkça dışarıdan örnek alınır; kuvvet kenarda dikleşir (aynalanma) */
+ vec2 o=n*uM*s*s*uG;
+ vec4 cr=tx(p+o*.82),cg=tx(p+o),cb=tx(p+o*1.18);
+ vec4 c=vec4(cr.r,cg.g,cb.b,max(cr.a,max(cg.a,cb.a)));
+ float ib=clamp(.5-sdRnd(p,uR,uRr)/aa,0.,1.);c+=uBc*(1.-c.a)*ib;
+ /* camın kalınlığı: kenar şeridi hafif koyu, en dışta ince ışık parlaması (sol üstten) */
+ c.rgb*=1.-.10*s*s*uG;
+ float li=.45+.55*max(dot(n,normalize(vec2(-.45,-.9))),0.)+.25*max(dot(n,normalize(vec2(.45,.9))),0.);
+ float sp=(smoothstep(2.2,0.,d)*.75+smoothstep(7.,0.,d)*.12)*li*uSp*uG;
+ c.rgb+=vec3(sp)*(1.-c.rgb*.5);c.a=c.a+sp*(1.-c.a);
+ gl_FragColor=c*ins;}`));
+    gl.linkProgram(pg);if(!gl.getProgramParameter(pg,gl.LINK_STATUS))throw gl.getProgramInfoLog(pg);gl.useProgram(pg);
+    const b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
+    const al=gl.getAttribLocation(pg,'a');gl.enableVertexAttribArray(al);gl.vertexAttribPointer(al,2,gl.FLOAT,false,0,0);
+    const t=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,t);
+    [[gl.TEXTURE_MIN_FILTER,gl.LINEAR],[gl.TEXTURE_MAG_FILTER,gl.LINEAR],[gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE],[gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE]].forEach(([k,x])=>gl.texParameteri(gl.TEXTURE_2D,k,x));
+    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,true);
+    'T uS uP uO uC uL uM uB uD uG uR uRr uBc uSp'.split(' ').forEach(k=>LQ.u[k]=gl.getUniformLocation(pg,k));
+    gl.uniform1i(LQ.u.T,0);gl.clearColor(0,0,0,0);
+    cv.addEventListener('webglcontextlost',e=>{e.preventDefault();LQ.failed=true;LQ.gl=null;if(LQ.owner)LQ.owner.classList.remove('lqv');cv.remove()});
+    LQ.gl=gl;LQ.cv=cv;LQ.sc=document.createElement('canvas');LQ.tex=t;return gl}
+  catch(e){LQ.failed=true;return null}}
+/* Simgeler sahneye resim olarak çizilir (currentColor yerine o anki renk); yüklenince sahne yeniden çizilir */
+function lqIcon(svg,w,h,dpr){const k=svg.outerHTML+w+'x'+h+'@'+dpr;let e=LQ.img[k];if(e)return e.ok?e.im:null;
+  const c=svg.cloneNode(true);c.setAttribute('xmlns','http://www.w3.org/2000/svg');c.setAttribute('width',Math.round(w*dpr));c.setAttribute('height',Math.round(h*dpr));c.removeAttribute('class');c.removeAttribute('style');
+  const im=new Image();e=LQ.img[k]={im,ok:false};im.onload=()=>{e.ok=true;if(LQ.owner&&LQ.owner._lq)LQ.owner._lq.sig=''};
+  /* renkten bağımsız (siyah) yüklenir, çizerken o anki renge boyanır: renk geçişi sırasında her karede yeni resim gerekmez */
+  im.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(c.outerHTML.replace(/currentColor/g,'#000'));return null}
+/* Merceğin altındaki sahne: dış zemin, iz/çubuk (yuvarlak köşeli), yazılar ve simgeler; kabın koordinatlarında, LQ_SP payıyla */
+function lqScene(L,p,btns,pr,dpr){const C=L.C,P=LQ_SP,pw=pr.width,ph=pr.height,sc=LQ.sc,W=Math.ceil((pw+2*P)*dpr),H=Math.ceil((ph+2*P)*dpr);
+  if(sc.width!==W||sc.height!==H){sc.width=W;sc.height=H}
+  const x=sc.getContext('2d');x.setTransform(1,0,0,1,0,0);x.clearRect(0,0,W,H);x.setTransform(dpr,0,0,dpr,P*dpr,P*dpr);
+  /* dış zemin: segmentte kartın rengi her yer; sekme çubuğunda yalnız çubuğun üstü/altı (uçların dışı saydam, arkadaki gerçek içerik görünür) */
+  x.fillStyle=C.out;if(L.tab)x.fillRect(0,-P,pw,ph+2*P);else x.fillRect(-P,-P,pw+2*P,ph+2*P);
+  const rr=Math.min(parseFloat(C.rad)||99,ph/2),rect=(a,b,w,h,r)=>{x.beginPath();x.moveTo(a+r,b);x.arcTo(a+w,b,a+w,b+h,r);x.arcTo(a+w,b+h,a,b+h,r);x.arcTo(a,b+h,a,b,r);x.arcTo(a,b,a+w,b,r);x.closePath()};
+  rect(0,0,pw,ph,rr);x.fillStyle=C.bar;x.fill();if(C.bd){rect(.5,.5,pw-1,ph-1,rr-.5);x.strokeStyle=C.bd;x.lineWidth=1;x.stroke()}
+  let wait=false;
+  btns.forEach(b=>{
+    /* simgenin animasyonsuz CSS ölçüsü kullanılır (zıplama/büyüme sırasında her karede yeni resim yüklenmesin), konum merkezden */
+    b.querySelectorAll('svg').forEach(sv=>{const r=sv.getBoundingClientRect();if(!r.width)return;const sc=getComputedStyle(sv),w=parseFloat(sc.width)||r.width,h=parseFloat(sc.height)||r.height,im=lqIcon(sv,w,h,dpr);
+      if(!im){wait=true;return}
+      const tw=Math.round(w*dpr),th2=Math.round(h*dpr),t=LQ.tint||(LQ.tint=document.createElement('canvas'));t.width=tw;t.height=th2;const tc=t.getContext('2d');
+      tc.globalCompositeOperation='source-over';tc.drawImage(im,0,0,tw,th2);tc.globalCompositeOperation='source-in';tc.fillStyle=sc.color;tc.fillRect(0,0,tw,th2);
+      x.drawImage(t,r.left+r.width/2-w/2-pr.left,r.top+r.height/2-h/2-pr.top,w,h)});
+    const tw=document.createTreeWalker(b,NodeFilter.SHOW_TEXT);let n;
+    while(n=tw.nextNode()){const t=n.nodeValue.trim();if(!t)continue;const el=n.parentElement,cs=getComputedStyle(el);if(cs.visibility==='hidden'||cs.display==='none')continue;
+      const rg=document.createRange();rg.selectNodeContents(n);const r=rg.getBoundingClientRect();if(!r.width)continue;
+      x.font=`${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;x.fillStyle=cs.color;x.textBaseline='alphabetic';x.textAlign='left';
+      const m=x.measureText(t),as=m.fontBoundingBoxAscent??m.actualBoundingBoxAscent,ds=m.fontBoundingBoxDescent??m.actualBoundingBoxDescent;
+      /* yazı kutusunun içinde dikey ortalı taban çizgisi; yatayda gerçek genişliğe göre ortala (yazı tipi farkı kaydırmasın) */
+      x.fillText(t,r.left-pr.left+(r.width-m.width)/2,r.top-pr.top+(r.height-(as+ds))/2+as)}});
+  const gl=LQ.gl;gl.bindTexture(gl.TEXTURE_2D,LQ.tex);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,sc);
+  return !wait}
 /* Merceğin altındaki renkler: dış zemin (kart/sayfa) ve çubuğun/izin zemini, üst üste bindirilmiş opak renk olarak */
 function lqColors(p,tab,x,y){
   const rd=v=>{const m=String(v).match(/rgba?\(([^)]+)\)/);if(!m)return null;const a=m[1].split(/[\s,\/]+/).filter(Boolean).map(parseFloat);return[a[0],a[1],a[2],a.length>3?a[3]:1]};
@@ -1286,42 +1342,41 @@ function lqColors(p,tab,x,y){
   /* segment: dışı kendi kartı/sayfası. Yüzen sekme çubuğu: dışı sayfa zemini (videodaki gibi bantlar belirgin olsun),
      çubuğun içi ise arkasında o an duran öğenin (kart ya da sayfa) üstündeki cam rengi */
   const out=base(tab?up(document.body):up(p.parentElement)),under=tab?base(document.elementsFromPoint(x,y).filter(e=>!p.contains(e))):out;
-  /* cam, altındaki çubuğu biraz aydınlatır (videoda mercek içi çubuktan açık); dış zemin olduğu gibi kalır → bant belirgin */
-  const cs=tab?getComputedStyle(p,'::after'):getComputedStyle(p),lift=isDark()?.09:.4,bar=ov([255,255,255,lift],ov(rd(cs.backgroundColor),under)),bd=tab?rd(cs.borderTopColor):null;
-  const rgb=c=>`rgb(${c.map(Math.round).join(',')})`,sh=[];if(bd&&bd[3]>0)sh.push(`inset 0 0 0 1px rgba(${bd.join(',')})`);if(tab&&cs.boxShadow&&cs.boxShadow!=='none')sh.push(cs.boxShadow);
-  return{out:rgb(out),bar:rgb(bar),sh:sh.join(',')||'none',rad:cs.borderTopLeftRadius||'99px'}}
+  const cs=tab?getComputedStyle(p,'::after'):getComputedStyle(p),bar=ov(rd(cs.backgroundColor),under),bd=tab?rd(cs.borderTopColor):null;
+  const rgb=c=>`rgb(${c.map(Math.round).join(',')})`,o2=tab?base(document.elementsFromPoint(x,Math.max(0,p.getBoundingClientRect().top-2)).filter(e=>!p.contains(e))):out;
+  return{out:rgb(o2),bar:rgb(bar),barA:bar,bd:bd&&bd[3]>0?`rgba(${bd.join(',')})`:'',rad:cs.borderTopLeftRadius||'99px'}}
 /* Mercek açıkken ya da bırakıldıktan sonra küçülürken true döner (çizim döngüsü sürsün diye) */
 function lqSync(th,on,btns){const p=th.parentElement;let L=th._lq;
-  const hide=()=>{if(L&&L.vis){L.vis=false;L.el.classList.remove('vis');th.classList.remove('lqv');p.classList.remove('lqon')}return false};
+  const hide=()=>{if(L&&L.vis){L.vis=false;th.classList.remove('lqv');p.classList.remove('lqon');if(LQ.owner===th){LQ.owner=null;if(LQ.cv)LQ.cv.remove()}}return false};
   if(RM()||!btns.length||!on&&!(L&&L.vis))return hide();
-  const tab=p.classList.contains('tabbar'),[ex,ey]=tab?LQ_EX.tabbar:LQ_EX.seg,P=LQ_PAD,cs=getComputedStyle(th,'::before');
+  const gl=lqGL();if(!gl)return hide();
+  const tab=p.classList.contains('tabbar'),[ex,ey]=tab?LQ_EX.tabbar:LQ_EX.seg,cs=getComputedStyle(th,'::before');
   const iT=parseFloat(cs.top)||0,iR=parseFloat(cs.right)||0,iB=parseFloat(cs.bottom)||0,iL=parseFloat(cs.left)||0;
-  /* g: merceğin ne kadar açık olduğu (0 = koyu kapsül, 1 = tam mercek); bırakınca küçülürken büyütme de yumuşakça söner */
+  /* g: merceğin ne kadar açık olduğu (0 = düz gri kapsül, 1 = tam cam mercek); bırakınca küçülürken kırılma da söner */
   const g=Math.min(1,Math.max(0,-iT/ey,-iL/ex));if(!on&&g<.04)return hide();
-  if(!L||L.n!==btns.length||!L.el.isConnected){
-    if(L&&L.el)L.el.remove();
-    const el=document.createElement('span'),inn=document.createElement('span'),bo=document.createElement('span'),bg=document.createElement('span'),ed=document.createElement('span');el.className='lq';inn.className='lqi';bo.className='lqo';bg.className='lqb';ed.className='lqe';el.setAttribute('aria-hidden','true');el.appendChild(inn);inn.appendChild(bo);inn.appendChild(bg);
-    const cl=btns.map(b=>{const c=b.cloneNode(true);['data-act','data-id','role','aria-selected','aria-current','aria-label','aria-pressed'].forEach(a=>c.removeAttribute(a));c.classList.remove('under','pop');c.tabIndex=-1;inn.appendChild(c);return c});
-    el.appendChild(ed);th.appendChild(el);L=th._lq={el,inn,bo,bg,ed,cl,ic:cl.map(c=>[c.querySelector('svg'),c.querySelector('span')]),n:btns.length,w:0,h:0,pw:-1,ph:-1,pos:[],vis:false,tab}}
-  /* önce ölç, sonra yaz (sayfa yerleşimi her karede bir kez hesaplansın) */
-  const pr=p.getBoundingClientRect(),tr=th.getBoundingClientRect();
-  const relayout=L.pw!==p.offsetWidth||L.ph!==p.offsetHeight;if(relayout){L.pw=p.offsetWidth;L.ph=p.offsetHeight;L.pos=btns.map(b=>[b.offsetLeft,b.offsetTop,b.offsetWidth,b.offsetHeight])}
-  const vl=tr.left+iL-pr.left,vr=tr.right-iR-pr.left,lc=(vl+vr)/2,lw=Math.max(1,(vr-vl)/2);
-  if(!L.vis){const C=lqColors(p,tab,(tr.left+tr.right)/2,(pr.top+pr.bottom)/2);L.bo.style.background=C.out;
-    /* açık temada yarı saydam yer kırılınca griye dönüyor: orada merceğin içi tamamen opak (sayfa zemini); koyu temada çubuğun uçlarının dışı saydam, arkadaki içerik görünür */
-    L.el.style.background=isDark()?'transparent':C.out;Object.assign(L.bg.style,{background:C.bar,borderRadius:C.rad,boxShadow:C.sh});
-    L.vis=true;L.el.classList.add('vis');th.classList.add('lqv');p.classList.add('lqon')}
-  if(relayout){L.inn.style.width=L.pw+'px';L.inn.style.height=L.ph+'px';L.bg.style.width=L.pw+'px';L.bg.style.height=L.ph+'px';L.bg.style.transform=`scaleY(${(1-2*(tab?LQ_PUSH.tabbar:LQ_PUSH.seg)/L.ph).toFixed(4)})`;L.bo.style.width=L.pw+'px';L.cl.forEach((c,i)=>{const[x,y,w,h]=L.pos[i];c.style.cssText=`left:${x}px;top:${y}px;width:${w}px;height:${h}px`})}
-  /* bant kenarı renk şeridi: çubuğun içeri kaymış üst ve alt kenarında (merceğin kendi ölçüsünde) */
-  {const ps=tab?LQ_PUSH.tabbar:LQ_PUSH.seg,t0=tr.top-pr.top,b0=pr.bottom-tr.bottom;Object.assign(L.ed.style,{top:(P+ey-t0+ps-4).toFixed(2)+'px',bottom:(P+ey-b0+ps-4).toFixed(2)+'px'})}
-  L.inn.style.transform=`translate(${(pr.left-tr.left+ex+P).toFixed(2)}px,${(pr.top-tr.top+ey+P).toFixed(2)}px)`;
-  L.el.style.clipPath=`inset(${(iT+ey+P).toFixed(2)}px ${(iR+ex+P).toFixed(2)}px ${(iB+ey+P).toFixed(2)}px ${(iL+ex+P).toFixed(2)}px round 99px)`;
-  btns.forEach((b,i)=>{const[x,,w]=L.pos[i],c=L.cl[i];
-    c.classList.toggle('on',b.classList.contains('on'));c.classList.toggle('pre',b.classList.contains('pre'));
-    /* merkeze yaklaşan simge biraz büyür (büyüteç camı) */
-    let k=Math.max(0,1-Math.abs(x+w/2-lc)/lw);k*=k*g;
-    if(L.tab){const[sv,sp]=L.ic[i];if(sv)sv.style.transform=`scale(${(1+.18*k).toFixed(3)})`;if(sp)sp.style.transform=`scale(${(1+.08*k).toFixed(3)})`}
-    else c.style.transform=`scale(${(1+.06*k).toFixed(3)})`});
+  /* tek WebGL tuvali: başka bir mercekteyse ve bu mercek basılıysa buraya taşınır */
+  if(LQ.owner!==th){if(LQ.owner&&LQ.owner.isConnected&&LQ.owner.classList.contains('sw')&&!on)return false;
+    if(LQ.owner){LQ.owner.classList.remove('lqv');LQ.owner.parentElement&&LQ.owner.parentElement.classList.remove('lqon');if(LQ.owner._lq)LQ.owner._lq.vis=false}
+    LQ.owner=th;th.appendChild(LQ.cv);if(L)L.sig=''}
+  if(!L)L=th._lq={vis:false,sig:'',cw:0,ch:0,tab};
+  const pr=p.getBoundingClientRect(),tr=th.getBoundingClientRect(),dpr=Math.min(3,devicePixelRatio||1);
+  if(!L.vis){L.C=lqColors(p,tab,(tr.left+tr.right)/2,(pr.top+pr.bottom)/2);L.vis=true;L.sig='';th.classList.add('lqv');p.classList.add('lqon')}
+  /* sahne yalnız seçenekler/renkler değişince yeniden çizilir (sürüklerken seçili renk değişebilir) */
+  const sig=btns.map(b=>b.className).join('|')+pr.width+'x'+pr.height+dpr;
+  if(L.sig!==sig){L.sig=lqScene(L,p,btns,pr,dpr)?sig:'~'}
+  /* mercek tuvali: merceğin tam açık ölçüsü + kenar payı, göstergeye göre konumlu */
+  const cwC=tr.width+2*ex+2*LQ_CP,chC=tr.height+2*ey+2*LQ_CP,cv=LQ.cv;
+  if(Math.abs(L.cw-cwC)>.5||Math.abs(L.ch-chC)>.5||cv.width!==Math.round(cwC*dpr)){L.cw=cwC;L.ch=chC;cv.width=Math.round(cwC*dpr);cv.height=Math.round(chC*dpr);
+    Object.assign(cv.style,{left:-(ex+LQ_CP)+'px',top:-(ey+LQ_CP)+'px',width:cwC+'px',height:chC+'px'})}
+  const ox=tr.left-pr.left-ex-LQ_CP,oy=tr.top-pr.top-ey-LQ_CP,lx=tr.left-pr.left+iL,ly=tr.top-pr.top+iT,lw=tr.width-iL-iR,lh=tr.height-iT-iB;
+  /* kırılma ölçüleri merceğin yüksekliğine göre: kenar şeridi b, en dıştan çekilen mesafe M (M > b/2 → kenarda aynalanma) */
+  const B=Math.min(lh*.34,16),M=Math.min(lh*.3,13),U=LQ.u,bc=L.C.barA;
+  gl.viewport(0,0,cv.width,cv.height);gl.clear(gl.COLOR_BUFFER_BIT);
+  gl.uniform2f(U.uS,pr.width+2*LQ_SP,pr.height+2*LQ_SP);gl.uniform1f(U.uP,LQ_SP);gl.uniform2f(U.uO,ox,oy);gl.uniform2f(U.uC,cwC,chC);
+  gl.uniform4f(U.uL,lx,ly,lw,lh);gl.uniform1f(U.uM,M);gl.uniform1f(U.uB,B);gl.uniform1f(U.uD,dpr);gl.uniform1f(U.uG,g);
+  gl.uniform4f(U.uR,0,0,pr.width,pr.height);gl.uniform1f(U.uRr,Math.min(parseFloat(L.C.rad)||99,pr.height/2));gl.uniform4f(U.uBc,bc[0]/255,bc[1]/255,bc[2]/255,1);
+  gl.uniform1f(U.uSp,isDark()?.75:.9);
+  gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
   return true}
 /* Gösterge cam mercek modu: ms>0 → o süre sonra koyu kapsüle döner; ms=0 → parmak kalkana kadar */
 function lens(th,ms){if(!th||RM())return;th.classList.add('sw');clearTimeout(th._t);th._hold=!ms;th._t=setTimeout(()=>{if(!ms)th._hold=false;if(!th._hold)th.classList.remove('sw')},ms||2500)}
