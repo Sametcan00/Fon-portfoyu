@@ -30,7 +30,7 @@ Bu dosya yeni Claude sohbetlerinde otomatik okunur. Her sürümden sonra güncel
 
 ## Sürüm kuralı
 
-- Güncel sürüm: **1.9.8**
+- Güncel sürüm: **1.9.9**
 - Her güncellemede **iki yerde** sürüm artırılır: `sw.js` içinde `VERSION`, `index.html` içinde `APPV`.
 - Ayarlar sayfasının altında "sürüm X.Y.Z" yazar; kullanıcı bununla kontrol eder.
 
@@ -148,8 +148,12 @@ Kullanıcı isterse dosyaları elle de yükleyebilir: GitHub → Add file → Up
   - Gölgelendirici: kapsül uzaklık alanı (SDF) ile kenara uzaklık d; kenar şeridi B=min(.34h,16), en dıştan çekilen mesafe M=min(.3h,13). Örnek noktası `p + n·M·s²` (s=1-d/B; M > B/2 olduğundan kenarda aynalanma). R/G/B .82/1/1.18 oranında ayrı örneklenir (renk ayrışması yalnız kenarda). Çubuğun içinde saydam kalan yer çubuk rengiyle doldurulur. Kenar şeridi hafif koyu; en dışta sol üstten gelen ince parlama.
   - Renkler `lqColors`: segmentte dış zemin kendi kartı. Sekme çubuğunda dış zemin çubuğun hemen üstündeki öğenin rengi, yalnız çubuğun yatay uzunluğunca; uçların dışı saydam, arkadaki gerçek içerik görünür. Çubuk rengi = cam dolgusu + arkasındaki öğe.
   - Mercek açıkken gösterge seçeneklerin üstüne çıkar (`.thumb.lqv{z-index:2}`), alttaki `::before` zemini kapanır, ince koyu kenar `::after` (`--lens-rim`) üstte kalır. `g` (merceğin açıklığı) ile kırılma ve parlama mercek küçülürken söner.
-  - WebGL yoksa ya da bağlam kaybolursa mercek eski düz cam olarak çalışır. Hareketi azalt açıksa mercek açılmaz. Gölgelendirici açılıştan 1,2 sn sonra boşta derlenir (ilk basışta takılma olmasın).
+  - WebGL yoksa ya da bağlam kaybolursa mercek eski düz cam olarak çalışır. Hareketi azalt açıksa mercek açılmaz. Gölgelendirici açılıştan 0,4 sn sonra boşta derlenir (ilk basışta takılma olmasın).
   - Gerçek düğme sorguları hep `:scope>button` olmalı.
+- **1.9.9 ince ayarları (kullanıcı 1.9.8'i beğendi, temel yapı korunacak):**
+  - Kırılma yalnız camın en dıştaki ince şeridinde: B=min(.16h,7), M=.42B (M < B/2 → aynalanma yok). İçerisi birebir (büyütme/kayma yok). 1.9.8'de M=13 dışarıdan komşu yazıyı içeri çekiyor, "Tümümü", "Özet" çiftlenmesi, "3A"nın "1Y"ye kayması görülüyordu.
+  - Renk ayrışması sade: kanallar .86/1.14, kenara doğru `mix(düz, ayrık, .75·s)`; kenar koyulaşması .06, parlama koyu .6 / açık .85.
+  - Jöle esnemesi (`jelly`): uzak sekmeye geçişte iki kenar ayrı yaylarla gider (öndeki önde, arkadaki `lag` kadar geride) → hıza göre yatay uzama, hedefte öndeki kenar hafif taşıp yaylanır. Ölçek kullanılmaz (yamuk olmasın), `width`+`translateX` Web Animations ile. Ölçülen: uzak (4 seçenek) 67→140 px, yakın 67→74 px, sekme çubuğu uçtan uca 76→117 px. Sürükleme başlarken animasyon iptal edilir (`th._jl`). Mercek tuvali genişliği 16'lık basamakla ayrılır (esnerken her karede yeniden boyutlanmasın).
 - **Denenip bırakılanlar (tekrar denenmesin):**
   - 1.9.3: yazı kopyası + SVG filtre, içeriden dışarı uzatma. Yanlış yön; bant oluşmuyordu.
   - 1.9.4–1.9.5: opak kopya + SVG `feDisplacementMap`. Safari'de içeriği bütünüyle ~4 nokta kaydırdı, gerçek yazı arkada "damga" gibi kaldı. Sebep doğrulanamadı (feImage ölçüsü ya da 128 nötr değerinin renk uzayı).
@@ -160,7 +164,7 @@ Kullanıcı isterse dosyaları elle de yükleyebilir: GitHub → Add file → Up
 
 - 1.8.1'in gerçek iPhone'da doğrulanması: hızlı dokunma, parmakla sürükleme, merceğin taşması.
 - 1.9.2'nin gerçek iPhone'da doğrulanması: segmentlerde parmakla sürükleme.
-- 1.9.8'in gerçek iPhone'da doğrulanması: WebGL cam mercek (kenarda bükülme, renk ayrışması, parlama) Safari'de sekme çubuğunda ve seçicilerde görünüyor mu, akıcı mı; yeni sürüm hemen yükleniyor mu (1.9.7 önbellek düzeltmesi).
+- 1.9.9'un gerçek iPhone'da doğrulanması: jöle esnemesi; WebGL cam mercek (kenarda bükülme, renk ayrışması, parlama) Safari'de sekme çubuğunda ve seçicilerde görünüyor mu, akıcı mı; yeni sürüm hemen yükleniyor mu (1.9.7 önbellek düzeltmesi).
 - 1.9.0'ın gerçek iPhone'da doğrulanması: Face ID kilidi (ana ekran uygulamasında WebAuthn), grafikte parmakla gezinme, TEFAS'tan kopyalanan gerçek metnin okunması.
 - TÜFE işinin ilk otomatik güncellemesi (3 Aralık 2026, Kasım verisi) Actions sekmesinden kontrol edilmeli.
 - Henüz istenmemiş olası geliştirmeler: hedef dağılım ve dengeleme, düzenli yatırım planı, Mac edinilirse yerel SwiftUI sürümü.
