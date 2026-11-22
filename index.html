@@ -2,6 +2,8 @@
 <html lang="tr">
 <head>
 <meta charset="utf-8">
+<!-- 1.9.20: İçerik güvenliği — uygulama yalnız kendi dosyalarını yükler; veriler başka bir adrese gönderilemez -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; font-src 'self'; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Fon Portföyüm</title>
 <meta name="description" content="Kişisel fon portföyü takibi: FIFO satış, stopaj, günlük ve haftalık getiri.">
@@ -624,7 +626,7 @@ button.tgl:active{transform:none}
 <nav class="tabbar glass" id="nav" aria-label="Sekmeler"></nav>
 <div id="m"></div><div id="t" class="glass" role="status" aria-live="polite"></div>
 <script>
-const APPV='1.9.19',KEY='fon-portfoyum-v2',TK='fon-tema',$=s=>document.querySelector(s);
+const APPV='1.9.20',KEY='fon-portfoyum-v2',TK='fon-tema',$=s=>document.querySelector(s);
 const NF=new Intl.NumberFormat('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2});
 // Gizlilik modu: ekrandaki tutarlar maskelenir (kayıtlara yazılan metinler her zaman gerçek tutarla: moneyR/sgnR)
 const PK='fon-gizli';let priv=false;try{priv=localStorage.getItem(PK)==='1'}catch(e){}
@@ -642,28 +644,42 @@ const dTR=i=>String(i).split('-').reverse().join('.');
 const trN=v=>parseFloat(String(v).replace(/\./g,'').replace(',','.'));
 // Tutar kutuları: yalnız binlik noktası olan 10.000 / 1.250.000 yazımı da tutar olarak okunur
 const pnM=v=>{const s=String(v??'').trim();return /^\d{1,3}(\.\d{3})+$/.test(s)?trN(s):pn(s)};
-function pn(v){const s=String(v??'').trim();if(!s)return NaN;if(s.includes('.')&&s.includes(','))return s.lastIndexOf(',')>s.lastIndexOf('.')?parseFloat(s.replace(/\./g,'').replace(',','.')):parseFloat(s.replace(/,/g,''));return parseFloat(s.replace(',','.'))}
+/* 1.9.20: birden çok nokta (1.234.567) ya da birden çok virgül (1,234,567) binlik ayırıcıdır; sonsuz/geçersiz değer NaN döner */
+function pn(v){let s=String(v??'').trim();if(!s)return NaN;const nd=(s.match(/\./g)||[]).length,nc=(s.match(/,/g)||[]).length;
+  if(nd&&nc)s=s.lastIndexOf(',')>s.lastIndexOf('.')?s.replace(/\./g,'').replace(',','.'):s.replace(/,/g,'');else if(nd>1)s=s.replace(/\./g,'');else if(nc>1)s=s.replace(/,/g,'');else s=s.replace(',','.');
+  const n=parseFloat(s);return isFinite(n)?n:NaN}
 // Varsayılan stopaj tüm fonlarda %17,5; fon bazında elle değiştirilebilir
 const defTax=()=>.175;
 const mk=(code,name,type,price,tax)=>({code,name,type,price,tax:tax??defTax(type),lots:[],hist:[],log:[{d:today(),p:price}],chk:today()});
 const dec=v=>String(+v).replace('.',',');
 const isDate=s=>{if(!/^\d{4}-\d{2}-\d{2}$/.test(s))return false;const t=Date.parse(s+'T00:00:00Z');return !isNaN(t)&&new Date(t).toISOString().slice(0,10)===s};
 // Yüklenen her veriyi (yerel, bulut, yedek) aynı şemaya getirir; bozuk kayıt uygulamayı kilitlemez
+/* 1.9.20: sonsuz (1e999), negatif ya da sayı olmayan değerler içeri alınmaz; aynı kodlu fonlar ve aynı kimlikli kayıtlar ayrılır;
+   veride ileri tarihli kimlik varsa yeni kayıtların kimliği onlardan büyük olur (çakışma olmasın) */
+const fin=v=>{v=+v;return isFinite(v)?v:0},pos=v=>{v=+v;return isFinite(v)&&v>0?v:0};
+const okId=v=>typeof v==='number'&&isFinite(v)||typeof v==='string'&&v!=='';
 function norm(o){
-  if(!o||!Array.isArray(o.funds))return null;let k=0;const nid=()=>Date.now()+(k++);
-  const lots=a=>(Array.isArray(a)?a:[]).filter(l=>l&&+l.qty>0).map(l=>({id:l.id??nid(),date:isDate(l.date)?l.date:today(),qty:+l.qty,cost:+l.cost||0}));
+  if(!o||!Array.isArray(o.funds))return null;
+  const seeId=v=>{const n=+v;if(Number.isSafeInteger(n)&&n>lastUid&&n<1e14)lastUid=n};
+  o.funds.forEach(f=>{if(!f||typeof f!=='object')return;(Array.isArray(f.lots)?f.lots:[]).forEach(l=>l&&seeId(l.id));
+    (Array.isArray(f.hist)?f.hist:[]).forEach(h=>{if(!h)return;seeId(h.id);seeId(h.lot);[h.prev,h.used].forEach(a=>Array.isArray(a)&&a.forEach(l=>l&&seeId(l.id)))})});
+  const nid=()=>uid(),idv=v=>okId(v)?v:nid();
+  const lots=a=>(Array.isArray(a)?a:[]).filter(l=>l&&pos(l.qty)>0).map(l=>({id:idv(l.id),date:isDate(l.date)?l.date:today(),qty:+l.qty,cost:Math.max(0,fin(l.cost))}));
+  // Aynı kimlik ikinci kez geçerse yeni kimlik verilir (düzenleme/silme yanlış kaydı bulmasın)
+  const uniq=a=>{const s=new Set();a.forEach(x=>{if(s.has(String(x.id)))x.id=nid();s.add(String(x.id))});return a};
   // 1.9: işlem kayıtlarında yapısal alanlar (adet q, fiyat p, sepet lot, satışta kullanılan sepetler used, stopaj tax, brüt rev; düzenleme kaydında ref/old) korunur
-  const opt=(h,o)=>{if(+h.q>0)o.q=+h.q;if(+h.p>0)o.p=+h.p;if(h.lot!=null)o.lot=h.lot;if(Array.isArray(h.used))o.used=lots(h.used);if(isFinite(+h.tax)&&h.tax!=null)o.tax=+h.tax;if(isFinite(+h.rev)&&h.rev!=null)o.rev=+h.rev;
-    if(h.ref!=null&&h.old&&typeof h.old==='object'){const x=h.old;o.ref=h.ref;o.old={date:isDate(x.date)?x.date:today(),detail:String(x.detail||''),amount:+x.amount||0,gain:+x.gain||0,undone:!!x.undone};['q','p','tax','rev'].forEach(k=>{if(x[k]!=null&&isFinite(+x[k]))o.old[k]=+x[k]});if(Array.isArray(x.used))o.old.used=lots(x.used)}return o};
-  const funds=o.funds.filter(f=>f&&f.code).map(f=>{const price=+f.price>0?+f.price:0;return{
-    code:String(f.code).toUpperCase(),name:String(f.name||f.code),type:String(f.type||'Yatırım Fonu'),price,
-    tax:typeof f.tax==='number'&&f.tax>=0&&f.tax<1&&(f.tax>0||f.taxSet)?f.tax:defTax(f.type),taxSet:!!f.taxSet,lots:lots(f.lots),
-    hist:(Array.isArray(f.hist)?f.hist:[]).filter(Boolean).map(h=>opt(h,{id:h.id??nid(),type:h.type||'',date:isDate(h.date)?h.date:today(),detail:String(h.detail||''),amount:+h.amount||0,gain:+h.gain||0,prev:Array.isArray(h.prev)?lots(h.prev):null,undone:!!h.undone})),
-    log:sortLog((Array.isArray(f.log)?f.log:[]).filter(e=>e&&isDate(e.d)&&+e.p>0).map(e=>({d:e.d,p:+e.p}))),
-    chk:isDate(f.chk)?f.chk:null}});
+  const opt=(h,o)=>{if(pos(h.q))o.q=+h.q;if(pos(h.p))o.p=+h.p;if(okId(h.lot))o.lot=h.lot;if(Array.isArray(h.used))o.used=lots(h.used);if(h.tax!=null&&isFinite(+h.tax))o.tax=+h.tax;if(h.rev!=null&&isFinite(+h.rev))o.rev=+h.rev;
+    if(okId(h.ref)&&h.old&&typeof h.old==='object'){const x=h.old;o.ref=h.ref;o.old={date:isDate(x.date)?x.date:today(),detail:String(x.detail||''),amount:fin(x.amount),gain:fin(x.gain),undone:!!x.undone};['q','p','tax','rev'].forEach(k=>{if(x[k]!=null&&isFinite(+x[k]))o.old[k]=+x[k]});if(Array.isArray(x.used))o.old.used=lots(x.used)}return o};
+  const funds=o.funds.filter(f=>f&&typeof f==='object'&&f.code!=null&&String(f.code).trim()).map(f=>{const log=sortLog((Array.isArray(f.log)?f.log:[]).filter(e=>e&&isDate(e.d)&&pos(e.p)).map(e=>({d:e.d,p:+e.p})));
+    return{code:String(f.code).trim().toUpperCase().replace(/[\s|]+/g,'-'),name:String(f.name||f.code),type:String(f.type||'Yatırım Fonu'),price:pos(f.price)||(log.length?log[log.length-1].p:0),
+    tax:typeof f.tax==='number'&&f.tax>=0&&f.tax<1&&(f.tax>0||f.taxSet)?f.tax:defTax(f.type),taxSet:!!f.taxSet,lots:uniq(lots(f.lots)),
+    hist:uniq((Array.isArray(f.hist)?f.hist:[]).filter(h=>h&&typeof h==='object').map(h=>opt(h,{id:idv(h.id),type:String(h.type||''),date:isDate(h.date)?h.date:today(),detail:String(h.detail||''),amount:fin(h.amount),gain:fin(h.gain),prev:Array.isArray(h.prev)?lots(h.prev):null,undone:!!h.undone}))),
+    log,chk:isDate(f.chk)?f.chk:null}});
+  // Aynı kodlu ikinci fon (ör. "abc" ve "ABC") ayrı kod alır: hiçbir fon kaybolmaz, işlemler karışmaz
+  const seen=new Set();funds.forEach(f=>{let c=f.code,i=2;while(seen.has(c))c=f.code+'-'+(i++);f.code=c;seen.add(c)});
   // Güncel fiyat her zaman fiyat geçmişinin son kaydıdır
   funds.forEach(f=>{const L=f.log,last=L[L.length-1];if(f.price&&(!last||Math.abs(last.p-f.price)>1e-12))f.log=sortLog([...L.filter(e=>e.d!==today()),{d:today(),p:f.price}])});
-  return{funds,updatedAt:+o.updatedAt||0}}
+  return{funds,updatedAt:fin(o.updatedAt)}}
 const addD=(d,n)=>new Date(Date.parse(d+'T00:00:00Z')+n*864e5).toISOString().slice(0,10);
 // Fiyat geçmişi (en çok 4000 kayıt ≈ 15 yıl): tarihe göre sıralı, her güne tek kayıt, bir önceki kayıtla aynı olan fiyat (hafta sonu/tatil tekrarı) atılır
 function sortLog(a){const m=new Map();a.forEach(e=>m.set(e.d,e.p));const s=[...m].sort((x,y)=>x[0]<y[0]?-1:x[0]>y[0]?1:0).map(([d,p])=>({d,p}));const o=[];for(const e of s)if(!o.length||Math.abs(o[o.length-1].p-e.p)>1e-12)o.push(e);return o.slice(-4000)}
@@ -842,7 +858,7 @@ I.chev='<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" 
 
 const PARENT={detail:'home',tx:'overview',year:'overview',trash:'settings'};
 const AYLAR=['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
-const ayAd=ym=>{const [y,m]=ym.split('-');return AYLAR[+m-1]+' '+y};
+const ayAd=ym=>{const [y,m]=String(ym).split('-');return (AYLAR[+m-1]||'')+' '+esc(y||'')};
 
 /* --- İşlem kayıtları: eski (yalnız metin) ve yeni (yapısal) kayıtlar aynı biçimde okunur --- */
 function buyInfo(h){let q=+h.q||0,p=+h.p||0;if(!(q>0&&p>0)){const m=/([\d.,]+)\s*adet\s*×\s*([\d.,]+)\s*₺/.exec(h.detail||'');if(m){q=trN(m[1]);p=trN(m[2])}}
@@ -865,13 +881,22 @@ const laterSell=(f,h)=>f.hist.some(x=>x!==h&&x.type==='sell'&&!x.undone&&(x.date
 // Satış tarihinde portföyde olan sepetler (sonradan alınan sepet geçmişteki bir satışta kullanılamaz)
 const byDate=(lots,d)=>({ok:lots.filter(l=>l.date<=d),later:lots.filter(l=>l.date>d)});
 const sumQ=a=>a.reduce((s,l)=>s+l.qty,0);
+/* 1.9.20 — FIFO sırası: geçmiş tarihli yeni bir işlem, daha sonraki bir satışın kullandığı sepetlerle çelişmesin
+   (çelişirse kâr/zarar ve stopaj yanlış satışa yazılırdı). lc: sepetlerin FIFO sırası (tarih, sonra kimlik). */
+const lc=(a,b)=>a.date<b.date?-1:a.date>b.date?1:(+a.id||0)-(+b.id||0);
+// Satış (tarih d, kullanacağı sepet parçaları u): d'den sonra yapılmış bir satış, u'dakilerden daha eski bir sepeti kullandıysa çelişki
+function sellClash(f,d,u,skip){if(!u.length)return null;const mx=u.reduce((a,b)=>lc(a,b)>=0?a:b);
+  return f.hist.find(x=>x!==skip&&x.type==='sell'&&!x.undone&&x.date>d&&(usedOf(f,x)||[]).some(y=>lc(y,mx)<0))||null}
+// Alım (sepet l): l'nin tarihinde ya da sonra yapılmış bir satış, l'den daha yeni bir sepeti kullandıysa çelişki (önce l satılmalıydı)
+function buyClash(f,l){return f.hist.find(x=>x.type==='sell'&&!x.undone&&x.date>=l.date&&(usedOf(f,x)||[]).some(y=>String(y.id)!==String(l.id)&&lc(l,y)<0))||null}
+const clashMsg=(x,buy)=>`${dTR(x.date)} tarihli satış, ${buy?'bu alımdan daha yeni bir sepeti':'bu satışın kullanacağı sepetlerden daha eski bir sepeti'} kullanmış. FIFO sırası bozulmasın diye önce o satışı silin${buy?'':' ya da bu satışı o tarihten sonraya girin'}.`;
 // Satışın kendi stopaj oranı (fonun oranı sonradan değiştiyse eski satış eski oranla kalır)
 const rateOf=(f,h)=>{const s=sellInfo(h);return s.pr>0.005&&s.tax>=0?Math.round(s.tax/s.pr*1000)/1000:f.tax};
 function putBack(lots,used){const o=lots.map(l=>({...l}));used.forEach(u=>{const e=o.find(l=>String(l.id)===String(u.id));if(e)e.qty=+(e.qty+u.qty).toFixed(6);else o.push({id:u.id,date:u.date,qty:u.qty,cost:u.cost})});return o}
 const keepOld=h=>{const o={date:h.date,detail:h.detail,amount:h.amount,gain:h.gain,undone:h.undone};['q','p','tax','rev'].forEach(k=>{if(h[k]!=null)o[k]=h[k]});if(h.used)o.used=h.used;return o};
 // Bir işlem kaydı düzenlenebilir/silinebilir mi? (neden olmadığı da söylenir)
 function txCan(f,h){if(h.undone)return{ok:false,why:'Bu işlem zaten silinmiş.'};if(h.type==='buy'){const l=lotOf(f,h),b=buyInfo(h);if(!l)return{ok:false,why:'Bu alımın sepeti artık portföyde yok (tamamı satılmış ya da silinmiş). Önce ilgili satışı silin.'};
-    if(b.q&&Math.abs(l.qty-b.q)>(+h.q>0?1e-6:6e-4))return{ok:false,why:'Bu alımın bir kısmı satılmış. Düzenlemek ya da silmek için önce ilgili satışı silin.'};return{ok:true,lot:l}}
+    if(b.q?Math.abs(l.qty-b.q)>(+h.q>0?1e-6:6e-4):Math.abs(l.qty*l.cost-(+h.amount||0))>.01)return{ok:false,why:'Bu alımın bir kısmı satılmış. Düzenlemek ya da silmek için önce ilgili satışı silin.'};return{ok:true,lot:l}}
   if(h.type==='sell'){if(laterSell(f,h))return{ok:false,why:'Bu satıştan sonra yapılmış satış var. FIFO sırası bozulmasın diye önce sonraki satışları (en yenisinden başlayarak) silin ya da düzenleyin.'};const u=usedOf(f,h);if(!u)return{ok:false,why:'Bu eski satış kaydında hangi sepetlerin satıldığı bilgisi yok. Yalnızca en son işlemse fonun Geçmiş sekmesinden “Geri al” ile kaldırılabilir.'};return{ok:true,used:u}}
   return{ok:false,why:''}}
 
@@ -880,7 +905,11 @@ function staleDays(f){if(!(Q(f)>0))return 0;const L=f.log[f.log.length-1];let b=
   const days=Math.round((Date.parse(t)-Date.parse(b))/864e5);if(days>30)return days;let wd=0;for(let d=addD(b,1);d<=t;d=addD(d,1)){const w=new Date(d+'T00:00:00Z').getUTCDay();if(w!==0&&w!==6)wd++}return wd>=2?days:0}
 
 /* --- Enflasyon (TÜFE): GitHub her gün TCMB'nin Tüketici Fiyatları sayfasından tufe.json üretir; uygulama onu okur --- */
-const TFK='fon-tufe';let TUFE=null;try{TUFE=JSON.parse(localStorage.getItem(TFK)||'null')}catch(e){}
+/* 1.9.20: TÜFE verisi biçimi doğrulanır (bozuk ya da beklenmeyen veri sayfayı çökertmesin, sayfaya kod olarak girmesin) */
+const tufeClean=j=>{if(!j||typeof j!=='object'||typeof j.son!=='string'||!/^\d{4}-(0[1-9]|1[0-2])$/.test(j.son)||!j.m||typeof j.m!=='object')return null;const m={};
+  Object.keys(j.m).forEach(k=>{const v=j.m[k];if(/^\d{4}-(0[1-9]|1[0-2])$/.test(k)&&Array.isArray(v)&&isFinite(+v[1]))m[k]=[fin(v[0]),+v[1]]});
+  return Object.keys(m).length?{kaynak:String(j.kaynak||''),guncelleme:String(j.guncelleme||''),son:j.son,m}:null};
+const TFK='fon-tufe';let TUFE=null;try{TUFE=tufeClean(JSON.parse(localStorage.getItem(TFK)||'null'))}catch(e){}
 let TIX=null;
 function tufeIx(){if(!TUFE||!TUFE.m)return null;if(TIX&&TIX.k===TUFE.son)return TIX;const ms=Object.keys(TUFE.m).filter(k=>/^\d{4}-\d{2}$/.test(k)).sort();if(!ms.length)return null;let v=1;const ix={};ms.forEach(m=>{v*=1+(+TUFE.m[m][1]||0)/100;ix[m]=v});TIX={k:TUFE.son,ms,ix,first:ms[0],last:ms[ms.length-1]};return TIX}
 // Bir tarihten son açıklanan aya kadar fiyatlar genel seviyesindeki artış (çarpan); veri yoksa null
@@ -889,7 +918,7 @@ function realOf(funds){let v=0,c=0,ci=0,miss=0;funds.forEach(f=>f.lots.forEach(l
   if(!(c>0))return null;return{nom:(v/c-1)*100,inf:(ci/c-1)*100,real:(v/ci-1)*100,v,c,ci,miss}}
 function yearInfl(Y){const t=tufeIx();if(!t)return null;let v=1,n=0,lastM=null;for(let m=1;m<=12;m++){const k=`${Y}-${String(m).padStart(2,'0')}`;if(TUFE.m[k]){v*=1+(+TUFE.m[k][1]||0)/100;n++;lastM=k}}return n?{p:(v-1)*100,n,lastM}:null}
 const infLbl=i=>i.n===12?'Ocak–Aralık':i.n===1?'Ocak':'Ocak–'+AYLAR[+i.lastM.slice(5)-1];
-async function loadTufe(){if(location.protocol==='file:')return;try{const r=await fetch('tufe.json',{cache:'no-store'});if(!r.ok)return;const j=await r.json();if(!j||!j.m||!j.son)return;
+async function loadTufe(){if(location.protocol==='file:')return;try{const r=await fetch('tufe.json',{cache:'no-store'});if(!r.ok)return;const j=tufeClean(await r.json());if(!j)return;
   const ch=!TUFE||TUFE.son!==j.son||TUFE.guncelleme!==j.guncelleme;TUFE=j;TIX=null;try{localStorage.setItem(TFK,JSON.stringify(j))}catch(e){}if(ch&&!sheetOpen()&&!sw&&!scr)render()}catch(e){}}
 
 /* --- Değer grafiği --- */
@@ -949,8 +978,8 @@ function tmap(items,x,y,w,h,out){if(!items.length)return;if(items.length===1){ou
 function heatH(){const held=S.funds.filter(f=>V(f)>0);if(!held.length)return'';const per=view.hm||'daily',cap={daily:2,weekly:5,total:25}[per];
   const it=held.map(f=>({f,a:V(f),r:ret(f,per)})).sort((a,b)=>b.a-a.a),out=[];tmap(it,0,0,360,210,out);
   return `<div class="sech"><h2>Isı haritası</h2><span>büyüklük: değer · renk: getiri</span></div>
-  <section class="glass card heatc" data-k="heat"><div class="heat">${out.map(t=>{const p=t.r.p,k=Math.min(1,Math.abs(p)/cap),a=(.18+.72*k).toFixed(2),sm=t.w<70||t.h<46;
-    return `<button class="tile ${p>0.0001?'up':p<-0.0001?'dn':'eq'}${k>.4?' st':''}" data-act="open" data-id="${esc(t.f.code)}" style="left:${(t.x/3.6).toFixed(3)}%;top:${(t.y/2.1).toFixed(3)}%;width:${(t.w/3.6).toFixed(3)}%;height:${(t.h/2.1).toFixed(3)}%;--a:${a}"><b>${esc(t.f.code)}</b>${sm?'':`<span>${pc(p)}</span>`}</button>`}).join('')}</div>
+  <section class="glass card heatc" data-k="heat"><div class="heat">${out.map(t=>{const p=t.r.p,k=Math.min(1,Math.abs(p)/cap),a=(.18+.72*k).toFixed(2),sm=t.w<70||t.h<46,xs=t.w<40||t.h<28;
+    return `<button class="tile ${p>0.0001?'up':p<-0.0001?'dn':'eq'}${k>.4?' st':''}" data-act="open" data-id="${esc(t.f.code)}" style="left:${(t.x/3.6).toFixed(3)}%;top:${(t.y/2.1).toFixed(3)}%;width:${(t.w/3.6).toFixed(3)}%;height:${(t.h/2.1).toFixed(3)}%;--a:${a}" aria-label="${esc(t.f.code)} ${pc(p)}">${xs?'':`<b>${esc(t.f.code)}</b>`}${sm?'':`<span>${pc(p)}</span>`}</button>`}).join('')}</div>
   ${segH('hm',[['daily','Günlük'],['weekly','Haftalık'],['total','Toplam']],per)}</section>`}
 
 /* 1.9.13: Face ID kilidi kullanıcı isteğiyle kaldırıldı; önceki sürümden kalan kilit kaydı silinir (kilit ekranında takılı kalınmasın) */
@@ -1019,7 +1048,8 @@ function txPage(){const all=txAll(),ff=view.txf||'all',ft=view.txt||'all';
   <div class="pv txsum"><div><span>${L.length} işlem · toplam alım</span><b>${money(tb)}</b></div><div><span>Satışlardan ele geçen (net)</span><b>${money(ts)}</b></div></div>
   <div class="tbody ${tabAnim}">${body||'<div class="list glass"><div class="empty">Bu filtreye uyan işlem yok.</div></div>'}</div>
   <p class="hint" style="text-align:center;margin:2px 8px">Bir işleme dokunarak düzenleyebilir ya da silebilirsiniz. Fonun “Geçmiş” sekmesi tüm değişiklikleri (düzenleme ve silmeler dahil) gösterir.</p>`}
-function findTx(id){const [c,hid]=String(id).split('|'),f=S.funds.find(x=>x.code===c),h=f&&f.hist.find(x=>String(x.id)===hid);return h?{f,h}:null}
+const splitId=id=>{const s=String(id),k=s.lastIndexOf('|');return[s.slice(0,k),s.slice(k+1)]};
+function findTx(id){const [c,hid]=splitId(id),f=S.funds.find(x=>x.code===c),h=f&&f.hist.find(x=>String(x.id)===hid);return h?{f,h}:null}
 function txModal(id){const x=findTx(id);if(!x)return;const {f,h}=x,s=h.type==='sell',cn=txCan(f,h);
   const info=s?sellInfo(h):buyInfo(h);
   const pv=s?`<div class="pv"><div><span>Adet × fiyat</span><b>${info.q?num(info.q)+' × '+num(info.p,6)+' ₺':'—'}</b></div><div><span>Brüt tutar</span><b>${money(info.rev)}</b></div><div><span>Kâr/zarar (stopaj öncesi)</span><b class="${info.pr>=0?'up':'dn'}">${sgn(info.pr)}</b></div><div><span>Stopaj</span><b class="dn">−${money(info.tax)}</b></div><div class="tot"><span>Net ele geçen</span><b>${money(info.net)}</b></div></div>`
@@ -1040,10 +1070,12 @@ function txEditOk(id){const x=findTx(id);if(!x)return;const {f,h}=x,s=h.type==='
   const q=pn(g('x_q')),p=pn(g('x_p')),d=g('x_d');if(!(q>0&&p>0)){e.textContent='Geçerli bir adet ve birim fiyat girin.';return}if(!isDate(d)||d>today()){e.textContent='İleri tarihli işlem girilemez.';return}
   const old=keepOld(h);
   if(!s&&d<h.date&&f.hist.some(x=>x.type==='sell'&&!x.undone&&x.date>=d&&x.date<h.date)){e.textContent='Bu alım, arada yapılmış bir satıştan önceye alınamaz (FIFO sırası bozulur). Önce o satışı silin.';return}
-  if(!s){const nl=f.lots.map(l=>l===cn.lot?{...l,date:d,qty:q,cost:p}:l);commit(f,'edit',today(),`${dTR(old.date)} tarihli alım düzenlendi → ${dTR(d)}, ${num(q)} adet × ${num(p,6)} ₺.`,0,nl,0,{ref:h.id,old});
+  if(!s){const cl=buyClash(f,{id:cn.lot.id,date:d});if(cl){e.textContent=clashMsg(cl,true);return}
+    const nl=f.lots.map(l=>l===cn.lot?{...l,date:d,qty:q,cost:p}:l);commit(f,'edit',today(),`${dTR(old.date)} tarihli alım düzenlendi → ${dTR(d)}, ${num(q)} adet × ${num(p,6)} ₺.`,0,nl,0,{ref:h.id,old});
     Object.assign(h,{date:d,q,p,amount:q*p,detail:buyTxt(q,p),lot:cn.lot.id})}
   else{const bd=byDate(putBack(f.lots,cn.used),d),avail=sumQ(bd.ok);if(q>avail+1e-4){e.textContent=`${dTR(d)} tarihinde en çok ${num(avail)} adet satılabilir.`;return}
-    const r=sellRun(bd.ok,q,p,rateOf(f,h));commit(f,'edit',today(),`${dTR(old.date)} tarihli satış düzenlendi → ${dTR(d)}, ${num(q)} adet × ${num(p,6)} ₺.`,0,[...r.lots,...bd.later],0,{ref:h.id,old});
+    const r=sellRun(bd.ok,q,p,rateOf(f,h)),cl=sellClash(f,d,r.used,h);if(cl){e.textContent=clashMsg(cl,false);return}
+    commit(f,'edit',today(),`${dTR(old.date)} tarihli satış düzenlendi → ${dTR(d)}, ${num(q)} adet × ${num(p,6)} ₺.`,0,[...r.lots,...bd.later],0,{ref:h.id,old});
     Object.assign(h,{date:d,q,p,used:r.used,tax:r.r.tax,rev:r.r.rev,gain:r.r.pr-r.r.tax,amount:-r.r.net,detail:sellTxt(q,p,r.r)})}
   closeM();save();toast('İşlem düzenlendi. Fonun Geçmiş sekmesinden geri alabilirsiniz.')}
 function txDel(id){const x=findTx(id);if(!x)return;const {f,h}=x,s=h.type==='sell';
@@ -1060,7 +1092,10 @@ function undoLast(f){const h=f.hist.find(x=>!x.undone&&x.prev);if(!h)return null
   if(h.ref!=null&&h.old){const t=f.hist.find(x=>String(x.id)===String(h.ref));if(t){['q','p','tax','rev','used'].forEach(k=>{if(!(k in h.old))delete t[k]});Object.assign(t,h.old)}}return h}
 // Sepet kaydı olmadan silinmiş sepet: silme kaydından önceki ve sonraki sepetlerin farkı (hâlâ portföyde değilse)
 function lostLot(f,e){const i=f.hist.indexOf(e);if(i<0||!e.prev)return null;const after=i>0?f.hist[i-1].prev:f.lots;if(!after)return null;
-  const l=e.prev.find(p=>!after.some(a=>String(a.id)===String(p.id)));return l&&!f.lots.some(a=>String(a.id)===String(l.id))?l:null}
+  const l=e.prev.find(p=>!after.some(a=>String(a.id)===String(p.id))),has=(a,l)=>a.some(x=>String(x.id)===String(l.id));if(!l||has(f.lots,l))return null;
+  /* 1.9.20: silmeden sonra geri getirilmiş sepet (sonradan satılmış ya da silinmiş olsa da) yeniden listelenmez; yoksa ikinci kez geri getirilip bedava pay oluşuyordu */
+  for(let j=i-1;j>=0;j--){const r=f.hist[j],aft=j>0?f.hist[j-1].prev:f.lots;if(!r.undone&&r.prev&&aft&&!has(r.prev,l)&&has(aft,l))return null}
+  return l}
 // Silinen (iptal edilmiş) alım ve satışlar + kayıtsız silinen sepetler, en son silinen önce
 function trTxList(){const a=[];S.funds.forEach(f=>f.hist.forEach(h=>{
   if((h.type==='buy'||h.type==='sell')&&h.undone){const d=f.hist.find(y=>y.type==='delete'&&y.ref!=null&&String(y.ref)===String(h.id));a.push({k:'tx',f,h,at:d?+d.id||0:+h.id||0})}
@@ -1072,7 +1107,7 @@ function trTx(id){const x=findTx(id);if(!x){toast('Kayıt bulunamadı.');return}
   const top=f.hist.find(y=>!y.undone&&y.prev);
   if(top&&(top.type==='delete'&&top.ref!=null&&String(top.ref)===String(h.id))){undoLast(f);closeM();save();toast((s?'Satış':'Alım')+' geri getirildi.');return}
   if(!s){const b=buyInfo(h);if(!(b.q>0&&b.p>0)){toast('Bu eski kaydın adet ve fiyatı okunamadı; geri getirilemiyor.');return}
-    const lid=h.lot!=null&&!f.lots.some(l=>String(l.id)===String(h.lot))?h.lot:uid(),old=keepOld(h);
+    const lid=h.lot!=null&&!f.lots.some(l=>String(l.id)===String(h.lot))?h.lot:uid(),old=keepOld(h),cl=buyClash(f,{id:lid,date:h.date});if(cl){toast(clashMsg(cl,true));return}
     commit(f,'restore',today(),`${dTR(h.date)} tarihli alım geri getirildi (${num(b.q)} adet).`,b.q*b.p,[...f.lots,{id:lid,date:h.date,qty:b.q,cost:b.p}],0,{ref:h.id,old});
     Object.assign(h,{undone:false,q:b.q,p:b.p,lot:lid})}
   else{const i=sellInfo(h);if(!(i.q>0&&i.p>0)){toast('Bu eski kaydın adet ve fiyatı okunamadı; geri getirilemiyor.');return}
@@ -1082,9 +1117,9 @@ function trTx(id){const x=findTx(id);if(!x){toast('Kayıt bulunamadı.');return}
     commit(f,'restore',today(),`${dTR(h.date)} tarihli satış geri getirildi (${num(i.q)} adet).`,0,[...r.lots,...bd.later],0,{ref:h.id,old});
     Object.assign(h,{undone:false,q:i.q,p:i.p,used:r.used,tax:r.r.tax,rev:r.r.rev,gain:r.r.pr-r.r.tax,amount:-r.r.net,detail:sellTxt(i.q,i.p,r.r)})}
   closeM();save();toast((s?'Satış':'Alım')+' geri getirildi.')}
-function trLot(id){const [c,eid]=String(id).split('|'),f=S.funds.find(x=>x.code===c),e=f&&f.hist.find(x=>String(x.id)===eid);if(!e||e.undone){toast('Kayıt bulunamadı.');return}
+function trLot(id){const [c,eid]=splitId(id),f=S.funds.find(x=>x.code===c),e=f&&f.hist.find(x=>String(x.id)===eid);if(!e||e.undone){toast('Kayıt bulunamadı.');return}
   if(f.hist.find(y=>!y.undone&&y.prev)===e){undoLast(f);save();toast('Sepet geri getirildi.');return}
-  const l=lostLot(f,e);if(!l){toast('Bu sepet zaten portföyde.');return}
+  const l=lostLot(f,e);if(!l){toast('Bu sepet zaten portföyde.');return}const cl=buyClash(f,l);if(cl){toast(clashMsg(cl,true));return}
   commit(f,'restore',today(),`${dTR(l.date)} tarihli ${num(l.qty)} adetlik sepet geri getirildi.`,l.qty*l.cost,[...f.lots,{...l}],0);save();toast('Sepet geri getirildi.')}
 /* Son silinenler deposundaki fon / fiyat kaydı / önceki portföy */
 function trRestore(tid,sure){const x=TR.find(y=>y.id===tid);if(!x){toast('Bu kayıt artık yok.');return}
@@ -1191,7 +1226,7 @@ function trashPage(){trSave();const T=trTxList(),F=TR.filter(x=>x.kind==='fund')
     return `<div class="row" data-k="tr-t${esc(x.h.id)}">${av(x.f)}<div class="l"><b>${s?'Satış':'Alım'} · ${esc(x.f.code)}</b><div class="sub">${dTR(x.h.date)}${i.q?` · ${num(i.q)} adet`:''} · ${money(s?i.net:x.h.amount)}</div></div>${btn('trtx',x.f.code+'|'+x.h.id)}</div>`});
   const fu=F.map(x=>{const d=x.data||{},nl=Array.isArray(d.lots)?d.lots.length:0,nh=Array.isArray(d.hist)?d.hist.filter(h=>h&&(h.type==='buy'||h.type==='sell')&&!h.undone).length:0;
     return `<div class="row" data-k="tr-${esc(x.id)}">${gav(x.code)}<div class="l"><b>${esc(x.code)}</b><div class="sub">${left(x.at)} · ${nl} sepet · ${nh} işlem</div></div>${btn('trrest',x.id)}</div>`});
-  const pr=P.map(x=>`<div class="row" data-k="tr-${esc(x.id)}">${S.funds.some(f=>f.code===x.code)?av({code:x.code}):gav(x.code)}<div class="l"><b>${esc(x.code)} · ${dTR(x.d)}</b><div class="sub">${num(x.p,6)} ₺ · ${left(x.at)}</div></div>${btn('trrest',x.id)}</div>`);
+  const pr=P.map(x=>`<div class="row" data-k="tr-${esc(x.id)}">${S.funds.some(f=>f.code===x.code)?av({code:x.code}):gav(x.code)}<div class="l"><b>${esc(x.code)} · ${esc(dTR(x.d))}</b><div class="sub">${num(x.p,6)} ₺ · ${left(x.at)}</div></div>${btn('trrest',x.id)}</div>`);
   const st=ST.map(x=>{const n=x.data&&Array.isArray(x.data.funds)?x.data.funds:[];return `<div class="row" data-k="tr-${esc(x.id)}"><span class="ico" style="--c:#8e8e93">${I.pie}</span><div class="l"><b>${esc(x.why||'Önceki portföy')}</b><div class="sub">${del(x.at)} · ${n.length} fon${n.length?': '+n.slice(0,4).map(f=>esc(f&&f.code||'')).join(', ')+(n.length>4?'…':''):''} · ${left(x.at)}</div></div>${btn('trrest',x.id,'Geri yükle')}</div>`});
   const body=sec('Alım, satış ve sepetler',tx)+sec('Fonlar',fu)+sec('Fiyat kayıtları',pr)+sec('Önceki portföyler',st);
   return `${dnav('Ayarlar')}<header class="hdr"><div><h1>Son silinenler</h1></div></header>
@@ -1321,10 +1356,12 @@ function txOk(kind){
   const f=cur(),q=pn(g('t_q')),p=pn(g('t_p')),d=g('t_d')||today(),e=$('#t_e');
   if(!(q>0&&p>0)){e.textContent='Geçerli bir adet ve birim fiyat girin.';return}
   if(!isDate(d)||d>today()){e.textContent='İleri tarihli işlem girilemez.';return}
-  if(kind==='buy'){const lid=uid();commit(f,'buy',d,buyTxt(q,p),q*p,[...f.lots,{id:lid,date:d,qty:q,cost:p}],0,{q,p,lot:lid});toast('Alım kaydedildi.')}
+  if(kind==='buy'){const lid=uid(),cl=buyClash(f,{id:lid,date:d});if(cl){e.textContent=clashMsg(cl,true);return}
+    commit(f,'buy',d,buyTxt(q,p),q*p,[...f.lots,{id:lid,date:d,qty:q,cost:p}],0,{q,p,lot:lid});toast('Alım kaydedildi.')}
   else{const bd=byDate(f.lots,d),av=sumQ(bd.ok);if(q>Q(f)+1e-4){e.textContent=`Portföydeki toplam adetten (${num(Q(f))}) fazla satamazsınız.`;return}
     if(q>av+1e-4){e.textContent=`${dTR(d)} tarihinde portföyde ${num(av)} adet vardı; daha sonra alınan sepetler bu tarihte satılamaz.`;return}
-    const x=sellRun(bd.ok,q,p,f.tax);commit(f,'sell',d,sellTxt(q,p,x.r),-x.r.net,[...x.lots,...bd.later],x.r.pr-x.r.tax,{q,p,used:x.used,tax:x.r.tax,rev:x.r.rev});toast('Satış kaydedildi.')}
+    const x=sellRun(bd.ok,q,p,f.tax),cl=sellClash(f,d,x.used);if(cl){e.textContent=clashMsg(cl,false);return}
+    commit(f,'sell',d,sellTxt(q,p,x.r),-x.r.net,[...x.lots,...bd.later],x.r.pr-x.r.tax,{q,p,used:x.used,tax:x.r.tax,rev:x.r.rev});toast('Satış kaydedildi.')}
   closeM();save()}
 
 function act(a,id){
@@ -1385,11 +1422,11 @@ function act(a,id){
       if(q<=0){el.innerHTML='<p class="err">Bu fonda satılabilecek pay yok.</p>';return}
       const L=sorted(f),sim=n=>fifo(L,Math.min(n,q),f.price,f.tax);let n,ex=false;
       {let lo=1,hi=Math.ceil(q);if(sim(hi).net<T){ex=true;n=hi}else{while(lo<hi){const mid=(lo+hi)>>1;sim(mid).net>=T?hi=mid:lo=mid+1}n=lo}}
-      const r=sim(n);
-      el.innerHTML=`<div class="pv"><div><span>Satılması gereken adet</span><b>${num(Math.min(n,q),3)}</b></div><div><span>Brüt satış tutarı</span><b>${money(r.rev)}</b></div><div><span>Tahmini stopaj (${rateTxt(f.tax)})</span><b class="dn">−${money(r.tax)}</b></div><div class="tot"><span>Tahmini net</span><b>${money(r.net)}</b></div></div>${ex?`<p class="err">Hedef tutar portföyünüzü aşıyor; en fazla ${num(q)} adet satılabilir.</p>`:`<button class="btn red" style="margin-top:10px;width:100%" data-act="sellpre" data-id="${n}">Bu adetle satış ekranını aç</button>`}`;break}
+      const nq=Math.min(n,q),r=sim(nq);
+      el.innerHTML=`<div class="pv"><div><span>Satılması gereken adet</span><b>${num(nq,3)}</b></div><div><span>Brüt satış tutarı</span><b>${money(r.rev)}</b></div><div><span>Tahmini stopaj (${rateTxt(f.tax)})</span><b class="dn">−${money(r.tax)}</b></div><div class="tot"><span>Tahmini net</span><b>${money(r.net)}</b></div></div>${ex?`<p class="err">Hedef tutar portföyünüzü aşıyor; en fazla ${num(q)} adet satılabilir.</p>`:`<button class="btn red" style="margin-top:10px;width:100%" data-act="sellpre" data-id="${dec(+nq.toFixed(6))}">Bu adetle satış ekranını aç</button>`}`;break}
     case 'sellpre':openTx('sell',id);break;
     case 'newfund':modal(`<h3>Yeni fon</h3><div class="f"><div class="lh"><label for="n_c">Fon kodu</label></div><input id="n_c" autocapitalize="characters" autocomplete="off" placeholder="Örn: TLY"></div>${txt('n_n','Fon adı')}<div class="two">${txt('n_t','Fon türü','Para Piyasası')}${fld('n_p','Birim fiyat (₺)')}</div>${fld('n_x','Stopaj oranı (%)','17,5')}<p class="hint">Varsayılan %17,5. Farklı oran uygulanan bir fonunuz varsa buradan değiştirebilirsiniz.</p><p class="err" id="n_e"></p><div class="btns"><button class="btn plain" data-act="close">Vazgeç</button><button class="btn pri" data-act="newok">Portföye ekle</button></div>`);break;
-    case 'newok':{const c=g('n_c').trim().toUpperCase(),n=g('n_n').trim(),p=pn(g('n_p')),x=pn(g('n_x'));if(!c||!n||!(p>0)){$('#n_e').textContent='Kod, ad ve geçerli bir fiyat girin.';return}if(!(x>=0&&x<100)){$('#n_e').textContent='Stopaj oranı 0 ile 100 arasında olmalı.';return}if(S.funds.some(y=>y.code===c)){$('#n_e').textContent='Bu fon kodu zaten var.';return}S.funds.push({...mk(c,n,g('n_t').trim()||'Yatırım Fonu',p,x/100),taxSet:true});view.page='home';closeM();save();toast(c+' eklendi.');break}
+    case 'newok':{const c=g('n_c').trim().toUpperCase(),n=g('n_n').trim(),p=pn(g('n_p')),x=pn(g('n_x'));if(!c||!n||!(p>0)){$('#n_e').textContent='Kod, ad ve geçerli bir fiyat girin.';return}if(/[\s|]/.test(c)||c.length>12){$('#n_e').textContent='Fon kodu boşluk ve | içeremez, en çok 12 karakter olabilir.';return}if(!(x>=0&&x<100)){$('#n_e').textContent='Stopaj oranı 0 ile 100 arasında olmalı.';return}if(S.funds.some(y=>y.code===c)){$('#n_e').textContent='Bu fon kodu zaten var.';return}S.funds.push({...mk(c,n,g('n_t').trim()||'Yatırım Fonu',p,x/100),taxSet:true});view.page='home';closeM();save();toast(c+' eklendi.');break}
     case 'editfund':modal(`<h3>Fonu düzenle</h3>${txt('e_c','Fon kodu',f.code,'readonly')}${txt('e_n','Fon adı',f.name)}<div class="two">${txt('e_t','Fon türü',f.type)}${fld('e_x','Stopaj oranı (%)',num(f.tax*100,2))}</div><p class="hint">Stopaj oranı satış önizlemesini, nakit hesabını ve özeti etkiler. Geçmiş satış kayıtları değişmez.</p><p class="err" id="e_e"></p><div class="btns"><button class="btn red" data-act="delfund">Fonu sil</button><button class="btn plain" data-act="close">Vazgeç</button><button class="btn pri" data-act="editok">Kaydet</button></div>`);break;
     case 'editok':{const n=g('e_n').trim(),x=pn(g('e_x'));if(!n){$('#e_e').textContent='Fon adı boş olamaz.';return}if(!(x>=0&&x<100)){$('#e_e').textContent='Stopaj oranı 0 ile 100 arasında olmalı.';return}f.name=n;f.type=g('e_t').trim()||'Yatırım Fonu';f.tax=x/100;f.taxSet=true;closeM();save();toast('Fon bilgileri güncellendi.');break}
     case 'delfund':modal(`<h3>${esc(f.code)} silinsin mi?</h3><p>Fon, ${f.lots.length} sepeti, fiyat geçmişi ve tüm işlem geçmişiyle birlikte silinecek.</p><p class="sub" style="white-space:normal">Ayarlar › Son silinenler’den ${TR_DAYS} gün içinde geri getirebilirsiniz.</p><div class="btns"><button class="btn plain" data-act="close">Vazgeç</button><button class="btn red" data-act="delfundok">Evet, sil</button></div>`);break;
@@ -1400,9 +1437,10 @@ function act(a,id){
     case 'backup':go('settings');break;
     case 'exportfile':exportFile();break;
     case 'importfile':{const i=$('#b_f');if(i){i.value='';i.click()}else go('settings');break}
-    case 'bcopy':{const t=g('b_j');(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>{markBackup();toast('Yedek kodu kopyalandı.')}).catch(()=>{$('#b_j').select();try{document.execCommand('copy');toast('Yedek kodu kopyalandı.')}catch(e){toast('Kopyalanamadı, metni elle seçin.')}});break}
+    case 'bcopy':{const t=JSON.stringify(S);setv('b_j',t);const be=$('#b_e');if(be)be.textContent='';(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>{markBackup();toast('Yedek kodu kopyalandı.')}).catch(()=>{$('#b_j').select();try{document.execCommand('copy');toast('Yedek kodu kopyalandı.')}catch(e){toast('Kopyalanamadı, metni elle seçin.')}});break}
     case 'brest':{try{const o=JSON.parse(g('b_j'));let n;
-      if(Array.isArray(o)&&o.length)n=norm({funds:o.map(x=>({code:x.code,name:x.name,type:x.type||'Yatırım Fonu',price:+x.currentPrice||0,lots:(x.baskets||[]).map(b=>({id:b.id,date:String(b.date).split('.').reverse().join('-'),qty:+b.quantity,cost:+b.cost})),hist:(x.history||[]).map(h=>({id:h.id,type:h.type,date:String(h.date).split('.').reverse().join('-'),detail:h.details||'',amount:+h.amount||0,prev:null,undone:!!h.isUndone}))}))});
+      const oD=v=>{const m=/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/.exec(String(v).trim());return m?`${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`:String(v)};
+      if(Array.isArray(o)&&o.length)n=norm({funds:o.map(x=>({code:x.code,name:x.name,type:x.type||'Yatırım Fonu',price:+x.currentPrice||0,lots:(x.baskets||[]).map(b=>({id:b.id,date:oD(b.date),qty:+b.quantity,cost:+b.cost})),hist:(x.history||[]).map(h=>({id:h.id,type:h.type,date:oD(h.date),detail:h.details||'',amount:+h.amount||0,prev:null,undone:!!h.isUndone}))}))});
       else n=norm(o);
       if(!n||!n.funds.length)throw 0;
       pend=n;const lots=n.funds.reduce((a,x)=>a+x.lots.length,0);

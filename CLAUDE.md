@@ -22,6 +22,7 @@ Bu dosya yeni Claude sohbetlerinde otomatik okunur. Her sürümden sonra güncel
 ## Dosyalar
 
 - `index.html`: tüm CSS ve JS tek dosyada, harici kütüphane yok.
+  - 1.9.20: `<head>`'de İçerik Güvenliği Politikası (CSP meta): yalnız kendi dosyaları; `connect-src 'self'` (veri başka adrese gönderilemez), `img-src 'self' data: blob:` (mercek simgeleri data: SVG). Harici kaynak eklenirse CSP'ye de eklenmeli. `frame-ancestors` meta ile çalışmaz, eklenmemeli (konsola hata yazar).
 - `sw.js`: service worker. Önce cihazdaki kopyayı açar, arka planda internetten günceller. Önbellek adı `fon-portfoyu-` + `VERSION`.
   - 1.9.7: kurulumda dosyalar `cache:'reload'`, arka plan güncellemesi `cache:'no-cache'` ile alınır; kayıt `updateViaCache:'none'`, uygulama öne gelince `reg.update()`. Önceden GitHub Pages'in 10 dk HTTP önbelleği yüzünden yeni sürüm eski `index.html` ile kurulabiliyordu (kullanıcı yayından hemen sonra denediğinde sürüm değişmedi). `tufe.json` için tersi: önce internet, yoksa cihazdaki kopya.
 - `tufe.json`: TCMB TÜFE verisi (`{kaynak, guncelleme, son:'YYYY-AA', m:{'YYYY-AA':[yıllık%, aylık%]}}`). Elle düzenlenmez; GitHub Actions üretir.
@@ -30,7 +31,7 @@ Bu dosya yeni Claude sohbetlerinde otomatik okunur. Her sürümden sonra güncel
 
 ## Sürüm kuralı
 
-- Güncel sürüm: **1.9.19**
+- Güncel sürüm: **1.9.20**
 - Her güncellemede **iki yerde** sürüm artırılır: `sw.js` içinde `VERSION`, `index.html` içinde `APPV`.
 - Ayarlar sayfasının altında "sürüm X.Y.Z" yazar; kullanıcı bununla kontrol eder.
 
@@ -42,6 +43,10 @@ Bu dosya yeni Claude sohbetlerinde otomatik okunur. Her sürümden sonra güncel
 - `navigator.storage.persist()` ile kalıcı depolama istenir.
 - Yedekleme: "Dışa aktar" paylaşım menüsünü açar (iCloud Drive'a kaydedilebilir). "Dosyadan yükle" ile geri yüklenir. Yedek kodunu kopyalama ve eski yedek formatını içe aktarma da var.
 - Yüklenen her veri `norm()` ile aynı şemaya getirilir. Bu davranış bozulmamalı.
+  - 1.9.20: `norm()` sonsuz (`1e999`), negatif maliyet ve sayı olmayan değerleri almaz (`fin`/`pos`); fiyatı 0 olan fon fiyat geçmişinin son fiyatını alır; kod kırpılır, boşluk/`|` → `-`; aynı kodlu ikinci fon `KOD-2` olur; fon içinde aynı kimlikli sepet/kayıt yeni kimlik alır; veride ileri tarihli kimlik varsa `lastUid` ona çekilir (yeni kayıt aynı kimliği almasın). Uygulamanın kendi verisinde sonuç eski `norm` ile birebir aynı (test edildi).
+  - Eski (Claude/Gemini) yedek biçiminde `5.1.2026` gibi sıfırsız tarihler doğru okunur (`oD`); önceden bugüne dönüyordu.
+  - Yedek kodu "Kopyala" her zaman gerçek portföyü (`JSON.stringify(S)`) kopyalar ve kutuyu yeniler; önceden kutuya yapıştırılıp vazgeçilen metni kopyalayıp "yedek alındı" sayıyordu.
+  - `fon-tufe` ve indirilen `tufe.json` `tufeClean` ile doğrulanır (`son` = YYYY-AA, aylar dizi); bozuk veri Ayarlar'ı çökertmez, sayfaya kod olarak giremez. `ayAd` yılı `esc` eder.
 
 ## Finans mantığı (doğru çalışıyor, korunmalı)
 
@@ -50,16 +55,19 @@ Bu dosya yeni Claude sohbetlerinde otomatik okunur. Her sürümden sonra güncel
   - 1.9.1: satış yalnızca **satış tarihinde portföyde olan** sepetlerden yapılır (`byDate`); sonradan alınan sepet geçmiş tarihli satışta kullanılamaz.
   - Aynı fonda kendisinden sonra satış olan eski bir satış düzenlenemez/silinemez (`laterSell`): FIFO sırası bozulmasın diye önce sonrakiler silinir. Sonraki satışları yeniden hesaplayan bir "tekrar oynatma" bilerek yapılmadı.
   - Satış düzenlenirken satışın kendi stopaj oranı korunur (`rateOf`), fonun güncel oranı değil.
+  - 1.9.20 FIFO çelişki denetimi (`lc`, `sellClash`, `buyClash`, `clashMsg`): geçmiş tarihli **yeni satış** ya da tarihi değişen satış, kendisinden sonraki bir satışın kullandığı sepetten daha yeni bir sepete düşecekse; geçmiş tarihli **yeni alım**, alım düzenleme, silinen alımın ya da sepetin geri getirilmesi, kendi tarihinde/sonrasında yapılmış bir satışın kullandığı daha yeni bir sepetten önce gelecekse işlem yapılmaz ve hangi satışın engel olduğu yazılır. Önceden sessizce yanlış sepetten satıyordu (kâr/zarar ve stopaj yanlış satışa yazılıyordu). Tek sepetli ya da çelişmeyen geçmiş tarihli işlemler serbest. Sepet bilgisi olmayan eski satışlar denetlenemez.
 - **Getiri (Midas mantığı):** her fonun tarihli fiyat kaydı tutulur (aynı gün tek kayıt).
   - Günlük getiri: bir önceki fiyat gününe göre.
   - Haftalık getiri: son fiyat tarihinden en az 7 gün önceki fiyata göre.
   - Dönem içinde alınan lotlar kendi maliyetiyle hesaplanır.
 - **Biçim:** fiyat girişinde Türkçe ondalık virgül desteklenir. Her fonun rengi kendine ait.
+  - 1.9.20: `pn` birden çok nokta (`1.234.567`) ya da birden çok virgülü binlik ayırıcı sayar; sonsuz/geçersiz değer `NaN` döner (önceden `Infinity` adet/fiyat girilebiliyordu). Yeni fon kodu boşluk ve `|` içeremez, en çok 12 karakter (`findTx` kimliği `kod|kayıt` biçiminde, `splitId` son `|`'den ayırır).
   - Sayı okuma: `pn` (fiyat/adet girişi; tek nokta ondalık sayılır), `pnM` (tutar kutuları; `10.000` = on bin), `trN` (uygulamanın kendi yazdığı Türkçe metinler, örn. eski kayıtlardaki "10.000 adet"). Eski kayıt metni asla `pn` ile okunmamalı.
   - `isDate` gerçek takvim tarihini doğrular (2025-19-05, 2025-02-30 reddedilir); `norm()` bozuk tarihli fiyat kayıtlarını atar.
 - **Fiyatlar elle girilir.** TEFAS'tan otomatik fiyat çekme yok ve yapılmamalı: TEFAS botları F5 korumasıyla bilerek engelliyor, eski `api/DB/BindHistoryInfo` kapatılmış (2026-11 denendi). Bu korumayı atlatmaya çalışılmaz.
 - **Toplu fiyat girişi** (`bulkModal`): tüm fonlar tek ekranda. 1.9.15'ten beri düzeni tekli "Fiyat · FON" penceresiyle aynı: üstte tarih, her fon için iki sütun (`.bpr`: solda fon kodu + son fiyat/tarih kutusu `.bpf`, sağda "Birim fiyat (₺)" kutusu `#bp_i`), açıklama, Vazgeç/Kaydet, en altta TEFAS'tan yapıştır (`.bpp`). Kullanıcının TEFAS'tan kendi kopyaladığı metin `parsePaste` ile okunur: fon kodundan sonraki ilk ondalıklı sayı fiyat, kodun hemen önündeki tarih o fiyatın tarihi.
 - **Enflasyon (reel getiri):** her sepet kendi alış ayından son açıklanan aya kadar TÜFE ile karşılaştırılır (`inflFrom`, `realOf`). Satılmış sepetler dahil değil.
+- **Nakit hesabı (1.9.20):** önerilen adet elde olan adetle sınırlanır ve kesirli adet olduğu gibi aktarılır (`nq`); önceden 0,4 adet varken 1 adet önerip satış ekranında reddediliyordu.
 - **Fiyat hatırlatıcısı:** elde tutulan fonun fiyatı en az 2 iş günü girilmediyse (ya da kontrol edilmediyse) uyarı çıkar (`staleDays`). `chk` yalnız ileri gider: geçmiş bir güne fiyat eklemek fonu "güncel" yapmaz.
 - **TEFAS yapıştırma:** tarih yalnız fon kodunun hemen önündeki hücreden alınır; mevcut fiyattan %50'den fazla sapan değer (getiri tablosu gibi) kutuya yazılmaz, kullanıcıya gösterilir.
 
@@ -90,6 +98,7 @@ Bu dosya yeni Claude sohbetlerinde otomatik okunur. Her sürümden sonra güncel
   - Portföy: değer grafiği (1H/1A/3A/1Y/Tümü, parmakla gezinme, kesikli çizgi = yatırılan para). Getiri yüzdesi = dönem kâr/zararı ÷ (dönem başı değer + dönem içi alımlar).
   - Fon detayı: birim fiyat grafiği, alım günü işaretleri, reel getiri satırı.
   - Özet: İşlem geçmişi ve Yıllık özet bağlantıları, enflasyon kartı, ısı haritası.
+    - 1.9.20: ısı haritasında çok küçük kutuda (`xs`: 40×28 birimden küçük) yazı yok (önceden yarısı kesik görünüyordu); her kutuda `aria-label` (kod + getiri).
   - Alt sayfalar `PARENT` ile tanımlı (`tx` ve `year` → Özet, `detail` → Portföy); soldan kaydırınca üst sayfaya dönülür.
   - İşlem geçmişi: alım/satış düzenleme ve silme. Kısmen satılmış alım ya da sepet bilgisi bulunamayan eski satış kilitlidir, nedeni yazılır. Her değişiklik fonun Geçmiş sekmesine düşer ve "Geri al" ile geri alınır.
   - Gizlilik modu (göz düğmesi): tutarlar `••••`. Kayda yazılan metinler her zaman `moneyR`/`sgnR` ile gerçek tutarla yazılır.
@@ -99,7 +108,7 @@ Bu dosya yeni Claude sohbetlerinde otomatik okunur. Her sürümden sonra güncel
   - 1.9.16 (kullanıcı daha yumuşak animasyon istedi): açılış `DP_SPRING` sönümlü yay eğrisiyle (`linear()`, ≈%0,5 taşma, 620 ms; desteklenmezse `cubic-bezier(.16,1,.3,1)`), `scale(.6)` + 10 px dikey kaymadan; saydamlık ayrı ve hızlı (220 ms); içerik 90 ms gecikmeyle hafifçe belirir. Kapanış 300 ms `scale(.72)`, saydamlık 60 ms sonra söner. Eski `filter:blur` kaldırıldı (bulanık camla birlikte Safari'de ağırdı) ve eski 1.025 sıçraması yok.
   - 1.9.18 (kullanıcı: 1.9.16 animasyonu "çok yavaş, yavan"): takvim tarih kutusunun kendisinden doğar — `transform-origin:0 0`, kutunun yeri/boyuna eşleyen `translate+scale(x,y)` (`DP.from()`) ile başlar, `dpSpr(.64,17,.52)` (sönümlü yay denkleminden üretilen `linear()`, ≈%7 taşma, 520 ms; ilk varış ≈170 ms) ile açılır, köşe 14→26. Saydamlık 130 ms; içerik (başlık, günler, alt satır) 60 ms + 40 ms aralıkla sırayla belirir. Seçilen gün `DP_POP` yayıyla zıplar, 170 ms sonra takvim kutuya geri çekilerek kapanır (260 ms). Ay değişince günler ve başlık yön yönünde kayarak gelir.
 - **Saydam cam (1.9.19, kullanıcı isteği: Apple Music'teki "clear glass"):** sekme çubuğu (`.tabbar::after`), üst dairesel butonlar (`.ib`), geri butonları (`.cap`), bildirim (`#t`) ve segment çubukları yalnız CSS değişkenleriyle (`--cg-*`, `--tb-thumb`, `--segth/--segsh`, `--seg-rim`) güncellendi: çok düşük dolgu (koyu çubuk .26, koyu buton beyaz .07; açık çubuk beyaz .30, buton .42), `blur(10px) saturate(180%)`, üstten parlak alttan zayıf ince kenar + hafif pembe/mavi kenar kırılması + üst parlama gradyanı (`background-image`, `background-color` ayrı: mercek kodu `backgroundColor` okur), dış gölge. `.ib`/`.cap`/`#t`'de `clip-path:none` (dış gölge görünsün; köşeyi border-radius yuvarlar). Okunabilirlik için çubuk yazı/simgelerinde hafif hale (`--cg-ink`, `--cg-ico`). Kullanıcı kuralı: bu tür istekte JS/animasyon/yerleşim koduna dokunulmaz, yalnız malzeme.
-- **Silme güvenliği (1.9.19):** her silme onay penceresi açar (fiyat kaydı silmede ve Geçmiş'teki "Geri al"da da). Silinen her şey geri getirilebilir: Ayarlar › **Son silinenler** (`trash` sayfası, `PARENT.trash='settings'`). Alım/satış/sepet: fonun geçmişindeki `undone` kayıtlardan bulunur (`trTxList`, süresiz). En son değişiklik bu silmeyse birebir geri alınır (`undoLast`), değilse aynı tarih/adet/fiyatla yeniden uygulanır (`trTx`, geçmişe `restore` türü "Geri getirme" kaydı düşer; satışta `laterSell` ve o tarihteki adet kontrol edilir). Fon, fiyat kaydı (sortLog'un düşürdüğü komşu kayıt dahil, `lost`) ve yedek yüklenmeden önceki portföy `fon-silinenler`'de (`trAdd`/`trRestore`); depolama doluysa kopya saklanamaz ve silme yapılmaz. Silmeden hemen sonra bildirimde "Geri al" düğmesi çıkar (`toast(m,act,id)`, 5,5 sn, yalnız görünürken dokunulur).
+- **Silme güvenliği (1.9.19):** her silme onay penceresi açar (fiyat kaydı silmede ve Geçmiş'teki "Geri al"da da). 1.9.20: Son silinenler'den geri getirilen sepet sonradan satılır/silinirse listede yeniden çıkmaz (`lostLot` sonraki kayıtlarda o sepetin eklendiğini arar); önceden ikinci kez geri getirilip bedava pay oluşuyordu. Geri getirme Geçmiş'ten geri alınırsa sepet yeniden listelenir. Eski kayıtta (adedi metinden okunamayan alım) sepet tutarı alım tutarından farklıysa (kısmen satılmış) düzenleme/silme kilitli. Silinen her şey geri getirilebilir: Ayarlar › **Son silinenler** (`trash` sayfası, `PARENT.trash='settings'`). Alım/satış/sepet: fonun geçmişindeki `undone` kayıtlardan bulunur (`trTxList`, süresiz). En son değişiklik bu silmeyse birebir geri alınır (`undoLast`), değilse aynı tarih/adet/fiyatla yeniden uygulanır (`trTx`, geçmişe `restore` türü "Geri getirme" kaydı düşer; satışta `laterSell` ve o tarihteki adet kontrol edilir). Fon, fiyat kaydı (sortLog'un düşürdüğü komşu kayıt dahil, `lost`) ve yedek yüklenmeden önceki portföy `fon-silinenler`'de (`trAdd`/`trRestore`); depolama doluysa kopya saklanamaz ve silme yapılmaz. Silmeden hemen sonra bildirimde "Geri al" düğmesi çıkar (`toast(m,act,id)`, 5,5 sn, yalnız görünürken dokunulur).
 - **Satış uyarısı (1.9.18):** elde adet yoksa (`Q(f)=0`) Satış butonu soluk (`.btn.dim`) ve dokununca satış paneli yerine "Satılacak pay yok" uyarısı açılır (Tamam / Alım ekle).
 - **Arka plan kaydırma kilidi (1.9.17):** alt panel açıkken (`modal()` → `lockScroll()`) gövde `position:fixed; top:-scrollY` ile dondurulur, `html.mlock` taşmayı/overscroll'u kapatır. Belge düzeyinde (capture) `touchmove` engellenir; yalnız panelin (`.sheet`) ya da takvimin (`.dp`) içindeki gerçekten kaydırılabilir öğede ve odaktaki kutuda serbest (`canScroll`). Kapanış başlarken (`closeM`, aşağı çekerek kapatma, `finishClose`) `unlockScroll()` aynı konuma döner. Panel açıkken `scrollY` 0 okunur; konum gerekiyorsa `curY()` kullanılmalı (`go()` öyle yapar).
 - **Fon performansı (1.9.17, Yıllık özet):** eski "En iyi ve en kötü fon" yerine tüm fonların fiyat performansı listesi (`#pfl`). Başlığın sağında tek dokunuşla değişen sıralama butonu (`.sortb`, `data-act="psort"`, açılır menü değil): "En yüksek ↓" (varsayılan) / "En düşük ↑". Durum `view.psort` ('desc'/'asc'); dokununca sayfa yeniden çizilmez, satırlar FLIP ile yer değiştirir (`togglePerfSort`; `nofade` giriş animasyonunun yeniden başlamasını önler).
@@ -183,6 +192,10 @@ Kullanıcı isterse dosyaları elle de yükleyebilir: GitHub → Add file → Up
 - Yalnız Chromium'da test edildi (ortamda WebKit yok). WebGL gölgelendirici iki tarayıcıda aynı matematikle çalışır, ama gerçek iPhone'da görünüm ve akıcılık kullanıcının kaydıyla doğrulanmalı.
 
 ## Açık konular
+
+- 1.9.20'nin gerçek iPhone'da doğrulanması: CSP Safari'de hiçbir şeyi engellemiyor mu (mercek, TÜFE, yedek paylaşma/indirme, ana ekran simgesi).
+- Bilinen, değiştirilmeyen: gizlilik modu yalnız tutarları gizler; adet ve birim fiyat görünür (adet × fiyat ile tutar hesaplanabilir). Ürün kararı; 1.9.20 raporunda kullanıcıya bildirildi, istenirse adetler de gizlenebilir.
+- Bilinen sınır: `localStorage` kaynağa (origin) bağlıdır; `sametcan00.github.io` altındaki diğer GitHub Pages projeleri aynı kaynağı paylaşır ve bu veriyi okuyabilir. Yalnız kendi depolarınız bu kaynağa sayfa koyabilir; özel alan adı ayrı kaynak sağlar.
 
 - 1.8.1'in gerçek iPhone'da doğrulanması: hızlı dokunma, parmakla sürükleme, merceğin taşması.
 - 1.9.2'nin gerçek iPhone'da doğrulanması: segmentlerde parmakla sürükleme.
