@@ -30,7 +30,7 @@ Bu dosya yeni Claude sohbetlerinde otomatik okunur. Her sürümden sonra güncel
 
 ## Sürüm kuralı
 
-- Güncel sürüm: **1.9.11**
+- Güncel sürüm: **1.9.12**
 - Her güncellemede **iki yerde** sürüm artırılır: `sw.js` içinde `VERSION`, `index.html` içinde `APPV`.
 - Ayarlar sayfasının altında "sürüm X.Y.Z" yazar; kullanıcı bununla kontrol eder.
 
@@ -160,6 +160,11 @@ Kullanıcı isterse dosyaları elle de yükleyebilir: GitHub → Add file → Up
   - **Kopya yok, kayma imkânsız:** WebGL tuvali yalnız kenar şeridini (d < B) çizer; şeridin içinde tamamen saydamdır, altta duran gerçek yazı/simgeler görünür (gösterge `.lqv` iken `::before` zemini kapalı). Şeridin iç yarısında kopyadan gerçeğe yumuşak geçiş (`smoothstep(B,.55B,d)`). Sebep: telefonda sekme çubuğundaki kopya yazı/simge dikeyde kayıyor, gerçekle çift görünüyordu ("1Y 1Y"); muhtemelen Safari'nin yazı tipi ölçüleri farklı. Test: mercek açıkken iç bölge, tuval gizlenmiş haliyle piksel piksel aynı (koyu/açık, sekme çubuğu ve iki seçici). Bu testi bozacak değişiklik yapılmamalı.
   - **Prizma rengi:** kanallar normal yönünde sabit küçük farkla da ayrılır (`n·1.15·s`), kenar parlaması açıya göre hafif gökkuşağı tonuna kayar (%38). Düz beyaz parlama yok.
   - **Esneme çubuğa göre:** `JELLY_K` = {rng:1 (referans, değiştirme), nav:.38, period/hm/theme/txt:.62, tab:.6}; listede olmayan çubukta `67/seçenek genişliği`. Şiddet gecikmeyi (`lag`) ve öndeki kenarın taşmasını ölçekler. Ölçülen: grafik aralığı uzak 67→141 yakın 67→74 (1.9.10 ile aynı), sekme çubuğu uçtan uca 76→90 (1.9.10'da 115), Günlük/Haftalık/Toplam uzak 110→165 yakın 110→122.
+- **1.9.12: sekme çubuğundaki rastgele dikey kayma (kök neden bulundu):** tek WebGL tuvali açık olan merceğe taşınıyor, ama göstergeye göre `top`/`left` yalnız boyut değişince yazılıyordu. Segment merceğinden (dikey pay 6) sonra kalıcı sekme çubuğu göstergesine geçince tuval −8'de kalıyordu (doğrusu −12) → kenar şeridi ve kopyası 4 piksel kayık; hangi mercek en son kullanıldıysa ona göre "bir oluyor bir olmuyordu". Eski kodda testle yeniden üretildi (`ybug.js` mantığı).
+  - Çözüm: sahip değişince önbellek sıfırlanır, tuval konumu `L.pos` farklıysa her seferinde yazılır.
+  - Tüm ölçüler kabın kendi yerleşim koordinatlarında: dikey konum/yükseklik `offsetTop`/`offsetHeight` (CSS, dönüşümden etkilenmez); yatay yalnız o anki `translateX` (`DOMMatrixReadOnly(...).m41`) ve hesaplanan genişlik. Sahne çiziminde ekran ölçüleri kabın ölçeğine bölünür. Sayfa kayması/güvenli alan/kabın animasyonu etkilemez.
+  - `.thumb{transform-origin:50% 50%;translate:none;rotate:none}`; esneme yarıda kesilirse yeni hareket o anki gerçek konumdan başlar.
+  - Mercek açıkken (`.lqon`) seçeneklerin içindeki animasyon/dönüşüm kapalı (sekme simgesinin zıplaması dahil): gerçek simge kenar şeridine girip kesilmesin.
 - **1.9.9 (geri alınmıştı):** kenar şeridi çok inceydi (B=7, M=.42B, `s²`); kullanıcı 1.9.8'e döndü, sonra aynı istekleri yineledi → 1.9.10.
 - **Denenip bırakılanlar (tekrar denenmesin):**
   - 1.9.3: yazı kopyası + SVG filtre, içeriden dışarı uzatma. Yanlış yön; bant oluşmuyordu.
@@ -171,7 +176,7 @@ Kullanıcı isterse dosyaları elle de yükleyebilir: GitHub → Add file → Up
 
 - 1.8.1'in gerçek iPhone'da doğrulanması: hızlı dokunma, parmakla sürükleme, merceğin taşması.
 - 1.9.2'nin gerçek iPhone'da doğrulanması: segmentlerde parmakla sürükleme.
-- 1.9.11'in gerçek iPhone'da doğrulanması: sekme çubuğunda yazı/simge kayması bitti mi; jöle esnemesi, aydınlık modda merceğin seçilmesi; WebGL cam mercek (kenarda bükülme, renk ayrışması, parlama) Safari'de sekme çubuğunda ve seçicilerde görünüyor mu, akıcı mı; yeni sürüm hemen yükleniyor mu (1.9.7 önbellek düzeltmesi).
+- 1.9.12'nin gerçek iPhone'da doğrulanması: sekme çubuğunda rastgele dikey kayma/kesilme bitti mi; jöle esnemesi, aydınlık modda merceğin seçilmesi; WebGL cam mercek (kenarda bükülme, renk ayrışması, parlama) Safari'de sekme çubuğunda ve seçicilerde görünüyor mu, akıcı mı; yeni sürüm hemen yükleniyor mu (1.9.7 önbellek düzeltmesi).
 - 1.9.0'ın gerçek iPhone'da doğrulanması: Face ID kilidi (ana ekran uygulamasında WebAuthn), grafikte parmakla gezinme, TEFAS'tan kopyalanan gerçek metnin okunması.
 - TÜFE işinin ilk otomatik güncellemesi (3 Aralık 2026, Kasım verisi) Actions sekmesinden kontrol edilmeli.
 - Henüz istenmemiş olası geliştirmeler: hedef dağılım ve dengeleme, düzenli yatırım planı, Mac edinilirse yerel SwiftUI sürümü.
