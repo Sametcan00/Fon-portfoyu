@@ -484,10 +484,19 @@ html.vt-theme .tabbar::after{-webkit-backdrop-filter:none;backdrop-filter:none}
 .tgl.on{background:#34c759}.tgl.on i{transform:translateX(20px)}
 button.tgl:active{transform:none}
 /* Toplu fiyat girişi */
-.bpl{background:var(--sbg);margin-top:2px}
-.bpl .row{min-height:64px}
-.bpl .bpi{width:128px;flex-shrink:0;text-align:right;padding:10px 12px;font-size:17px}
-.bpl .bpn{font-size:12px;white-space:normal}
+/* 1.9.15 — Fiyatları güncelle: tekli fiyat penceresiyle aynı alan görünümü */
+.bpr+.bpr{margin-top:2px}.bpr .f{margin-bottom:0}.bpr .two{align-items:end}
+.bpc{font-weight:600;color:var(--ink)}
+.bpf{display:flex;align-items:center;gap:10px;height:48px;padding:0 12px;border-radius:12px;background:var(--fill);min-width:0}
+.bpf .av.sm{width:30px;height:30px;border-radius:9px;font-size:9px}
+.bpf .l{display:flex;flex-direction:column;min-width:0;line-height:1.15}.bpf .l b{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bpf .l span{font-size:12px;color:var(--mut)}
+.bpn{font-size:12px;white-space:normal;margin:4px 4px 0;min-height:0}.bpn:empty{display:none}
+.bpg{display:flex;flex-direction:column;gap:12px;margin-bottom:4px}
+.bpp{background:var(--field);border-radius:22px;padding:14px}
+.bpp textarea{width:100%;margin-bottom:10px;border:0;background:var(--fill);border-radius:12px;padding:10px 12px;font-size:15px;resize:vertical;color:var(--ink)}
+.bpi.bad{box-shadow:0 0 0 2px var(--dn)}
+.bpp .btn{width:100%}
 .inp.bad{box-shadow:0 0 0 2px var(--dn)}
 .paste{margin-top:4px;background:var(--sbg)!important}
 .paste textarea{width:100%;border:0;background:var(--fill);border-radius:12px;padding:10px 12px;font-size:15px;resize:vertical}
@@ -549,7 +558,7 @@ button.tgl:active{transform:none}
 <nav class="tabbar glass" id="nav" aria-label="Sekmeler"></nav>
 <div id="m"></div><div id="t" class="glass" role="status" aria-live="polite"></div>
 <script>
-const APPV='1.9.14',KEY='fon-portfoyum-v2',TK='fon-tema',$=s=>document.querySelector(s);
+const APPV='1.9.15',KEY='fon-portfoyum-v2',TK='fon-tema',$=s=>document.querySelector(s);
 const NF=new Intl.NumberFormat('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2});
 // Gizlilik modu: ekrandaki tutarlar maskelenir (kayıtlara yazılan metinler her zaman gerçek tutarla: moneyR/sgnR)
 const PK='fon-gizli';let priv=false;try{priv=localStorage.getItem(PK)==='1'}catch(e){}
@@ -846,13 +855,19 @@ function parsePaste(txt,codes){const toks=String(txt).split(/[\s;|]+/).map(t=>t.
   return out}
 let bulkX=[];
 function bulkModal(){bulkX=[];const fs=S.funds;
+  /* 1.9.15: tekli "Fiyat · FON" penceresinin düzeni: üstte tarih, her fon için iki sütun (solda fon ve son fiyatı,
+     sağda birim fiyat kutusu), açıklama, Vazgeç/Kaydet; TEFAS'tan yapıştırma en altta (tekli penceredeki Fiyat geçmişi yerinde) */
   modal(`<h3>Fiyatları güncelle</h3>
-  <div class="f"><div class="lh"><label for="bp_d">Fiyat tarihi</label></div><input id="bp_d" type="date" max="${today()}" value="${today()}"></div>
-  <div class="list bpl">${fs.map((f,i)=>{const L=f.log[f.log.length-1],sd=staleDays(f);return `<div class="row">${av(f)}<div class="l"><b>${esc(f.code)}</b><div class="sub wl">${num(f.price,6)} ₺${L?' · '+dTR(L.d):''}${sd?` · <span class="dn">${sd} gün</span>`:''}</div><div class="sub bpn" id="bpn_${i}"></div></div><input class="inp bpi" id="bp_${i}" data-i="${i}" inputmode="decimal" autocomplete="off" placeholder="${dec(f.price)}" aria-label="${esc(f.code)} yeni fiyat"></div>`}).join('')}</div>
-  <p class="hint" style="margin:8px 4px 12px">Boş bıraktığınız fonlar değişmez. Fiyatı değişmemiş bir fonu “kontrol edildi” saymak için aynı fiyatı yazabilirsiniz.</p>
-  <div class="glass card pad paste"><div class="lbl" style="font-weight:600;color:var(--ink)">TEFAS’tan yapıştır</div><div class="hint" style="margin:0">TEFAS’ta fonun sayfasını ya da “Tarihsel Veriler” tablosunu açın, fon kodu ve fiyatın olduğu kısmı seçip kopyalayın, buraya yapıştırın. Uygulama portföyünüzdeki fon kodlarını ve fiyatlarını kendisi bulur.</div>
-  <textarea id="bp_t" rows="3" placeholder="Örn: 19.11.2026  TTE  İş Portföy …  1,234567"></textarea><button class="btn plain" data-act="bulkparse"><span>Metni oku</span></button><div id="bp_r"></div></div>
-  <p class="err" id="bp_e"></p><div class="btns"><button class="btn plain" data-act="close">Vazgeç</button><button class="btn pri" data-act="bulkok">Kaydet</button></div>`,true);
+  <div class="f"><div class="lh"><label for="bp_d">Fiyat tarihi</label><span>${fs.length} fon</span></div><input id="bp_d" type="date" max="${today()}" value="${today()}"></div>
+  <div class="bpg">${fs.map((f,i)=>{const L=f.log[f.log.length-1],sd=staleDays(f);return `<div class="bpr"><div class="two">
+    <div class="f"><div class="lh"><span class="bpc">${esc(f.code)}</span>${sd?`<span class="dn">${sd} gün</span>`:''}</div><div class="bpf">${av(f,'sm')}<div class="l"><b>${num(f.price,6)} ₺</b><span>${L?dTR(L.d):'fiyat yok'}</span></div></div></div>
+    <div class="f"><div class="lh"><label for="bp_${i}">Birim fiyat (₺)</label></div><input class="bpi" id="bp_${i}" data-i="${i}" inputmode="decimal" autocomplete="off" placeholder="${dec(f.price)}" aria-label="${esc(f.code)} yeni fiyat"></div>
+  </div><div class="sub bpn" id="bpn_${i}"></div></div>`}).join('')}</div>
+  <p class="hint">Boş bıraktığınız fonlar değişmez. Fiyatı değişmemiş bir fonu “kontrol edildi” saymak için aynı fiyatı yazabilirsiniz.</p><p class="err" id="bp_e"></p>
+  <div class="btns"><button class="btn plain" data-act="close">Vazgeç</button><button class="btn pri" data-act="bulkok">Kaydet</button></div>
+  <div class="lbl" style="margin:20px 4px 6px">TEFAS’tan yapıştır</div><div class="bpp">
+  <div class="hint" style="margin:0 0 10px">TEFAS’ta fonun sayfasını ya da “Tarihsel Veriler” tablosunu açın, fon kodu ve fiyatın olduğu kısmı seçip kopyalayın, buraya yapıştırın. Uygulama portföyünüzdeki fon kodlarını ve fiyatlarını kendisi bulur.</div>
+  <textarea id="bp_t" rows="3" placeholder="Örn: 19.11.2026  TTE  İş Portföy …  1,234567"></textarea><button class="btn plain" data-act="bulkparse"><span>Metni oku</span></button><div id="bp_r"></div></div>`,true);
   const t=$('#bp_t');if(t)t.addEventListener('paste',()=>setTimeout(()=>act('bulkparse'),30));
   $('#m').oninput=e=>{const i=e.target;if(i.classList.contains('bpi')){delete i.dataset.d;bulkX=bulkX.filter(x=>x.i!==+i.dataset.i);i.classList.remove('bad');const n=$('#bpn_'+i.dataset.i);if(n)n.innerHTML=''}}}
 function bulkParse(){const codes=new Set(S.funds.map(f=>f.code)),res=parsePaste(g('bp_t'),codes),el=$('#bp_r');bulkX=[];

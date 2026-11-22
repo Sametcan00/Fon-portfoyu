@@ -30,7 +30,7 @@ Bu dosya yeni Claude sohbetlerinde otomatik okunur. Her sürümden sonra güncel
 
 ## Sürüm kuralı
 
-- Güncel sürüm: **1.9.14**
+- Güncel sürüm: **1.9.15**
 - Her güncellemede **iki yerde** sürüm artırılır: `sw.js` içinde `VERSION`, `index.html` içinde `APPV`.
 - Ayarlar sayfasının altında "sürüm X.Y.Z" yazar; kullanıcı bununla kontrol eder.
 
@@ -58,7 +58,7 @@ Bu dosya yeni Claude sohbetlerinde otomatik okunur. Her sürümden sonra güncel
   - Sayı okuma: `pn` (fiyat/adet girişi; tek nokta ondalık sayılır), `pnM` (tutar kutuları; `10.000` = on bin), `trN` (uygulamanın kendi yazdığı Türkçe metinler, örn. eski kayıtlardaki "10.000 adet"). Eski kayıt metni asla `pn` ile okunmamalı.
   - `isDate` gerçek takvim tarihini doğrular (2025-19-05, 2025-02-30 reddedilir); `norm()` bozuk tarihli fiyat kayıtlarını atar.
 - **Fiyatlar elle girilir.** TEFAS'tan otomatik fiyat çekme yok ve yapılmamalı: TEFAS botları F5 korumasıyla bilerek engelliyor, eski `api/DB/BindHistoryInfo` kapatılmış (2026-11 denendi). Bu korumayı atlatmaya çalışılmaz.
-- **Toplu fiyat girişi** (`bulkModal`): tüm fonlar tek ekranda. Kullanıcının TEFAS'tan kendi kopyaladığı metin `parsePaste` ile okunur: fon kodundan sonraki ilk ondalıklı sayı fiyat, kodun hemen önündeki tarih o fiyatın tarihi.
+- **Toplu fiyat girişi** (`bulkModal`): tüm fonlar tek ekranda. 1.9.15'ten beri düzeni tekli "Fiyat · FON" penceresiyle aynı: üstte tarih, her fon için iki sütun (`.bpr`: solda fon kodu + son fiyat/tarih kutusu `.bpf`, sağda "Birim fiyat (₺)" kutusu `#bp_i`), açıklama, Vazgeç/Kaydet, en altta TEFAS'tan yapıştır (`.bpp`). Kullanıcının TEFAS'tan kendi kopyaladığı metin `parsePaste` ile okunur: fon kodundan sonraki ilk ondalıklı sayı fiyat, kodun hemen önündeki tarih o fiyatın tarihi.
 - **Enflasyon (reel getiri):** her sepet kendi alış ayından son açıklanan aya kadar TÜFE ile karşılaştırılır (`inflFrom`, `realOf`). Satılmış sepetler dahil değil.
 - **Fiyat hatırlatıcısı:** elde tutulan fonun fiyatı en az 2 iş günü girilmediyse (ya da kontrol edilmediyse) uyarı çıkar (`staleDays`). `chk` yalnız ileri gider: geçmiş bir güne fiyat eklemek fonu "güncel" yapmaz.
 - **TEFAS yapıştırma:** tarih yalnız fon kodunun hemen önündeki hücreden alınır; mevcut fiyattan %50'den fazla sapan değer (getiri tablosu gibi) kutuya yazılmaz, kullanıcıya gösterilir.
