@@ -30,7 +30,7 @@ Bu dosya yeni Claude sohbetlerinde otomatik okunur. Her sürümden sonra güncel
 
 ## Sürüm kuralı
 
-- Güncel sürüm: **1.9.16**
+- Güncel sürüm: **1.9.17**
 - Her güncellemede **iki yerde** sürüm artırılır: `sw.js` içinde `VERSION`, `index.html` içinde `APPV`.
 - Ayarlar sayfasının altında "sürüm X.Y.Z" yazar; kullanıcı bununla kontrol eder.
 
@@ -97,6 +97,8 @@ Bu dosya yeni Claude sohbetlerinde otomatik okunur. Her sürümden sonra güncel
   - Face ID kilidi 1.9.13'te kullanıcı isteğiyle tamamen kaldırıldı (kod, CSS, simge, Ayarlar satırı). Açılışta eski `fon-kilit` kaydı silinir.
 - **Cam takvim (1.9.14):** iOS'un yerel tarih penceresine animasyon/stil verilemediği için modal içindeki her `input[type=date]` `dpEnhance` ile gizli alana çevrilir (id ve YYYY-AA-GG değeri aynı, hesap kodu `g('p_d')` vb. değişmedi) ve yanına `.dpb` kutusu eklenir. Dokununca `.dp` takvimi (body'de, z-index 40) kutudan yaylanarak büyüyüp açılır, seçince/dışarı dokununca kutuya doğru küçülerek kapanır. Bulanık yarı saydam cam (`--dp-bg` .86), ince kenar parlaması, yumuşak gölge. `max` (bugün) sonrası günler kapalı. Değer değişince `input`/`change` olayı yayılır. Takvim açıkken dışarı dokunmak yalnız takvimi kapatır; panel kapanırken takvim de kapanır.
   - 1.9.16 (kullanıcı daha yumuşak animasyon istedi): açılış `DP_SPRING` sönümlü yay eğrisiyle (`linear()`, ≈%0,5 taşma, 620 ms; desteklenmezse `cubic-bezier(.16,1,.3,1)`), `scale(.6)` + 10 px dikey kaymadan; saydamlık ayrı ve hızlı (220 ms); içerik 90 ms gecikmeyle hafifçe belirir. Kapanış 300 ms `scale(.72)`, saydamlık 60 ms sonra söner. Eski `filter:blur` kaldırıldı (bulanık camla birlikte Safari'de ağırdı) ve eski 1.025 sıçraması yok.
+- **Arka plan kaydırma kilidi (1.9.17):** alt panel açıkken (`modal()` → `lockScroll()`) gövde `position:fixed; top:-scrollY` ile dondurulur, `html.mlock` taşmayı/overscroll'u kapatır. Belge düzeyinde (capture) `touchmove` engellenir; yalnız panelin (`.sheet`) ya da takvimin (`.dp`) içindeki gerçekten kaydırılabilir öğede ve odaktaki kutuda serbest (`canScroll`). Kapanış başlarken (`closeM`, aşağı çekerek kapatma, `finishClose`) `unlockScroll()` aynı konuma döner. Panel açıkken `scrollY` 0 okunur; konum gerekiyorsa `curY()` kullanılmalı (`go()` öyle yapar).
+- **Fon performansı (1.9.17, Yıllık özet):** eski "En iyi ve en kötü fon" yerine tüm fonların fiyat performansı listesi (`#pfl`). Başlığın sağında tek dokunuşla değişen sıralama butonu (`.sortb`, `data-act="psort"`, açılır menü değil): "En yüksek ↓" (varsayılan) / "En düşük ↑". Durum `view.psort` ('desc'/'asc'); dokununca sayfa yeniden çizilmez, satırlar FLIP ile yer değiştirir (`togglePerfSort`; `nofade` giriş animasyonunun yeniden başlamasını önler).
 - **`.wrap` çakışması (1.9.14):** `wrap` ana kabın (`#app`) sınıfı; alt metinlerde satır kaydırma için kullanılan `sub wrap` ana kabın boşluk ve PWA'da ekran boyu yükseklik kurallarını alıp "Fiyatları güncelle" ve "Yıllık özet" kartlarını ekran boyu uzatıyordu. Adı `sub wl` yapıldı. Yeni bir yardımcı sınıfa `wrap` adı verilmemeli.
 - **CSS yapısı:** sürüm sürüm eklenmiş katmanlardan oluşur; sonraki bloklar öncekileri ezer. En sondaki "v1.8.1 — Düzeltmeler" bloğu geçerli olanıdır. Değişiklik yaparken önceki kuralların özgüllüğüne dikkat et (örnek: `:root[data-theme="light"] .tabbar>.thumb.sw`).
 
@@ -181,6 +183,7 @@ Kullanıcı isterse dosyaları elle de yükleyebilir: GitHub → Add file → Up
 - 1.8.1'in gerçek iPhone'da doğrulanması: hızlı dokunma, parmakla sürükleme, merceğin taşması.
 - 1.9.2'nin gerçek iPhone'da doğrulanması: segmentlerde parmakla sürükleme.
 - 1.9.12'nin gerçek iPhone'da doğrulanması: sekme çubuğunda rastgele dikey kayma/kesilme bitti mi; jöle esnemesi, aydınlık modda merceğin seçilmesi; WebGL cam mercek (kenarda bükülme, renk ayrışması, parlama) Safari'de sekme çubuğunda ve seçicilerde görünüyor mu, akıcı mı; yeni sürüm hemen yükleniyor mu (1.9.7 önbellek düzeltmesi).
+- 1.9.17'nin gerçek iPhone'da doğrulanması: alt panel açıkken arka plan kaymıyor mu (klavye açıkken dahil), panel kapanınca konum korunuyor mu.
 - 1.9.0'ın gerçek iPhone'da doğrulanması: grafikte parmakla gezinme, TEFAS'tan kopyalanan gerçek metnin okunması.
 - TÜFE işinin ilk otomatik güncellemesi (3 Aralık 2026, Kasım verisi) Actions sekmesinden kontrol edilmeli.
 - Henüz istenmemiş olası geliştirmeler: hedef dağılım ve dengeleme, düzenli yatırım planı, Mac edinilirse yerel SwiftUI sürümü.
