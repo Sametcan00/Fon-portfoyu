@@ -460,7 +460,7 @@ html.vt-theme .tabbar::after{-webkit-backdrop-filter:none;backdrop-filter:none}
 .chips::-webkit-scrollbar{display:none}
 .chipb{flex-shrink:0;border:0;border-radius:99px;padding:8px 14px;font-size:14px;font-weight:600;background:var(--sbg);color:var(--ink)}
 .chipb.on{background:var(--ink);color:var(--bg)}
-.sub.wrap{white-space:normal}
+.sub.wl{white-space:normal} /* 1.9.14: eskiden "wrap" idi; ana kabın .wrap kuralları (boşluk, ekran boyu yükseklik) bu metne uygulanıp kartları uzatıyordu */
 .mhd{font-size:13px;color:var(--mut);padding:8px 16px 0;text-transform:none}
 .txsum{margin-top:0;background:var(--sbg)}
 .dnav .cap+.cap{margin-left:auto}
@@ -524,6 +524,23 @@ button.tgl:active{transform:none}
 :root{--lens-tint:rgba(255,255,255,.14);--lens-rim:inset 0 0 0 1px rgba(0,0,0,.17),inset 0 1.5px 1px -1px #fff,inset 0 -1.5px 1px -1px rgba(255,255,255,.8)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--lens-tint:rgba(255,255,255,.09);--lens-rim:inset 0 0 0 1px rgba(0,0,0,.65),inset 0 1.5px 1px -1px rgba(255,255,255,.32),inset 0 -1.5px 1px -1px rgba(255,255,255,.14)}}
 :root[data-theme="dark"]{--lens-tint:rgba(255,255,255,.09);--lens-rim:inset 0 0 0 1px rgba(0,0,0,.65),inset 0 1.5px 1px -1px rgba(255,255,255,.32),inset 0 -1.5px 1px -1px rgba(255,255,255,.14)}
+/* 1.9.14 — Cam takvim */
+.dpb{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;text-align:left;cursor:pointer;color:var(--ink);font-size:16px}
+.dpb svg{width:18px;height:18px;color:var(--mut);flex-shrink:0}.dpb.act{box-shadow:0 0 0 2px var(--ac) inset}
+.dp{position:fixed;z-index:40;border-radius:26px;padding:14px 12px 10px;color:var(--ink);will-change:transform,opacity;
+  background:var(--dp-bg);-webkit-backdrop-filter:blur(26px) saturate(1.8);backdrop-filter:blur(26px) saturate(1.8);
+  box-shadow:inset 0 1px 0 var(--dp-hi),inset 0 0 0 .5px var(--dp-rim),0 22px 60px rgba(0,0,0,.38),0 4px 14px rgba(0,0,0,.18)}
+:root{--dp-bg:rgba(255,255,255,.86);--dp-hi:rgba(255,255,255,.95);--dp-rim:rgba(0,0,0,.08)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--dp-bg:rgba(44,44,48,.86);--dp-hi:rgba(255,255,255,.2);--dp-rim:rgba(255,255,255,.14)}}
+:root[data-theme="dark"]{--dp-bg:rgba(44,44,48,.86);--dp-hi:rgba(255,255,255,.2);--dp-rim:rgba(255,255,255,.14)}
+.dph{display:flex;align-items:center;justify-content:space-between;padding:0 6px 8px}.dph b{font:600 17px var(--disp)}
+.dpa{width:34px;height:34px;border:0;border-radius:50%;background:none;color:var(--ac);display:inline-grid;place-items:center}
+.dpa svg{width:18px;height:18px}.dpa.dpr svg{transform:scaleX(-1)}.dpa:disabled{opacity:.3}
+.dpw,.dpg{display:grid;grid-template-columns:repeat(7,1fr);text-align:center}
+.dpw i{font:600 11px var(--font);font-style:normal;color:var(--mut);padding:4px 0}
+.dpd{height:40px;border:0;background:none;color:var(--ink);font:500 17px var(--font);border-radius:50%;margin:1px auto;width:40px;display:grid;place-items:center;transition:background .15s,transform .15s}
+.dpd.td{color:var(--ac);font-weight:700}.dpd.on{background:var(--ac);color:#fff;font-weight:700}.dpd:disabled{opacity:.28}.dpd:active{transform:scale(.88)}
+.dpf{display:flex;justify-content:flex-end;padding:6px 4px 0}.dptd{border:0;border-radius:99px;padding:7px 14px;background:var(--field);color:var(--ac);font:600 14px var(--font)}
 </style>
 </head>
 <body>
@@ -532,7 +549,7 @@ button.tgl:active{transform:none}
 <nav class="tabbar glass" id="nav" aria-label="Sekmeler"></nav>
 <div id="m"></div><div id="t" class="glass" role="status" aria-live="polite"></div>
 <script>
-const APPV='1.9.13',KEY='fon-portfoyum-v2',TK='fon-tema',$=s=>document.querySelector(s);
+const APPV='1.9.14',KEY='fon-portfoyum-v2',TK='fon-tema',$=s=>document.querySelector(s);
 const NF=new Intl.NumberFormat('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2});
 // Gizlilik modu: ekrandaki tutarlar maskelenir (kayıtlara yazılan metinler her zaman gerçek tutarla: moneyR/sgnR)
 const PK='fon-gizli';let priv=false;try{priv=localStorage.getItem(PK)==='1'}catch(e){}
@@ -627,6 +644,7 @@ mq.addEventListener&&mq.addEventListener('change',()=>{applyTheme();render()});
 applyTheme();
 
 const I={
+  cal:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><rect x="3.5" y="5" width="17" height="15" rx="3.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>',
   sun:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg>',
   moon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z"/></svg>',
   plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
@@ -644,11 +662,50 @@ const FMT={big:v=>big(v),money:v=>money(v),sgn:v=>sgn(v),pc:v=>pc(v),pcabs:v=>pc
 const T=(k,v,f)=>`<span data-tw="${esc(k)}" data-v="${v}" data-f="${f}">${FMT[f](v)}</span>`;
 const chipH=(x,per,k)=>`<div class="chg"><span class="chip ${x.v>=0?'up':'dn'}">${x.v>=0?'▲':'▼'} ${T(k+'-p',x.p,'pcabs')}</span><span class="${x.v>=0?'up':'dn'}">${T(k+'-v',x.v,'sgn')}</span>${per?`<span class="per">${per}</span>`:''}</div>`;
 
-function modal(h,nofocus){const m=$('#m'),was=m.classList.contains('open')&&!m.classList.contains('closing');++closeTok;m.classList.remove('closing','fading');m.oninput=null;m.innerHTML='<div class="scrim'+(was?' noanim':'')+'"></div><div class="sheet glass'+(was?' noanim swap':'')+'" role="dialog" aria-modal="true"><div class="grab"></div>'+h+'</div>';m.classList.add('open');const i=!nofocus&&m.querySelector('input:not([readonly]):not([type=date])');if(i)setTimeout(()=>i.focus(),50)}
+function modal(h,nofocus){const m=$('#m'),was=m.classList.contains('open')&&!m.classList.contains('closing');++closeTok;m.classList.remove('closing','fading');m.oninput=null;m.innerHTML='<div class="scrim'+(was?' noanim':'')+'"></div><div class="sheet glass'+(was?' noanim swap':'')+'" role="dialog" aria-modal="true"><div class="grab"></div>'+h+'</div>';m.classList.add('open');dpEnhance(m);const i=!nofocus&&m.querySelector('input:not([readonly]):not([type=date]):not([type=hidden])');if(i)setTimeout(()=>i.focus(),50)}
 let closeTok=0;
+/* 1.9.14 — Cam takvim (iOS Liquid Glass tarzı). iOS'un yerel tarih penceresine animasyon/stil verilemediği için kendi
+   takvimimiz: değeri tutan alan gizli (id ve YYYY-AA-GG değeri aynı, hesap kodu değişmez), görünen kutuya dokununca
+   takvim kutudan yaylanarak büyüyüp açılır, seçince/dışarı dokununca kutuya doğru küçülerek kapanır. Arka plan bulanık
+   yarı saydam cam + ince kenar parlaması + yumuşak gölge: alttaki satırlarla karışmaz. */
+const DP_AY=['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+const DP_AYK=['Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'];
+const dpTxt=v=>{if(!isDate(v))return 'Tarih seçin';const[y,m,d]=v.split('-');return `${+d} ${DP_AYK[+m-1]} ${y}`};
+let DP=null;
+function dpEnhance(root){root.querySelectorAll('input[type=date]').forEach(inp=>{
+  const b=document.createElement('button');b.type='button';b.className='inp dpb';b.dataset.dp=inp.id;b.setAttribute('aria-haspopup','dialog');
+  b.innerHTML=`<span>${dpTxt(inp.value)}</span>${I.cal||''}`;inp.dataset.max=inp.max||'';inp.type='hidden';inp.after(b)})}
+function dpSet(inp,v){inp.value=v;const b=inp.nextElementSibling;if(b&&b.classList.contains('dpb'))b.firstElementChild.textContent=dpTxt(v);
+  inp.dispatchEvent(new Event('input',{bubbles:true}));inp.dispatchEvent(new Event('change',{bubbles:true}))}
+function dpGrid(){const{y,m,inp}=DP,v=inp.value,mx=inp.dataset.max||'9999-12-31',td=today();
+  const first=new Date(Date.UTC(y,m,1)),off=(first.getUTCDay()+6)%7,n=new Date(Date.UTC(y,m+1,0)).getUTCDate();
+  const ym=`${y}-${String(m+1).padStart(2,'0')}`,next=m===11?`${y+1}-01`:`${y}-${String(m+2).padStart(2,'0')}`;
+  let h='';for(let i=0;i<off;i++)h+='<i></i>';
+  for(let d=1;d<=n;d++){const k=`${ym}-${String(d).padStart(2,'0')}`,dis=k>mx;h+=`<button type="button" class="dpd${k===v?' on':''}${k===td?' td':''}" data-dpd="${k}"${dis?' disabled':''}>${d}</button>`}
+  DP.el.querySelector('.dpt').textContent=`${DP_AY[m]} ${y}`;DP.el.querySelector('.dpg').innerHTML=h;
+  DP.el.querySelector('[data-dpn="1"]').disabled=next+'-01'>mx}
+function dpOpen(btn){const inp=document.getElementById(btn.dataset.dp);if(!inp)return;if(DP&&DP.inp===inp){dpClose();return}dpClose(true);
+  const v=isDate(inp.value)?inp.value:today(),el=document.createElement('div');el.className='dp';el.setAttribute('role','dialog');el.setAttribute('aria-label','Tarih seç');
+  el.innerHTML=`<div class="dph"><b class="dpt"></b><div><button type="button" class="dpa" data-dpn="-1" aria-label="Önceki ay">${I.back}</button><button type="button" class="dpa dpr" data-dpn="1" aria-label="Sonraki ay">${I.back}</button></div></div><div class="dpw">${['Pzt','Sal','Çar','Per','Cum','Cmt','Paz'].map(x=>`<i>${x}</i>`).join('')}</div><div class="dpg"></div><div class="dpf"><button type="button" class="dptd" data-dpd="${today()}">Bugün</button></div>`;
+  document.body.appendChild(el);DP={el,inp,btn,y:+v.slice(0,4),m:+v.slice(5,7)-1};dpGrid();btn.classList.add('act');
+  /* yerleşim: kutunun altında (yer yoksa üstünde), ekrana sığacak şekilde; büyüme merkezi kutunun ortası */
+  const r=btn.getBoundingClientRect(),w=Math.min(340,innerWidth-24),hh=el.offsetHeight,left=Math.max(12,Math.min(r.left,innerWidth-w-12));
+  const below=r.bottom+8+hh<=innerHeight-12||r.top-8-hh<12,top=below?r.bottom+8:r.top-8-hh;
+  Object.assign(el.style,{left:left+'px',top:Math.max(12,top)+'px',width:w+'px',transformOrigin:`${r.left+r.width/2-left}px ${below?-8:hh+8}px`});
+  if(!RM()&&el.animate)el.animate([{opacity:0,transform:'scale(.42)',filter:'blur(6px)'},{opacity:1,transform:'scale(1.025)',filter:'blur(0)',offset:.62},{opacity:1,transform:'scale(1)',filter:'blur(0)'}],{duration:460,easing:'cubic-bezier(.2,.9,.25,1)'})}
+function dpClose(now){if(!DP)return;const{el,btn}=DP;DP=null;btn.classList.remove('act');
+  if(now||RM()||!el.animate){el.remove();return}el.style.pointerEvents='none';
+  el.animate([{opacity:1,transform:'scale(1)',filter:'blur(0)'},{opacity:0,transform:'scale(.5)',filter:'blur(4px)'}],{duration:240,easing:'cubic-bezier(.4,0,.8,.6)',fill:'forwards'}).onfinish=()=>el.remove()}
+document.addEventListener('click',e=>{const b=e.target.closest('.dpb');if(b){e.stopPropagation();e.preventDefault();dpOpen(b);return}
+  if(!DP)return;const d=e.target.closest('[data-dpd]'),n=e.target.closest('[data-dpn]');
+  if(d&&DP.el.contains(d)){e.stopPropagation();if(!d.disabled){dpSet(DP.inp,d.dataset.dpd);dpClose()}return}
+  if(n&&DP.el.contains(n)){e.stopPropagation();DP.m+=+n.dataset.dpn;if(DP.m<0){DP.m=11;DP.y--}if(DP.m>11){DP.m=0;DP.y++}dpGrid();return}
+  if(DP.el.contains(e.target)){e.stopPropagation();return}
+  /* takvimin dışına dokunmak yalnız takvimi kapatır (alttaki paneli değil) */
+  e.stopPropagation();e.preventDefault();dpClose()},true);
 const sheetOpen=()=>{const m=$('#m');return m.classList.contains('open')&&!m.classList.contains('closing')&&!m.classList.contains('fading')};
-function finishClose(){const m=$('#m');m.classList.remove('open','closing','fading');m.innerHTML=''}
-function closeM(){const m=$('#m');if(!m.classList.contains('open')||m.classList.contains('closing'))return;if(RM()){finishClose();return}const tok=++closeTok;m.classList.add('closing');setTimeout(()=>{if(tok===closeTok)finishClose()},290)}
+function finishClose(){const m=$('#m');dpClose(true);m.classList.remove('open','closing','fading');m.innerHTML=''}
+function closeM(){const m=$('#m');if(!m.classList.contains('open')||m.classList.contains('closing'))return;dpClose();if(RM()){finishClose();return}const tok=++closeTok;m.classList.add('closing');setTimeout(()=>{if(tok===closeTok)finishClose()},290)}
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeM()});
 const fld=(id,l,v='',x='')=>`<div class="f"><div class="lh"><label for="${id}">${l}</label>${x}</div><input id="${id}" inputmode="decimal" autocomplete="off" value="${esc(v)}"></div>`;
 const txt=(id,l,v='',a='')=>`<div class="f"><div class="lh"><label for="${id}">${l}</label></div><input id="${id}" autocomplete="off" value="${esc(v)}" ${a}></div>`;
@@ -791,7 +848,7 @@ let bulkX=[];
 function bulkModal(){bulkX=[];const fs=S.funds;
   modal(`<h3>Fiyatları güncelle</h3>
   <div class="f"><div class="lh"><label for="bp_d">Fiyat tarihi</label></div><input id="bp_d" type="date" max="${today()}" value="${today()}"></div>
-  <div class="list bpl">${fs.map((f,i)=>{const L=f.log[f.log.length-1],sd=staleDays(f);return `<div class="row">${av(f)}<div class="l"><b>${esc(f.code)}</b><div class="sub wrap">${num(f.price,6)} ₺${L?' · '+dTR(L.d):''}${sd?` · <span class="dn">${sd} gün</span>`:''}</div><div class="sub bpn" id="bpn_${i}"></div></div><input class="inp bpi" id="bp_${i}" data-i="${i}" inputmode="decimal" autocomplete="off" placeholder="${dec(f.price)}" aria-label="${esc(f.code)} yeni fiyat"></div>`}).join('')}</div>
+  <div class="list bpl">${fs.map((f,i)=>{const L=f.log[f.log.length-1],sd=staleDays(f);return `<div class="row">${av(f)}<div class="l"><b>${esc(f.code)}</b><div class="sub wl">${num(f.price,6)} ₺${L?' · '+dTR(L.d):''}${sd?` · <span class="dn">${sd} gün</span>`:''}</div><div class="sub bpn" id="bpn_${i}"></div></div><input class="inp bpi" id="bp_${i}" data-i="${i}" inputmode="decimal" autocomplete="off" placeholder="${dec(f.price)}" aria-label="${esc(f.code)} yeni fiyat"></div>`}).join('')}</div>
   <p class="hint" style="margin:8px 4px 12px">Boş bıraktığınız fonlar değişmez. Fiyatı değişmemiş bir fonu “kontrol edildi” saymak için aynı fiyatı yazabilirsiniz.</p>
   <div class="glass card pad paste"><div class="lbl" style="font-weight:600;color:var(--ink)">TEFAS’tan yapıştır</div><div class="hint" style="margin:0">TEFAS’ta fonun sayfasını ya da “Tarihsel Veriler” tablosunu açın, fon kodu ve fiyatın olduğu kısmı seçip kopyalayın, buraya yapıştırın. Uygulama portföyünüzdeki fon kodlarını ve fiyatlarını kendisi bulur.</div>
   <textarea id="bp_t" rows="3" placeholder="Örn: 19.11.2026  TTE  İş Portföy …  1,234567"></textarea><button class="btn plain" data-act="bulkparse"><span>Metni oku</span></button><div id="bp_r"></div></div>
@@ -880,7 +937,7 @@ function yearData(Y){const ys=Y+'-01-01',ye=Y+'-12-31',rows=[];let tb=0,tr=0,tt=
   return{rows,tb,tr,tt,tg,nb,ns}}
 function yearPage(){const yl=yearsList();if(!yl.includes(view.yr))view.yr=yl[0];const Y=view.yr,D=yearData(Y),inf=yearInfl(Y);
   const pf=D.rows.filter(r=>r.perf).sort((a,b)=>b.perf.p-a.perf.p),best=pf[0],worst=pf.length>1?pf[pf.length-1]:null;
-  const pr=r=>r?`${av(r.f)}<div class="l"><b>${esc(r.f.code)}</b><div class="sub wrap">Fiyat: ${r.perf.from?dTR(r.perf.from):'yıl başı'} → ${dTR(r.perf.to)}</div></div><b class="${r.perf.p>=0?'up':'dn'}">${pc(r.perf.p)}</b>`:'';
+  const pr=r=>r?`${av(r.f)}<div class="l"><b>${esc(r.f.code)}</b><div class="sub wl">Fiyat: ${r.perf.from?dTR(r.perf.from):'yıl başı'} → ${dTR(r.perf.to)}</div></div><b class="${r.perf.p>=0?'up':'dn'}">${pc(r.perf.p)}</b>`:'';
   return `${dnav('Özet',`<button class="cap glass" data-act="yrcopy"><span>Kopyala</span></button>`)}<header class="hdr"><div><h1>Yıllık özet</h1></div></header>
   ${chipsH('yr',yl.map(y=>[y,y]),Y)}
   <section class="hero glass"><div class="lbl" style="position:relative">${Y} yılında gerçekleşen kâr/zarar (stopaj sonrası)</div><div class="big md ${D.tg>=0?'up':'dn'}">${T('y-g',D.tg,'sgn')}</div>
@@ -888,7 +945,7 @@ function yearPage(){const yl=yearsList();if(!yl.includes(view.yr))view.yr=yl[0];
   ${inf?`<div class="list glass"><div class="row"><div class="l"><b>${Y} enflasyonu (TÜFE)</b><div class="sub">${infLbl(inf)} · TCMB</div></div><b>${pc(inf.p)}</b></div></div>`:''}
   ${best?`<div class="sech"><h2>En iyi ve en kötü fon</h2><span>fiyat performansı</span></div><div class="list glass"><div class="row">${pr(best)}</div>${worst&&worst!==best?`<div class="row">${pr(worst)}</div>`:''}</div>`:''}
   <div class="sech"><h2>Fon bazında</h2><span>${Y}</span></div>
-  <div class="list glass">${D.rows.map(r=>`<button class="row" data-act="open" data-id="${esc(r.f.code)}">${av(r.f)}<div class="l"><b>${esc(r.f.code)}</b><div class="sub wrap">Alım ${money(r.b)} · Stopaj ${money(r.t)}${r.perf?' · Fiyat '+pc(r.perf.p):''}</div></div><div class="r"><b class="${r.gn>=0?'up':'dn'}">${sgn(r.gn)}</b><div class="d sub">gerçekleşen</div></div></button>`).join('')||'<div class="empty">Bu yıl için işlem ya da fiyat kaydı yok.</div>'}</div>
+  <div class="list glass">${D.rows.map(r=>`<button class="row" data-act="open" data-id="${esc(r.f.code)}">${av(r.f)}<div class="l"><b>${esc(r.f.code)}</b><div class="sub wl">Alım ${money(r.b)} · Stopaj ${money(r.t)}${r.perf?' · Fiyat '+pc(r.perf.p):''}</div></div><div class="r"><b class="${r.gn>=0?'up':'dn'}">${sgn(r.gn)}</b><div class="d sub">gerçekleşen</div></div></button>`).join('')||'<div class="empty">Bu yıl için işlem ya da fiyat kaydı yok.</div>'}</div>
   <p class="hint" style="text-align:center;margin:2px 8px">Kendi hesabınız içindir; vergi beyanında aracı kurumunuzun dökümünü esas alın. Fiyat performansı, girdiğiniz fiyatlara göre yıl başından (ya da ilk fiyattan) yıl sonuna (ya da son fiyata) hesaplanır.</p>`}
 function yearText(){const Y=view.yr,D=yearData(Y),inf=yearInfl(Y),L=[`Fon Portföyüm · ${Y} yıllık özet`,`Gerçekleşen kâr/zarar (stopaj sonrası): ${sgnR(D.tg)}`,`Stopaj öncesi kâr/zarar: ${sgnR(D.tg+D.tt)}`,`Kesilen stopaj: ${moneyR(D.tt)}`,`Satışların brüt tutarı: ${moneyR(D.tr)} (${D.ns} satış)`,`Yatırılan: ${moneyR(D.tb)} (${D.nb} alım)`];
   if(inf)L.push(`TÜFE (${inf.n===12?'yıllık':infLbl(inf)}): ${pc(inf.p)}`);L.push('','Fon bazında:');D.rows.forEach(r=>L.push(`${r.f.code}: gerçekleşen ${sgnR(r.gn)}, stopaj ${moneyR(r.t)}, alım ${moneyR(r.b)}${r.perf?', fiyat '+pc(r.perf.p):''}`));return L.join('\n')}
