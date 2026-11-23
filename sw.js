@@ -1,7 +1,7 @@
 /* Fon Portföyüm — çevrimdışı çalışma.
    Uygulama dosyaları ilk açılışta iPhone'a kaydedilir; sonraki açılışlar internet olmadan da çalışır.
    Yeni sürüm yayınladığınızda aşağıdaki VERSION değerini artırın. */
-const VERSION = '1.9.21';
+const VERSION = '1.9.22';
 const CACHE = 'fon-portfoyu-' + VERSION;
 const FILES = [
   './',
@@ -49,7 +49,7 @@ self.addEventListener('fetch', (e) => {
       const cached = await cache.match(key, { ignoreSearch: true });
       // arka plan güncellemesi her seferinde sunucuya sorar (no-cache: değişmediyse 304, ucuz)
       const fresh = fetch(req, { cache: 'no-cache' }).then((res) => {
-        if (res && res.ok) cache.put(key, res.clone());
+        if (res && res.ok) return cache.put(key, res.clone()).then(() => res);
         return res;
       }).catch(() => null);
       if (cached) { e.waitUntil(fresh); return cached; }

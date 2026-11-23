@@ -31,7 +31,7 @@ Bu dosya yeni Claude sohbetlerinde otomatik okunur. Her sürümden sonra güncel
 
 ## Sürüm kuralı
 
-- Güncel sürüm: **1.9.21**
+- Güncel sürüm: **1.9.22**
 - Her güncellemede **iki yerde** sürüm artırılır: `sw.js` içinde `VERSION`, `index.html` içinde `APPV`.
 - Ayarlar sayfasının altında "sürüm X.Y.Z" yazar; kullanıcı bununla kontrol eder.
 
@@ -193,6 +193,18 @@ Kullanıcı isterse dosyaları elle de yükleyebilir: GitHub → Add file → Up
   - 1.9.4–1.9.5: opak kopya + SVG `feDisplacementMap`. Safari'de içeriği bütünüyle ~4 nokta kaydırdı, gerçek yazı arkada "damga" gibi kaldı. Sebep doğrulanamadı (feImage ölçüsü ya da 128 nötr değerinin renk uzayı).
   - 1.9.6: düz CSS (iz zemini `scaleY`, renk şeritleri). Yazı bükülmüyordu; kullanıcı gerçek kırılma istedi.
 - Yalnız Chromium'da test edildi (ortamda WebKit yok). WebGL gölgelendirici iki tarayıcıda aynı matematikle çalışır, ama gerçek iPhone'da görünüm ve akıcılık kullanıcının kaydıyla doğrulanmalı.
+
+## 1.9.22 düzeltmeleri ve geliştirmeleri
+
+- **Kısmen satılmış sepet kilidi + geri getirme güvenliği (`dellot`, `lostLot`, `trLot`):** Kısmen satılmış sepetin "Sepetler" sekmesindeki `Sil` düğmesi soluk (`.dim`) ve dokununca neden silinemediğini açıklayıp `İşlem geçmişi`ne yönlendirir (`txfund`). Eski sürümden kalan silinmiş kısmi sepetler de `putBack` ile mevcut sepetle birleşerek kaybolmadan geri getirilebilir.
+- **Satış önizlemesi ve "Tümü" (`openTx`, `all`):** Seçilen işlem tarihindeki (`t_d`) sepetlere göre hesaplanır; eldekinden fazla adet yazılınca sahte 0 maliyetli kâr yerine uyarı gösterir.
+- **Cam takvim (`dpPlace`):** `visualViewport.height` ile alt/üst sınırlama (küçük ekranda / klavyede alttan taşmaz, 5↔6 satır ay geçişinde yeniden konumlanır, `<label>` tıklaması takvimi açar, `Escape` önce takvimi kapatır).
+- **Depolama doluluğunda çöp kutusu koruması (`trSave`, `trAdd`):** Yeni öğe sığmazsa mevcut `fon-silinenler` kayıtları silinmeden geri alınır.
+- **Toplu fiyat yapıştırma (`parsePaste`, `bulkParse`):** 4+ ondalıklı TEFAS fiyatları fon adındaki ondalıklardan (`1,5`) önceliklidir; ikinci yapıştırmada diğer fonların çok günlük `bulkX` kayıtları silinmez.
+- **Satış toleransı ve `fifo` / `calc`:** Satış toleransı `1e-6` ve `Math.min(q, av)` ile kıstırıldı; `fifo` yalnızca tüketilen adet kadar gelir hesaplar; `calc` ikili araması `Math.floor((lo+hi)/2)` ile 32-bit taşmadan arındırıldı.
+- **Portföy grafiği ve fon grafiği (`series`, `portChart`, `fundChart`):** Gerçekleşen satış kârı net (stopaj sonrası) tutulur; fon değişiminde (sat-al) satış geliri yeni para girişi sayılmaz (getiri % düşmez); fon grafiğindeki mavi alım noktaları doğrusal enterpolasyonla tam çizginin üstüne oturur.
+- **Yıllık özet → Fon performansı:** Satırlar artık tıklanabilir (`<button class="row" data-act="open">`), FLIP sıralama korunur.
+- **Sağlamlık & arayüz:** `pn` boşluklu binlik (`10 000`) okur ve `100abc`/`10,50,25` reddeder; `norm` ileri tarihleri reddeder; alt panel sürüklemede `touchcancel` ve `dpClose()`; `#app.leaving` `pointer-events:none` + `cur()` boş korumaları; ekran boyutu/dönüşünde `syncThumbs()`; `tEl(e)` ile güvenli `closest`; `bcopy` yedek yolunda `execCommand` dönüş denetimi + `markBackup()`; `sw.js` `cache.put` beklemesi; `manifest.webmanifest` `#f2f2f7`; `inflH` Türkçe ek düzeltmesi; `tufe.py` ay `01–12` doğrulaması.
 
 ## Açık konular
 

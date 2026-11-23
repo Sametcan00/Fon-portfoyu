@@ -42,7 +42,7 @@ def oku(sayfa):
                  for h in re.findall(r"<t[dh][^>]*>(.*?)</t[dh]>", satir, re.S | re.I)]
         if len(hucre) < 3:
             continue
-        m = re.fullmatch(r"(\d{2})-(\d{4})", hucre[0])
+        m = re.fullmatch(r"(0[1-9]|1[0-2])-(\d{4})", hucre[0])
         if not m:
             continue
         try:
